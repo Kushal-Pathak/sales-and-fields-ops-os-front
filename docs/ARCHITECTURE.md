@@ -12,6 +12,7 @@ src/
 │   ├── navigation.ts       # sidebar groups and items — must match router paths
 │   ├── providers/
 │   │   ├── index.tsx       # <Providers>: composes every app-wide provider
+│   │   ├── query-provider.tsx  # TanStack Query client
 │   │   ├── theme-provider.tsx  # dark/light/system, toggles `.dark` on <html>
 │   │   └── theme-context.ts
 │   └── styles/
@@ -22,14 +23,24 @@ src/
 │   ├── ui/                 # shadcn/ui primitives, added via the CLI
 │   ├── common/             # reusable app components (RootErrorBoundary, ThemeToggle, …)
 │   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel
+├── data/
+│   ├── index.ts            # `db`: one Collection per entity (local demo store or REST, by env)
+│   ├── collection.ts       # Collection<T> + local / http implementations
+│   ├── local-store.ts      # localStorage persistence, seed versioning, reset
+│   ├── query-keys.ts       # TanStack Query key factory
+│   └── seed/               # generic demo data, dates relative to now
 ├── features/
 ├── hooks/
 ├── lib/
 │   ├── env.ts              # validated access to VITE_* variables
-│   ├── api.ts              # thin fetch client with ApiError
+│   ├── api.ts              # thin fetch client with ApiError (used only by data/)
+│   ├── format.ts           # formatMoney / formatDate / formatRelative / initials
 │   └── utils.ts            # cn()
 ├── pages/
+├── test/                   # Vitest setup
 └── types/
+    ├── domain/             # entity types shared by every feature
+    └── route-handle.ts
 ```
 
 ## Folder Responsibilities
@@ -87,11 +98,14 @@ Images and other static files imported from code. Files that must keep their URL
 ## Data Flow
 
 ```text
-page  →  feature component  →  feature hook  →  lib/api  →  backend
+page → feature component → feature hook (useQuery / useMutation) → db.<collection> → local demo store
+                                                                                    └→ lib/api → backend
 ```
 
-- `lib/api.ts` exposes `api.get/post/put/patch/delete<T>(path, options)`. It prefixes `env.apiBaseUrl`, sends/receives JSON and throws `ApiError { status, body }` on non-2xx responses.
-- Feature hooks own loading/error/empty state and call `api`. Components render what the hook returns.
+- **Entities** live in `src/types/domain/`: `Workspace`, `Role`, `User`, `Contact`, `Pipeline`, `Stage`, `Lead`, `Task`, `Appointment`, `Quote` (+ `QuoteLineItem`), `Activity`, `Conversation`, `Message`. All extend `BaseEntity { id, createdAt, updatedAt }`. Anything that varies per business (stages, lead sources, currency, tax) is data on `Workspace` / `Stage`, not code. Derived facts (a task being overdue, quote totals) are computed by helpers such as `isTaskOverdue`, never stored.
+- **`db`** (`src/data/index.ts`) exposes one `Collection<T>` per entity with `list / get / create / update / remove`. With `VITE_API_BASE_URL` empty it is the local demo store (seeded, persisted in `localStorage`, `resetDemoData()` reseeds); with it set, `createHttpCollection` maps the same operations onto `lib/api` (`GET /leads`, `PATCH /leads/:id`, …). `get` / `update` / `remove` reject with `NotFoundError`.
+- **Feature hooks** wrap TanStack Query around `db`, using `queryKeys.<collection>.list()` / `.detail(id)` and invalidating `queryKeys.<collection>.all` after mutations. Components render what the hook returns; they never import `db`.
+- Filtering, sorting and pagination are client-side for now; `list()` gains parameters when the backend contract exists.
 
 ## Styling
 
@@ -109,12 +123,13 @@ page  →  feature component  →  feature hook  →  lib/api  →  backend
 
 The foundation deliberately stops here. When the project needs more, put it where it belongs:
 
-| Need                 | Where                                                                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Server-state caching | Add TanStack Query as `app/providers/query-provider.tsx`; query functions call `lib/api`.                                         |
-| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                  |
-| Auth                 | `features/auth/` for logic and screens; session provider in `app/providers/`; route guards as a layout route in `app/router.tsx`. |
-| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                      |
-| Tests                | Vitest + Testing Library; configure in `vite.config.ts`, colocate `*.test.tsx` with source, add `test` to `npm run check`.        |
-| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                     |
-| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                         |
+| Need                 | Where                                                                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Server-state caching | Done: TanStack Query in `app/providers/query-provider.tsx`; query functions call `db` from `src/data/`.                             |
+| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                    |
+| Auth                 | `features/auth/` for logic and screens; session provider in `app/providers/`; route guards as a layout route in `app/router.tsx`.   |
+| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                        |
+| Tests                | Done: Vitest + Testing Library (`vite.config.ts` → `test`, setup in `src/test/setup.ts`); colocate `*.test.ts(x)` with source.      |
+| Real backend         | Set `VITE_API_BASE_URL`; `db` switches to `createHttpCollection`. Add list parameters to `Collection.list` as the API defines them. |
+| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                       |
+| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                           |

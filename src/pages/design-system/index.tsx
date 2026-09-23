@@ -69,6 +69,9 @@ import {
   DrawerTitle,
 } from '@/components/layout/drawer-panel';
 import { useDrawerParam } from '@/hooks/use-drawer-param';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { db, isDemoData, queryKeys, resetDemoData, type CollectionName } from '@/data';
+import { formatMoney } from '@/lib/format';
 
 /**
  * Dev-only style guide: renders every token and primitive so the design system
@@ -555,7 +558,70 @@ export function DesignSystemPage() {
           <span className="text-sm text-foreground-faint">Drag files or click to upload</span>
         </div>
       </Section>
+
+      <DataSection />
     </div>
+  );
+}
+
+/** Smoke test for the data layer: counts every collection through TanStack Query. */
+function DataSection() {
+  const queryClient = useQueryClient();
+  const counts = useQuery({
+    queryKey: ['dev', 'collection-counts'],
+    queryFn: async () => {
+      const names = Object.keys(db) as CollectionName[];
+      return Promise.all(
+        names.map(async (name) => [name, (await db[name].list()).length] as const),
+      );
+    },
+  });
+  const workspace = useQuery({
+    queryKey: queryKeys.workspace.list(),
+    queryFn: () => db.workspace.list(),
+  });
+  const current = workspace.data?.[0];
+
+  return (
+    <Section title="Data">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <span>{isDemoData ? 'Local demo data' : 'Backend API'}</span>
+        {current && (
+          <span>
+            · {current.name} ·{' '}
+            {formatMoney(125000, { currency: current.currency, locale: current.locale })}
+          </span>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto"
+          disabled={!isDemoData}
+          onClick={() => {
+            resetDemoData();
+            void queryClient.invalidateQueries();
+          }}
+        >
+          Reset demo data
+        </Button>
+      </div>
+      {counts.isPending ? (
+        <Skeleton className="h-16 w-full" />
+      ) : counts.isError ? (
+        <p className="text-sm text-destructive">Failed to load collections.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {counts.data.map(([name, count]) => (
+            <Card key={name} size="sm">
+              <CardContent>
+                <div className="text-xs text-muted-foreground">{name}</div>
+                <div className="text-xl font-bold tabular-nums">{count}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </Section>
   );
 }
 

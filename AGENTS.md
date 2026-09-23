@@ -25,16 +25,17 @@ React 19, Vite, TypeScript (strict), Tailwind CSS v4, shadcn/ui (Base UI, lucide
 
 Feature-first. Respect folder boundaries in `src/`:
 
-| Folder              | Holds                                                                |
-| ------------------- | -------------------------------------------------------------------- |
-| `app/`              | Composition root: `App.tsx`, `router.tsx`, `providers/`, `styles/`   |
-| `pages/<name>/`     | Route components; thin, compose features, no business logic          |
-| `features/<name>/`  | Business functionality (`components/ hooks/ types/ utils/ index.ts`) |
-| `components/ui`     | Design-system primitives (shadcn/ui, generated)                      |
-| `components/common` | Reusable app components (error boundary, theme toggle, …)            |
-| `components/layout` | Layout / app-shell components                                        |
-| `hooks/`, `types/`  | Hooks/types shared across multiple features                          |
-| `lib/`              | Infrastructure helpers: `env.ts`, `api.ts`, `utils.ts`               |
+| Folder              | Holds                                                                        |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `app/`              | Composition root: `App.tsx`, `router.tsx`, `providers/`, `styles/`           |
+| `pages/<name>/`     | Route components; thin, compose features, no business logic                  |
+| `features/<name>/`  | Business functionality (`components/ hooks/ types/ utils/ index.ts`)         |
+| `components/ui`     | Design-system primitives (shadcn/ui, generated)                              |
+| `components/common` | Reusable app components (error boundary, theme toggle, …)                    |
+| `components/layout` | Layout / app-shell components                                                |
+| `hooks/`, `types/`  | Hooks/types shared across multiple features; `types/domain/` = entities      |
+| `data/`             | Data access: `db.<collection>` services, local demo store + seed, query keys |
+| `lib/`              | Infrastructure helpers: `env.ts`, `api.ts`, `format.ts`, `utils.ts`          |
 
 - Feature-specific code stays inside its feature. Promote to a shared folder only when it is genuinely reused.
 - Features must not reach into another feature's internals; import from its `index.ts` or move shared pieces to a shared folder.
@@ -45,9 +46,11 @@ Feature-first. Respect folder boundaries in `src/`:
   - Pages: render `PageHeader` then `PageBody` from `@/components/layout/page-header`; `PageBody` is the scroll container. Full-height screens (inbox, builders, wizards) may skip both and manage their own layout inside `<main>`.
   - Detail panels: `DrawerPanel` (+ `DrawerHeader/Body/Footer`) from `@/components/layout/drawer-panel`, opened via `useDrawerParam('<key>')` from `@/hooks/use-drawer-param` so the open item is in the URL. Never keep drawer state in component state.
   - Providers: one file per provider in `src/app/providers/` (plus a `*-context.ts` if it exposes context), composed in `src/app/providers/index.tsx`. Expose the consuming hook from `src/hooks/`.
-  - API access: call `api` from `@/lib/api` inside feature hooks; hooks own loading/empty/error state.
+  - Data access: feature hooks in `features/<name>/hooks/` wrap TanStack Query (`useQuery` / `useMutation`) around `db.<collection>` from `@/data`, keyed with `queryKeys`. Components never call `db`; nothing outside `src/data/` touches `localStorage` or `@/lib/api`. Entity types come from `@/types/domain`; derived facts (overdue, quote totals) are computed, never stored.
+  - Money and dates: format with `formatMoney` / `formatDate` / `formatRelative` from `@/lib/format` using the workspace's `currency` and `locale`.
   - Theme: `useTheme()` from `@/hooks/use-theme`; never toggle the `.dark` class by hand.
-  - State/query/auth libraries are not included. If a task needs one, put it where `docs/ARCHITECTURE.md` ("Adding Things Later") says, keep it minimal, and document it.
+  - TanStack Query is the only state library. Auth and global client state are not included; if a task needs one, put it where `docs/ARCHITECTURE.md` ("Adding Things Later") says, keep it minimal, and document it.
+  - Tests: Vitest + Testing Library, colocated as `*.test.ts(x)`. Pure logic (data layer, formatting, derived state) gets tests; `npm run check` runs them.
 
 ## Engineering Standards
 
@@ -78,7 +81,7 @@ Feature-first. Respect folder boundaries in `src/`:
 After changes, run:
 
 ```bash
-npm run check   # lint + format:check + build (includes typecheck)
+npm run check   # lint + format:check + test + build (includes typecheck)
 ```
 
 Use `npm run lint:fix` / `npm run format` while iterating. Resolve every error your change introduces; do not disable rules to pass. Report anything you could not fix.

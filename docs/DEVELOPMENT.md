@@ -24,11 +24,14 @@ npm run dev
 | `npm run format`       | Formats files with Prettier                  |
 | `npm run format:check` | Checks formatting without changing files     |
 | `npm run typecheck`    | Type-checks with `tsc -b`                    |
+| `npm run test`         | Runs the Vitest suites once                  |
 | `npm run build`        | Type-checks and builds for production        |
 | `npm run preview`      | Serves the production build locally          |
-| `npm run check`        | Runs `lint`, `format:check` and `build`      |
+| `npm run check`        | Runs `lint`, `format:check`, `test`, `build` |
 
-While developing: `dev` → `lint:fix` + `format` → `typecheck`. Before pushing: always `check`.
+While developing: `dev` → `lint:fix` + `format` → `typecheck` / `test`. Before pushing: always `check`.
+
+With `VITE_API_BASE_URL` empty the app runs on local demo data. It is seeded on first load and persisted in `localStorage`; "Reset demo data" on the dev-only `/design-system` page reseeds it, and bumping `SEED_VERSION` in `src/data/local-store.ts` reseeds every browser.
 
 ## Branching and Commits
 
@@ -52,7 +55,9 @@ While developing: `dev` → `lint:fix` + `format` → `typecheck`. Before pushin
 - **A provider** — create `src/app/providers/<name>-provider.tsx` (and `<name>-context.ts` if it exposes context), compose it in `src/app/providers/index.tsx`, and expose a `use<Name>` hook from `src/hooks/`.
 - **A UI primitive** — `npx shadcn add <component>`. It lands in `src/components/ui/`. If the generated file imports `cn` from `'cn'`, change it to `@/lib/utils` for consistency.
 - **An env variable** — add to `.env.example`, declare in `src/env.d.ts`, expose via `src/lib/env.ts` (`required` or `optional`).
-- **An API call** — a hook inside the feature that calls `api` from `@/lib/api`; handle loading, empty and error states there.
+- **Reading or changing data** — a hook inside the feature (`features/<name>/hooks/use-<thing>.ts`) built on `useQuery` / `useMutation` with `db.<collection>` and `queryKeys` from `@/data`; invalidate `queryKeys.<collection>.all` after a mutation. Handle loading, empty and error states in the component from what the hook returns.
+- **An entity field** — add it to the type in `src/types/domain/`, to the seed under `src/data/seed/`, and bump `SEED_VERSION`.
+- **A test** — colocate `thing.test.ts` next to `thing.ts`; run with `npm run test`.
 
 ## Secrets
 

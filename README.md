@@ -21,17 +21,18 @@ This project uses npm. Use npm consistently to avoid lockfile conflicts.
 
 ## Scripts
 
-| Command                | What it does                                |
-| ---------------------- | ------------------------------------------- |
-| `npm run dev`          | Dev server with hot reload                  |
-| `npm run build`        | Type-checks and builds for production       |
-| `npm run preview`      | Serves the production build locally         |
-| `npm run lint`         | Reports ESLint problems                     |
-| `npm run lint:fix`     | Auto-fixes ESLint problems                  |
-| `npm run format`       | Formats files with Prettier                 |
-| `npm run format:check` | Checks formatting without changing files    |
-| `npm run typecheck`    | Type-checks with `tsc -b`                   |
-| `npm run check`        | `lint` + `format:check` + `build` (CI gate) |
+| Command                | What it does                               |
+| ---------------------- | ------------------------------------------ |
+| `npm run dev`          | Dev server with hot reload                 |
+| `npm run build`        | Type-checks and builds for production      |
+| `npm run preview`      | Serves the production build locally        |
+| `npm run lint`         | Reports ESLint problems                    |
+| `npm run lint:fix`     | Auto-fixes ESLint problems                 |
+| `npm run format`       | Formats files with Prettier                |
+| `npm run format:check` | Checks formatting without changing files   |
+| `npm run typecheck`    | Type-checks with `tsc -b`                  |
+| `npm run test`         | Runs the Vitest suites once                |
+| `npm run check`        | `lint` + `format:check` + `test` + `build` |
 
 Run `npm run check` before considering changes complete.
 
@@ -45,11 +46,12 @@ src/
 │   ├── ui/         # design-system primitives (shadcn/ui, generated)
 │   ├── common/     # reusable app components (error boundary, theme toggle, …)
 │   └── layout/     # app shell / layout components
+├── data/           # data access: db.<collection> services, local demo store + seed
 ├── features/       # business functionality, one folder per feature
 ├── hooks/          # hooks shared across features
-├── lib/            # infrastructure helpers: env.ts, api.ts, utils.ts
+├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, utils.ts
 ├── pages/          # route components; thin, compose features
-└── types/          # types shared across features
+└── types/          # types shared across features (types/domain = entities)
 ```
 
 The project follows a feature-first architecture. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for folder responsibilities and where to add things later (state, data fetching, auth, tests).
@@ -58,10 +60,10 @@ The project follows a feature-first architecture. See [`docs/ARCHITECTURE.md`](d
 
 Copy `.env.example` to `.env.local` and provide local values. Read them only through `src/lib/env.ts`, which fails fast on missing required values.
 
-| Variable            | Purpose                                     |
-| ------------------- | ------------------------------------------- |
-| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)       |
-| `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /) |
+| Variable            | Purpose                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)                                                                                   |
+| `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /). Leave empty to run on local demo data, seeded and persisted in the browser |
 
 Never store secrets, credentials, private keys, or other sensitive values in `VITE_*` variables. They are bundled into client-side code.
 
