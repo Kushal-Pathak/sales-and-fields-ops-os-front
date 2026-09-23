@@ -21,6 +21,6 @@ export function optional(key: keyof ImportMetaEnv, fallback = ''): string {
 }
 
 export const env = {
-  appName: optional('VITE_APP_NAME', 'App'),
+  appName: optional('VITE_APP_NAME', 'Pilot CRM'),
   apiBaseUrl: optional('VITE_API_BASE_URL'),
 } as const;

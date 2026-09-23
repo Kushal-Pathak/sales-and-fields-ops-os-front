@@ -2,7 +2,7 @@ import { Link, Outlet } from 'react-router';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { env } from '@/lib/env';
 
-/** App shell shared by every page. Replace or extend as the product needs. */
+/** Pilot CRM app shell shared by every page. Extend as the product needs. */
 export function RootLayout() {
   return (
     <div className="flex min-h-screen flex-col">

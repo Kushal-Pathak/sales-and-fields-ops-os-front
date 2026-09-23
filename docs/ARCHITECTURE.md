@@ -1,6 +1,6 @@
 # Architecture
 
-This template uses a feature-first frontend architecture. The rule of thumb: **`app/` wires, `pages/` route, `features/` own logic, `components/` are dumb and shared, `lib/` is infrastructure.**
+Pilot CRM uses a feature-first frontend architecture. The rule of thumb: **`app/` wires, `pages/` route, `features/` own logic, `components/` are dumb and shared, `lib/` is infrastructure.**
 
 ## Structure
 
@@ -102,7 +102,7 @@ page  →  feature component  →  feature hook  →  lib/api  →  backend
 
 ## Adding Things Later
 
-The template deliberately stops here. When a project needs more, put it where it belongs:
+The foundation deliberately stops here. When the project needs more, put it where it belongs:
 
 | Need                 | Where                                                                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |

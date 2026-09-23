@@ -1,8 +1,8 @@
-# React + Vite + TypeScript Template
+# Pilot CRM
 
-A minimal, reusable starter for React applications: React 19, Vite, TypeScript (strict), Tailwind CSS v4, shadcn/ui (Base UI), React Router, ESLint and Prettier.
+The Pilot CRM frontend: a customer relationship management application for managing leads, contacts and deals.
 
-It ships with the decisions every app needs already made — folder layout, routing, providers, theming, env access, an API client — and nothing else.
+Built with React 19, Vite, TypeScript (strict), Tailwind CSS v4, shadcn/ui (Base UI), React Router, ESLint and Prettier.
 
 ## Requirements
 
@@ -11,33 +11,13 @@ It ships with the decisions every app needs already made — folder layout, rout
 
 ## Getting Started
 
-Clone the repository with HTTPS or SSH:
-
 ```bash
-git clone https://github.com/Kushal-Pathak/react-vite-ts-template.git
-# or
-git clone git@github.com:Kushal-Pathak/react-vite-ts-template.git
-```
-
-Then install and run:
-
-```bash
-cd react-vite-ts-template
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
 This project uses npm. Use npm consistently to avoid lockfile conflicts.
-
-## Customising for a New Project
-
-1. `package.json` — set `name`.
-2. `index.html` — set `<title>` and `<meta name="description">`.
-3. `.env.example` — set `VITE_APP_NAME`, `VITE_API_BASE_URL`, add your own `VITE_*` vars (also declare them in `src/env.d.ts`).
-4. `src/app/styles/tokens.css` — colours, radius, font. Everything visual derives from here.
-5. `public/favicon.svg` — replace.
-6. `src/pages/home/index.tsx` — replace the demo content.
 
 ## Scripts
 
@@ -72,11 +52,16 @@ src/
 └── types/          # types shared across features
 ```
 
-The template follows a feature-first architecture. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for folder responsibilities and where to add things later (state, data fetching, auth, tests).
+The project follows a feature-first architecture. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for folder responsibilities and where to add things later (state, data fetching, auth, tests).
 
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` and provide local values. Read them only through `src/lib/env.ts`, which fails fast on missing required values.
+
+| Variable            | Purpose                                     |
+| ------------------- | ------------------------------------------- |
+| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)       |
+| `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /) |
 
 Never store secrets, credentials, private keys, or other sensitive values in `VITE_*` variables. They are bundled into client-side code.
 

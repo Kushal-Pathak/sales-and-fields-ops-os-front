@@ -1,6 +1,6 @@
 # Development
 
-How to work on a project built from this template. Read it once, follow it always.
+How to work on Pilot CRM. Read it once, follow it always.
 
 For setup see [`README.md`](../README.md), for structure see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md), and for agent rules see [`AGENTS.md`](../AGENTS.md).
 
