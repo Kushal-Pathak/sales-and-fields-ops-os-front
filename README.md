@@ -65,8 +65,13 @@ Copy `.env.example` to `.env.local` and provide local values. Read them only thr
 
 Never store secrets, credentials, private keys, or other sensitive values in `VITE_*` variables. They are bundled into client-side code.
 
+## Design System
+
+Colours, typography, spacing and the look and behaviour of every UI element are specified in [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) and implemented as tokens in `src/app/styles/tokens.css`. In development, `/design-system` renders every token and primitive for visual checks. The reference mock is kept locally in `design/` (git-ignored).
+
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Development Guide](docs/DEVELOPMENT.md)
+- [Design System](docs/DESIGN_SYSTEM.md)
 - [Agent Instructions](AGENTS.md)

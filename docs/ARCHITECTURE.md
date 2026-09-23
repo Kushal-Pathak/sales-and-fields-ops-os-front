@@ -92,7 +92,8 @@ page  →  feature component  →  feature hook  →  lib/api  →  backend
 ## Styling
 
 - Tailwind utilities only; compose conditional classes with `cn` from `@/lib/utils`.
-- All colours, radii and the font come from `src/app/styles/tokens.css`. `index.css` maps them to Tailwind via `@theme inline`; you should rarely need to touch it.
+- All colours, radii, shadows and the font come from `src/app/styles/tokens.css`. `index.css` maps them to Tailwind via `@theme inline` and defines the 13px type scale; you should rarely need to touch it.
+- What each element should look like, and which primitive builds it, is specified in [`docs/DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md). The dev-only `/design-system` route (`src/pages/design-system/`) renders it all.
 - Dark mode is class-based (`.dark` on `<html>`), managed by `ThemeProvider`.
 
 ## Import Convention

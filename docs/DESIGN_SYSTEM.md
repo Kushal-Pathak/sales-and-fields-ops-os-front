@@ -1,0 +1,213 @@
+# Design System
+
+The visual foundation of Pilot CRM. It is derived from the reference mock in `design/AquaEdge CRM (standalone).html` and implemented with the tokens in `src/app/styles/tokens.css`, the Tailwind wiring in `src/app/styles/index.css`, and the shadcn/ui primitives in `src/components/ui/`.
+
+Read this before building any screen. The reference file is a static mock: copy its patterns, not its DOM. Open `/design-system` in the dev server to see every token and primitive rendered.
+
+## Principles
+
+- **Dense and quiet.** A working tool, not a landing page: 13 px base type, 32 px controls, ~32 px table rows, hairline borders instead of shadows.
+- **Warm neutrals, one accent.** Everything is stone grey. Near-black is the only primary action colour. Yellow (`brand`) is reserved for identity moments: the workspace tile, the active wizard step, AI affordances.
+- **Colour means status.** Green / red / blue / amber / violet appear only as soft-fill pills, dots and small labels that carry meaning. Never as decoration.
+- **Rows open panels.** Clicking a row or card opens a right-hand drawer over the content; it does not navigate away.
+- **Tokens only.** No raw colour, radius, shadow or font-size values in components. If a value is missing, add a token.
+
+## Tokens
+
+All values live in `src/app/styles/tokens.css` and are exposed as Tailwind utilities through `@theme inline` in `index.css` (`bg-primary`, `text-muted-foreground`, `shadow-drawer`, …). Light values are the reference's exact colours; dark values are derived from the same stone family.
+
+### Colour
+
+| Token                         | Light                  | Dark                   | Use                                                       |
+| ----------------------------- | ---------------------- | ---------------------- | --------------------------------------------------------- |
+| `background`                  | `#ffffff`              | `#1c1917`              | page                                                      |
+| `foreground`                  | `#1c1917`              | `#fafaf9`              | primary text, titles                                      |
+| `foreground-secondary`        | `#57534e`              | `#d6d3d1`              | table cells, secondary button text                        |
+| `muted-foreground`            | `#78716c`              | `#a8a29e`              | table headers, captions, descriptions                     |
+| `foreground-faint`            | `#a8a29e`              | `#78716c`              | field labels, placeholders, meta, ghost rows              |
+| `card` / `popover`            | `#ffffff`              | `#232020`              | cards, menus, dialogs, drawers                            |
+| `muted`                       | `#f9f8f6`              | `#292524`              | panel backgrounds, selected rows, read-only boxes         |
+| `surface-2`                   | `#f4f4f2`              | `#292524`              | filter chips, search pill, neutral pills                  |
+| `secondary`                   | `#f4f4f2`              | `#292524`              | secondary buttons                                         |
+| `accent`                      | `#f1efeb`              | `#2f2b28`              | hover background for nav items, menu items, ghost buttons |
+| `primary`                     | `#1c1917`              | `#fafaf9`              | primary buttons, checked controls, active step            |
+| `destructive`                 | `#dc2626`              | `#f87171`              | danger text and outlines                                  |
+| `border`                      | `#ececec`              | `white / 10 %`         | panels, sidebar, table outlines                           |
+| `border-strong`               | `#e7e5e4`              | `white / 16 %`         | inputs, outlined buttons, dashed dropzones                |
+| `border-faint`                | `#f4f3f1`              | `white / 6 %`          | table row dividers, list dividers                         |
+| `input`                       | `#e7e5e4`              | `white / 15 %`         | form control borders, unchecked switch                    |
+| `ring`                        | `#1c1917`              | `#a8a29e`              | focus border and focus halo                               |
+| `brand`                       | `#f5c518` on `#1a1300` | same                   | workspace tile, active wizard step, AI mic                |
+| `success` / `-soft`           | `#15803d` / `#dcfce7`  | `#4ade80` / 15 % alpha | Won, Completed, Approved, Active                          |
+| `warning` / `-soft`           | `#92400e` / `#fef3c7`  | `#fbbf24` / 15 % alpha | Pending, Draft, Duplicates, Manager role                  |
+| `info` / `-soft`              | `#1d4ed8` / `#dbeafe`  | `#60a5fa` / 15 % alpha | Scheduled, In progress, Sent, automation Active           |
+| `destructive` / `danger-soft` | `#dc2626` / `#fee2e2`  | `#f87171` / 15 % alpha | Overdue, Lost, Rejected, errors                           |
+| `highlight` / `-soft`         | `#7c3aed` / `#ede9fe`  | `#a78bfa` / 15 % alpha | site visits, calendar visit events                        |
+| `whatsapp` / `-soft`          | `#25d366` / `#dcf8c6`  | same / 18 % alpha      | WhatsApp buttons, unread badges, outgoing bubbles         |
+| `overlay`                     | `rgb(28 25 23 / .35)`  | `rgb(0 0 0 / .6)`      | scrim behind dialogs, sheets and the command palette      |
+| `sidebar-*`                   | `#fbfbfa` family       | `#1a1715` family       | app sidebar background, item states                       |
+
+Category colours (lead stage, source, priority, task type, role) are **feature data**, not tokens. Define them next to the feature's types as maps onto the status tokens above; see the appendix for what the reference used.
+
+### Typography
+
+Font: **Hanken Grotesk** (variable, self-hosted via `@fontsource-variable/hanken-grotesk`). Weights: 400 body, 500 labels and secondary buttons, 600 primary buttons, pills, table titles, 700 headings and numbers.
+
+The Tailwind `text-*` scale is redefined for the 13 px base:
+
+| Utility     | Size / line | Use                                                                                             |
+| ----------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| `text-2xs`  | 10.5 / 14   | uppercase section and field labels (`font-bold tracking-wider uppercase text-foreground-faint`) |
+| `text-xs`   | 11.5 / 16   | pills, table headers, meta, timestamps                                                          |
+| `text-sm`   | 12.5 / 18   | buttons, tabs, secondary text, table cells                                                      |
+| `text-base` | 13 / 20     | body, inputs, primary table cell text                                                           |
+| `text-lg`   | 15 / 22     | drawer and dialog titles                                                                        |
+| `text-xl`   | 17 / 24     | totals, large values                                                                            |
+| `text-2xl`  | 19 / 26     | page titles                                                                                     |
+| `text-3xl`  | 22 / 28     | stat numbers, wizard titles                                                                     |
+
+`h1`–`h3` get `tracking-tight` automatically. Numbers in tables and totals use `tabular-nums`. Identifiers such as quote numbers use `font-mono text-xs`.
+
+### Shape, spacing, elevation
+
+- **Radius** (`--radius: 0.5rem`): `rounded-sm` 4.8 px pills and small chips · `rounded-md` 6.4 px badges, kbd · `rounded-lg` 8 px buttons, inputs, nav items, tabs · `rounded-xl` 11 px cards, tables, dialogs · `rounded-2xl` 14 px command palette · `rounded-full` avatars, dots, round filter chips.
+- **Spacing** follows the 4 px grid: control padding `px-2.5`–`px-3.5`, cell padding `px-3 py-1.5`, card padding `p-3`, panel padding `p-4`, section gaps `gap-3`–`gap-4`.
+- **Heights**: buttons `h-7` (28) / `h-8` (32, default) / `h-9` (36); inputs `h-8`; table rows ≈ 32; top bar 42; nav item ≈ 28; switch 32 × 18.
+- **Borders**: 1 px everywhere. Use `border-border` for containers, `border-border-strong` for controls, `divide-border-faint` for lists and rows. Selected/focused emphasis is a 1.5 px `ring` border, not a thicker line.
+- **Shadows** (only three): `shadow-card` on hovered cards, `shadow-drawer` on the side panel, `shadow-overlay` on the command palette and dialogs. Nothing else casts a shadow.
+- **Layers**: content 0 · sticky table header `z-10` · drawer `z-20` (inside the content column) · popovers, dialogs, sheets and the palette `z-50` (managed by the primitives).
+
+## Components
+
+Each entry says how the element looks, how it behaves, and how to build it. "Build with" names the primitive in `src/components/ui/` and the utilities that get it to the reference look. Add missing primitives with `npx shadcn add <name>`; never hand-roll an equivalent.
+
+### Buttons
+
+- **Looks**: 32 px tall, `rounded-lg`, 12.5 px text, icon 16 px with 6 px gap. Primary is near-black on white (600). Secondary is a soft chip (`surface-2`, 500). Outline is a 1 px `border-strong` box with `foreground-secondary` text. Ghost is text only. Destructive is a soft red fill with red text; a danger-outline variant is an outline with red text.
+- **Behaves**: hover changes background only; active nudges 1 px down; disabled at 50 % opacity; focus shows the `ring` halo.
+- **Build with**: `Button` (`variant`: `default` · `secondary` · `outline` · `ghost` · `destructive` · `link`; `size`: `sm` 28 · `default` 32 · `lg` 36 · `icon` / `icon-sm` / `icon-xs`). Danger-outline: `variant="outline" className="text-destructive"`. Icon-only buttons need `aria-label`.
+
+### Inputs
+
+- **Looks**: 32 px, `rounded-lg`, 1 px `input` border, 13 px text, `foreground-faint` placeholder. Textarea min 60 px. Select trigger shows a chevron; menu items 12.5 px with a check on the selected item.
+- **Behaves**: focus turns the border `ring` colour and adds the 3 px halo; invalid uses `destructive`; disabled 50 %.
+- **Build with**: `Input`, `Textarea`, `Select` + `SelectTrigger` + `SelectValue` + `SelectContent` + `SelectItem`. Field label: `<label className="text-xs font-semibold text-muted-foreground">` above the control; read-only values use `<div className="rounded-lg bg-muted px-3 py-2 text-sm">`. Search field: `InputGroup` with a leading `SearchIcon` in `InputGroupAddon`.
+
+### Selection controls
+
+- **Checkbox** 16 px, `rounded-[4px]`, fills `primary` with a white check. **Radio** 16 px circle, fills `primary` with an 8 px white dot. **Switch** 32 × 18, `primary` when on, `input` when off, knob slides 150 ms.
+- **Build with**: `Checkbox`, `RadioGroup` + `RadioGroupItem`, `Switch`. Pair each with a `<label htmlFor>`; group option rows as `flex items-start gap-3 border-b border-border-faint px-3.5 py-3` with title (`text-base font-medium`) and description (`text-xs text-foreground-faint`). Toggle rows (label + description + switch) sit in `rounded-lg bg-muted px-3 py-2.5`.
+
+### Pills and badges
+
+- **Looks**: `h-5`, `px-2`, 11.5 px, 600, `rounded-md`, soft fill + strong text. Optional 6 px dot before the label. Count badges are 16 px red circles with 10 px bold white text.
+- **Build with**: `Badge` (`variant`: `success` · `warning` · `info` · `highlight` · `neutral` · `destructive` for danger; the shadcn `default` / `secondary` / `outline` / `ghost` / `link` remain available). Dot: `<span className="size-1.5 rounded-full bg-current" />` as the first child. Count badge: `<Badge variant="destructive" className="h-4 min-w-4 rounded-full bg-destructive px-1 text-2xs text-white">`.
+
+### Avatars
+
+- **Looks**: circle with initials. Default is white with a `border` ring and `foreground-secondary` text; people and roles get a tinted fallback (`*-soft` fill, strong text). Sizes: `sm` 24 (table cells), `default` 32 (lists, chat), `lg` 40 (drawer header).
+- **Build with**: `Avatar size` + `AvatarFallback className="text-xs font-semibold"`; tint with `bg-warning-soft text-warning`, etc. Stack with `AvatarGroup`.
+
+### Tabs and segmented controls
+
+- **Pill tabs** (view switching): transparent list, 12.5 px 600 triggers, active gets the `accent` fill. **Underline tabs** (inside drawers): 2 px `foreground` underline, no fill. **Segmented control** (table / kanban): bordered group, icon-only items, active fill `accent`.
+- **Build with**: `Tabs` + `TabsList` + `TabsTrigger` + `TabsContent`. Pill: `<TabsList className="h-auto gap-0.5 bg-transparent p-0">` and `<TabsTrigger className="h-7 px-2.5 data-active:bg-accent data-active:shadow-none">`. Underline: `<TabsList variant="line">`. Segmented: `ToggleGroup variant="outline" spacing={0}` with `ToggleGroupItem size="sm"` and `aria-label`s.
+
+### Cards and stat tiles
+
+- **Looks**: white, 1 px hairline, `rounded-xl`, 12 px padding, 13 px body. Hover on clickable cards: `muted` background + `shadow-card`. Stat tile: label `text-xs text-muted-foreground` → value `text-3xl font-bold` → sub `text-xs text-foreground-faint`.
+- **Build with**: `Card size="sm"` (+ `CardHeader` / `CardTitle` / `CardContent`). Clickable: `className="cursor-pointer transition hover:bg-muted hover:shadow-card"`. Kanban card: `Card size="sm"` with a name row (`text-base font-semibold`), a description (`text-sm text-muted-foreground`), and a footer row separated by `border-t border-border-faint pt-2`.
+
+### Tables
+
+- **Looks**: header row 11.5 px 600 `muted-foreground`, sticky, white (or `sidebar` background inside bordered tables), `border-b border-border`. Cells 12.5–13 px, `px-3 py-1.5`, rows ≈ 32 px separated by `border-faint`, hover `muted`. Numeric columns right-aligned with `tabular-nums`. Leading checkbox column 36 px; a trailing faint "+" column on editable grids. The last row is a ghost "+ New …" action in `foreground-faint`. Wide tables scroll horizontally (`min-w-[…]`), they never squeeze columns.
+- **Behaves**: whole row is clickable and opens a drawer; the checkbox stops propagation; sort and filter live in the page header, not in the header cells.
+- **Build with**: `Table` family. Recipes: `<TableHead className="h-8 px-3 text-xs font-semibold text-muted-foreground">`, `<TableRow className="border-border-faint hover:bg-muted">`, `<TableCell className="px-3 py-1.5">`. Bordered variant: wrap in `rounded-xl border` and add `[&_th]:bg-sidebar`.
+
+### Kanban
+
+- **Looks**: horizontal row of 224 px columns, `gap-3`, page padding `p-4`. Column head: stage pill + faint count + bold sum right-aligned. Cards as above, `mb-2`. Ghost "+ Add" at the bottom.
+- **Build with**: plain flex layout (`flex items-start gap-3 overflow-x-auto`), `Badge` for the head, `Card` for items.
+
+### Sidebar navigation
+
+- **Looks**: 236 px, `bg-sidebar`, `border-r`. Top: workspace switcher (24 px `brand` square with the initial, 13.5 px bold name, chevron). Group labels `text-2xs font-bold uppercase tracking-wider text-foreground-faint` with `pt-3.5 pb-1 px-2`. Items: 13 px, `px-2 py-1.5`, `rounded-lg`, icon 15 px, label, then a faint count or a red count badge on the right. Active: `bg-sidebar-accent text-foreground font-semibold`. Hover: `bg-accent`. A `Separator` before admin items. Footer: user row (22 px tinted avatar + name), Settings, Sign out, above a `border-t`.
+- **Behaves**: one active item; counts are live numbers; the switcher opens a `DropdownMenu`.
+- **Build with**: `Button variant="ghost"` sized `h-7 w-full justify-start gap-2 px-2` (or a plain link with the same classes), `Badge` for counts, `Separator`, `DropdownMenu` for the switcher. Build the shell once in `src/components/layout/` and read nav items from config.
+
+### Top bar, breadcrumb, page header
+
+- **Top bar**: 42 px, `border-b border-border-faint`, `px-4`. Breadcrumb: root in `foreground-faint`, `/` in `border-strong` colour, leaf `font-semibold`. Right: ghost icon buttons (Filter, Sort, Search), the "Ask AI · ⌘K" chip (`h-7 rounded-lg bg-surface-2 px-3 text-sm text-muted-foreground` with a `Kbd`), and the user avatar.
+- **Page header**: `px-4 pt-3.5 pb-2.5`; title `text-2xl font-bold`, faint count beside it, actions right-aligned (`Button` primary + outline). Optional filter-chip row below: `rounded-full bg-surface-2 px-2.5 h-6 text-xs` chips showing `Field <b>value</b>`, plus a ghost "+ Add filter".
+- Full-height screens (inbox, builders, wizards) omit the page header and draw their own top strip.
+
+### Drawer (side panel)
+
+- **Looks**: 464 px wide, full height of the content column, white, `border-l` + `shadow-drawer`. Header `p-4 border-b border-border-faint`: avatar or icon, title `text-lg font-bold`, subtitle, pills; a ghost `icon-sm` close button top-right; optional quick-action row (`Button size="sm" variant="outline"`); optional underline tabs. Body scrolls, `p-4`; fields as a 2-column grid of label (`text-2xs` uppercase faint) over value (`text-base`). Footer `border-t px-3.5 py-2.5` with a row of `sm` buttons and one primary on the right.
+- **Behaves**: opens from a row click; Esc and the close button dismiss it; content behind stays visible and scrollable; only one drawer at a time.
+- **Build with**: `Sheet` + `SheetContent side="right" className="w-[464px] gap-0 p-0 sm:max-w-[464px] shadow-drawer"` + `SheetHeader` / `SheetTitle` / `SheetDescription` / `SheetFooter`. The overlay uses the `overlay` token; pass `className="bg-transparent"` to `SheetOverlay`-based variants if a screen needs the content visible without a scrim.
+
+### Dialogs and the command palette
+
+- **Dialog**: centred, `rounded-xl`, `p-4`, `shadow-overlay`, `overlay` scrim; title `text-lg font-bold`, description `text-sm text-muted-foreground`, footer buttons right-aligned. Confirmations for risky actions use a red-bordered card (`border-destructive/40 bg-danger-soft/40`) with "Yes, proceed" (`destructive` fill) and "Cancel".
+- **Command palette**: 556 px, `rounded-2xl`, opens on ⌘K / Ctrl-K, closes on Esc. Search row with a leading sparkle/search icon and an `Esc` `Kbd`; grouped lists ("Recent", "Suggested") with `text-2xs` uppercase headings; items 13 px with a leading icon; risky items show a red "Requires confirmation" sub-line.
+- **Build with**: `Dialog` family; `CommandDialog className="sm:max-w-[556px]"` + `CommandInput` + `CommandList` + `CommandGroup` + `CommandItem` + `CommandShortcut`; `Kbd` for shortcuts.
+
+### Menus, popovers, tooltips
+
+- **Looks**: white, `rounded-lg`, hairline ring, `shadow-overlay`-light; items 12.5 px, `px-2 py-1.5`, hover `accent`; destructive items in red. Tooltips are dark (`foreground` background, 11.5 px white text).
+- **Build with**: `DropdownMenu`, `Popover`, `Tooltip` (the `TooltipProvider` is already mounted in `src/app/providers`).
+
+### Wizards, progress, steps
+
+- **Step bar**: 40 px strip, `border-b`; each step is a 17 px circle (done: `primary` fill with ✓; active: `brand` fill; pending: `muted` fill, faint number) plus an 11.5 px label (active 600); `›` separators in `border-strong` colour. Bottom bar: 44 px, `border-t`, "Back" outline left, "Step n of N" faint centre, "Continue" primary right.
+- **Progress**: 6 px track `muted`, `primary` fill, `rounded-full`, animates width.
+- **Build with**: step bar is a small layout component built from `Badge`-sized spans; `Progress` (+ `ProgressLabel` / `ProgressValue`).
+
+### Upload dropzone, timeline, chat bubbles
+
+- **Dropzone**: `rounded-xl border-2 border-dashed border-border-strong p-5`, centred icon + `text-sm text-foreground-faint`; hover `border-input bg-muted`. File card: icon tile (`size-9 rounded-lg` soft fill) + name + faint meta + remove ×.
+- **Timeline**: 7 px coloured dot (status token) and a 1 px `border` line; text 12.5 px, meta 11 px faint below.
+- **Chat**: bubbles max 76–85 % wide; incoming `bg-surface-2 rounded-[3px_10px_10px_10px]`, outgoing `bg-whatsapp-soft rounded-[10px_3px_10px_10px]`; 11 px timestamps; composer is a `rounded-xl border-border-strong` box with chip buttons on top and send on the bottom-right.
+
+### Empty, loading, error states
+
+The reference has none; these are ours.
+
+- **Loading**: `Skeleton` rows matching the final layout (table rows 32 px, cards 88 px). Never spinners in content areas.
+- **Empty**: centred, `max-w-xs`, icon in a `size-10 rounded-xl bg-muted` tile, title `text-base font-semibold`, hint `text-sm text-muted-foreground`, one primary action.
+- **Error**: same layout with a `destructive` icon and a "Retry" outline button; route-level errors use `RootErrorBoundary`.
+
+### Icons and motion
+
+- Icons: `lucide-react`, 16 px in buttons and inputs, 15 px in nav, 14 px inside pills and tooltips. Stroke follows the library default. Always `currentColor`.
+- Motion: 150 ms for hover and toggle states, 200 ms for sheets, 100 ms for dialogs and menus; progress bars 400 ms. No motion on page load.
+- Keyboard: every interactive element is a real `button`, `a`, or form control with visible focus. ⌘K opens the palette; Esc closes the topmost overlay.
+
+## Layout shell (dimensions to build later)
+
+`100vh` row: sidebar 236 px · main column (top bar 42 px → page header → scrolling content) · drawer 464 px absolutely positioned on the right edge of the main column. Inbox is a 3-panel split (244 · flex · 218). Wizards centre their content at `max-w-[460–900px]`. The reference is desktop-only; below 1024 px the sidebar should collapse to icons and the drawer should become a full-width sheet.
+
+## Dark mode
+
+Class-based (`.dark` on `<html>`, managed by `ThemeProvider`). Dark tokens keep the same roles: backgrounds go to stone-900/800, borders become white at low alpha, status colours lighten and their soft fills become 15 % alpha of the strong colour. Check new components in both themes on `/design-system`.
+
+## Rules
+
+1. Style with Tailwind utilities backed by tokens. No raw hex, px radii, or ad-hoc shadows in `src/` outside `tokens.css`.
+2. Compose classes with `cn` from `@/lib/utils`.
+3. Use the primitives in `src/components/ui/`; add new ones via `npx shadcn add <component>` and fix the `cn` import to `@/lib/utils`. Keep edits to generated files minimal (the badge status variants and the `overlay` scrim on dialog/sheet are the only local changes).
+4. Reusable compositions (status pill with dot, initials avatar, data table header, page header, drawer frame) go to `src/components/common/` or `src/components/layout/` once two features need them.
+5. Category colour maps (stage, source, priority, type, role) live with the feature that owns them and map onto the status tokens.
+
+## Appendix: category colours in the reference
+
+For later feature work; these are data, not tokens.
+
+- **Lead stage**: New neutral · Contacted info · Site Visit Scheduled highlight · Site Visit Completed highlight (indigo in the mock) · Quote Created warning · Quote Sent warning (orange in the mock) · Negotiation warning (yellow) · Won success · Lost destructive.
+- **Source**: Facebook `#1877f2` · WhatsApp `whatsapp` · Telecall sky · Website neutral · IndiaMART teal · Manual neutral (sources keep their brand colours as 6 px dots only).
+- **Priority**: High destructive · Medium warning · Low neutral.
+- **Task type**: Call info · Visit highlight · Quote warning · Follow-up sky · Install success · Measurement indigo · Payment destructive · General neutral.
+- **Task status**: Pending neutral · In Progress info · Overdue destructive · Completed success.
+- **Quote status**: Pending warning · Approved success · Sent info · Accepted success (deeper) · Rejected destructive · Draft warning.
+- **Role**: Manager warning · Field Agent success · Sales Agent info · Accountant orange · Viewer neutral.

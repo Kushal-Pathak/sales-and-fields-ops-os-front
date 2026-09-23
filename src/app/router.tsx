@@ -16,6 +16,17 @@ export const router = createBrowserRouter([
         index: true,
         lazy: async () => ({ Component: (await import('@/pages/home')).HomePage }),
       },
+      // Dev-only style guide for the design system; tree-shaken out of production builds.
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: 'design-system',
+              lazy: async () => ({
+                Component: (await import('@/pages/design-system')).DesignSystemPage,
+              }),
+            },
+          ]
+        : []),
       {
         path: '*',
         lazy: async () => ({ Component: (await import('@/pages/not-found')).NotFoundPage }),

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from './theme-provider';
 
 /**
@@ -7,5 +8,9 @@ import { ThemeProvider } from './theme-provider';
  * and compose them here, so `App.tsx` stays flat.
  */
 export function Providers({ children }: { children: ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <TooltipProvider>{children}</TooltipProvider>
+    </ThemeProvider>
+  );
 }

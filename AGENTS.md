@@ -7,6 +7,7 @@ Sources of truth — read before non-trivial work:
 - [`README.md`](README.md) — setup, scripts, structure
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — folder responsibilities and boundaries
 - [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — workflow, commands, code rules
+- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — tokens, typography, and how every UI element looks and behaves
 
 If this file conflicts with those docs, the docs win; flag the conflict.
 
@@ -58,8 +59,10 @@ Feature-first. Respect folder boundaries in `src/`:
 
 ## UI and Design System
 
+- Follow [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md): it specifies the look and behaviour of buttons, inputs, pills, tables, drawers, navigation, overlays and states, with the primitive and utility recipe for each. Check new UI on the dev-only `/design-system` page in both themes.
 - Build UI from `@/components/ui` primitives; add new ones via `npx shadcn add <component>` rather than hand-rolling equivalents. Treat `components/ui` as generated code; keep edits minimal.
-- Style with Tailwind and the tokens in `src/app/styles/tokens.css` (the only place to change colours, radius, font). No hardcoded colors or one-off design values. `index.css` is wiring; rarely edit it.
+- Style with Tailwind and the tokens in `src/app/styles/tokens.css` (the only place to change colours, radius, font, shadows). No hardcoded colours, px radii, shadows or font sizes. `index.css` is wiring (token mapping and the 13px type scale); rarely edit it.
+- Status colours are token pairs (`success`/`success-soft`, `warning`, `info`, `highlight`, `destructive`/`danger-soft`) exposed as `Badge` variants. Category colour maps (stage, source, priority, …) belong to the owning feature and map onto those tokens.
 - Compose classes with `cn` from `@/lib/utils`. If a generated component imports `cn` from `'cn'`, change it to `@/lib/utils`.
 
 ## Environment and Secrets
