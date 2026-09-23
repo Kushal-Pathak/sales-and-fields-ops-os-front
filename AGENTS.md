@@ -41,7 +41,9 @@ Feature-first. Respect folder boundaries in `src/`:
 - Imports: `@/` across project areas, relative imports within the same module.
 - Never bypass a boundary because it is faster.
 - **Established conventions — follow them, do not introduce parallel ones:**
-  - Routing: register pages in `src/app/router.tsx` with `lazy`; `RootLayout` is the shell, `RootErrorBoundary` catches route errors, `*` renders `NotFoundPage`.
+  - Routing: register pages in `src/app/router.tsx` with `lazy` and a `handle: { title, group? }` (`src/types/route-handle.ts`); `AppShell` is the shell, `RootErrorBoundary` catches route errors, `*` renders `NotFoundPage`. Sidebar entries live in `src/app/navigation.ts` and must match route paths.
+  - Pages: render `PageHeader` then `PageBody` from `@/components/layout/page-header`; `PageBody` is the scroll container. Full-height screens (inbox, builders, wizards) may skip both and manage their own layout inside `<main>`.
+  - Detail panels: `DrawerPanel` (+ `DrawerHeader/Body/Footer`) from `@/components/layout/drawer-panel`, opened via `useDrawerParam('<key>')` from `@/hooks/use-drawer-param` so the open item is in the URL. Never keep drawer state in component state.
   - Providers: one file per provider in `src/app/providers/` (plus a `*-context.ts` if it exposes context), composed in `src/app/providers/index.tsx`. Expose the consuming hook from `src/hooks/`.
   - API access: call `api` from `@/lib/api` inside feature hooks; hooks own loading/empty/error state.
   - Theme: `useTheme()` from `@/hooks/use-theme`; never toggle the `.dark` class by hand.

@@ -46,15 +46,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -69,6 +60,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DrawerBody,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerPanel,
+  DrawerTitle,
+} from '@/components/layout/drawer-panel';
+import { useDrawerParam } from '@/hooks/use-drawer-param';
 
 /**
  * Dev-only style guide: renders every token and primitive so the design system
@@ -77,6 +77,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
  */
 export function DesignSystemPage() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const drawer = useDrawerParam('demo');
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -90,7 +91,7 @@ export function DesignSystemPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex max-w-5xl flex-col gap-10 p-6">
       <div>
         <h1 className="text-2xl font-bold">Design system</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -421,51 +422,56 @@ export function DesignSystemPage() {
 
       <Section title="Overlays">
         <div className="flex flex-wrap items-center gap-2">
-          <Sheet>
-            <SheetTrigger render={<Button variant="outline" />}>Open drawer</SheetTrigger>
-            <SheetContent className="w-[464px] gap-0 p-0 shadow-drawer sm:max-w-[464px]">
-              <SheetHeader className="border-b border-border-faint p-4">
-                <div className="flex items-center gap-2.5">
-                  <Avatar size="lg">
-                    <AvatarFallback className="text-sm font-semibold">AM</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <SheetTitle className="text-lg font-bold">Aarav Mehta</SheetTitle>
-                    <SheetDescription className="text-xs">+91 98230 11234</SheetDescription>
-                  </div>
+          <Button variant="outline" onClick={() => drawer.open('lead-1')}>
+            Open drawer
+          </Button>
+          <DrawerPanel
+            open={drawer.isOpen}
+            onOpenChange={(open) => {
+              if (!open) drawer.close();
+            }}
+          >
+            <DrawerHeader>
+              <div className="flex items-center gap-2.5">
+                <Avatar size="lg">
+                  <AvatarFallback className="text-sm font-semibold">AM</AvatarFallback>
+                </Avatar>
+                <div>
+                  <DrawerTitle>Aarav Mehta</DrawerTitle>
+                  <DrawerDescription>+91 98230 11234 · {drawer.id}</DrawerDescription>
                 </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="highlight">
-                    <Dot /> Site Visit Scheduled
-                  </Badge>
-                  <span className="flex items-center gap-1.5 text-xs text-foreground-secondary">
-                    <span className="size-1.5 rounded-full bg-destructive" /> High priority
-                  </span>
-                </div>
-              </SheetHeader>
-              <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto p-4">
-                {drawerFields.map((field) => (
-                  <div key={field.label}>
-                    <div className="text-2xs font-bold tracking-wider text-foreground-faint uppercase">
-                      {field.label}
-                    </div>
-                    <div className="mt-0.5 text-base">{field.value}</div>
-                  </div>
-                ))}
               </div>
-              <SheetFooter className="flex-row items-center gap-1.5 border-t px-3.5 py-2.5">
-                <Button size="sm" variant="outline">
-                  <PlusIcon /> Task
-                </Button>
-                <Button size="sm" variant="outline" className="text-success">
-                  WhatsApp
-                </Button>
-                <Button size="sm" className="ml-auto">
-                  Move stage
-                </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+              <div className="flex items-center gap-2">
+                <Badge variant="highlight">
+                  <Dot /> Site Visit Scheduled
+                </Badge>
+                <span className="flex items-center gap-1.5 text-xs text-foreground-secondary">
+                  <span className="size-1.5 rounded-full bg-destructive" /> High priority
+                </span>
+              </div>
+            </DrawerHeader>
+            <DrawerBody className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {drawerFields.map((field) => (
+                <div key={field.label}>
+                  <div className="text-2xs font-bold tracking-wider text-foreground-faint uppercase">
+                    {field.label}
+                  </div>
+                  <div className="mt-0.5 text-base">{field.value}</div>
+                </div>
+              ))}
+            </DrawerBody>
+            <DrawerFooter>
+              <Button size="sm" variant="outline">
+                <PlusIcon /> Task
+              </Button>
+              <Button size="sm" variant="outline" className="text-success">
+                WhatsApp
+              </Button>
+              <Button size="sm" className="ml-auto">
+                Move stage
+              </Button>
+            </DrawerFooter>
+          </DrawerPanel>
 
           <Dialog>
             <DialogTrigger render={<Button variant="outline" />}>Open dialog</DialogTrigger>

@@ -8,7 +8,8 @@ Pilot CRM uses a feature-first frontend architecture. The rule of thumb: **`app/
 src/
 ├── app/
 │   ├── App.tsx             # composition root: <Providers><RouterProvider/></Providers>
-│   ├── router.tsx          # route table (pages are lazy-loaded here)
+│   ├── router.tsx          # route table (pages are lazy-loaded here, each with a `handle`)
+│   ├── navigation.ts       # sidebar groups and items — must match router paths
 │   ├── providers/
 │   │   ├── index.tsx       # <Providers>: composes every app-wide provider
 │   │   ├── theme-provider.tsx  # dark/light/system, toggles `.dark` on <html>
@@ -20,7 +21,7 @@ src/
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives, added via the CLI
 │   ├── common/             # reusable app components (RootErrorBoundary, ThemeToggle, …)
-│   └── layout/             # app shell (RootLayout)
+│   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel
 ├── features/
 ├── hooks/
 ├── lib/
@@ -37,7 +38,10 @@ src/
 
 Application-level setup only: the composition root, route table, providers, theme, global styles. No business logic.
 
-- **Routing** — `router.tsx` uses React Router's data router. Each page is registered with `lazy` so it is code-split. `RootLayout` is the shared shell; `RootErrorBoundary` catches render and loader errors for every route. A `*` route renders `NotFoundPage`.
+- **Routing** — `router.tsx` uses React Router's data router. Each page is registered with `lazy` so it is code-split, and declares a `handle: { title, group? }` (`src/types/route-handle.ts`) that drives the breadcrumb and document title via `useRouteHandle()`. `AppShell` is the shared shell; `RootErrorBoundary` catches render and loader errors for every route. `/` redirects to `/dashboard`; a `*` route renders `NotFoundPage`. Routes not yet built point at `ComingSoonPage`.
+- **Navigation** — `navigation.ts` is the single source for sidebar groups and items (label, path, icon, optional count). Add a route and its nav entry together. Sub-views such as "hot leads" are in-page tabs, not sidebar entries.
+- **Shell layout** — `AppShell` is a fixed-height frame: `Sidebar` (236px, hidden below `lg` and opened from the top bar as a sheet) + a column with `TopBar` (42px) and `<main>`. Pages render `PageHeader` then `PageBody`; `PageBody` is the scroll container, so sticky table headers stick to it. Full-height screens may skip both.
+- **Detail drawers** — row-level detail opens in `DrawerPanel` (464px sheet). Its open state is the URL: `useDrawerParam('lead')` reads/writes `?lead=<id>`, so panels are linkable and Esc/close is a URL change.
 - **Providers** — one file per provider in `providers/` (`<name>-provider.tsx`, plus `<name>-context.ts` when it exposes context, kept separate so component files export only components). `providers/index.tsx` composes them all; it is the single place to add app-wide context (query client, auth session, i18n, …). Keep `App.tsx` flat. The consuming hook (`useTheme`, `useAuth`, …) lives in `src/hooks/` so components never import from `app/`.
 - **Theme** — `ThemeProvider` persists `light | dark | system` in `localStorage` and toggles the `.dark` class. Components read it with `useTheme()` from `@/hooks/use-theme`.
 
