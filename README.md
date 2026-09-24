@@ -47,9 +47,9 @@ src/
 │   ├── common/     # reusable app components (error boundary, theme toggle, …)
 │   └── layout/     # app shell / layout components
 ├── data/           # data access: db.<collection> services, local demo store + seed
-├── features/       # business functionality, one folder per feature (dashboard, workspace, contacts, leads, tasks, quotes, appointments, calendar, team, pipeline-settings, …)
+├── features/       # business functionality, one folder per feature (dashboard, workspace, contacts, leads, lead-import, tasks, quotes, appointments, calendar, team, pipeline-settings, …)
 ├── hooks/          # hooks shared across features
-├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, dates.ts, utils.ts
+├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, dates.ts, csv.ts, utils.ts
 ├── pages/          # route components; thin, compose features
 └── types/          # types shared across features (types/domain = entities)
 ```

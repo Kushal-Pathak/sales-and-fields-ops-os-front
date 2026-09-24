@@ -22,7 +22,7 @@ src/
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives, added via the CLI
 │   ├── common/             # RootErrorBoundary, ThemeToggle, StatusBadge/StatusDot, InitialsAvatar, EmptyState
-│   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel, SectionNav, ViewSwitch
+│   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel, SectionNav, ViewSwitch, StepBar/WizardFrame
 ├── data/
 │   ├── index.ts            # `db`: one Collection per entity (local demo store or REST, by env)
 │   ├── collection.ts       # Collection<T> + local / http implementations
@@ -38,6 +38,7 @@ src/
 │   ├── quotes/             # quotes table + drawer (approval workflow), full-page builder, print view, LeadQuoteList
 │   ├── appointments/       # appointments table + drawer, schedule/edit dialog, complete-with-notes, LeadAppointmentList
 │   ├── calendar/           # week time-grid + month grid over appointments and due tasks (pure buildEvents model)
+│   ├── lead-import/        # CSV/TSV import wizard: parse → map → validate → plan → run
 │   ├── team/               # members table + drawer, invite/edit, deactivate-with-reassign, roles + permissions
 │   └── pipeline-settings/  # stage list (sortable), stage drawer, delete-with-move, pipeline rename
 ├── hooks/
@@ -46,6 +47,7 @@ src/
 │   ├── api.ts              # thin fetch client with ApiError (used only by data/)
 │   ├── format.ts           # formatMoney / formatDate / formatRelative / initials
 │   ├── dates.ts            # local-day arithmetic and <input type=date|time> conversions
+│   ├── csv.ts              # delimited-text parsing and writing (CSV / TSV)
 │   └── utils.ts            # cn()
 ├── pages/
 ├── test/                   # Vitest setup
@@ -93,6 +95,7 @@ features/
 - `features/team/` owns members and roles. Inviting creates the user record directly until auth exists; deactivating reassigns the member's open leads and tasks (logging a `reassigned` activity on each lead) and flips `active`. Roles carry the `Permission` list; the UI does not enforce permissions yet.
 - `features/appointments/` owns appointments (meeting, video call, phone call, on-site visit): the leads-shaped list and drawer, a schedule/edit dialog that derives `endAt` from a duration, a reschedule popover, completion with outcome notes, cancel/restore. Scheduling, completing and cancelling write `appointment_*` activities on the lead. "Needs outcome" is derived (`isAppointmentOverdue`), never stored. `LeadAppointmentList` is embedded in the lead drawer.
 - `features/calendar/` is a composite view: `buildEvents` (pure, tested) turns appointments and open tasks into `CalendarEvent`s, `weekDays` / `monthCells` / `layoutDayEvents` shape the grids, and the view/anchor/filters live in the URL (`?view=month&date=2026-10-05&tasks=0&assignee=`). The feature owns the toolbar and grids only; `pages/calendar` composes `AppointmentDrawer` and `TaskDrawer` and opens the scheduling dialog from slot clicks.
+- `features/lead-import/` is the import wizard (`/leads/import`, reached from the Leads page). It is a pipeline of pure, tested steps: `parseDelimited` (`lib/csv.ts`) → `autoMap` (header aliases in `utils/import-fields.ts`) → `validateRows` (errors skip the row, warnings fall back to defaults, existing contacts matched by normalised email or phone, repeats within the file attach to the first row's contact) → `buildImportPlan` (create / attach / update / skip per the duplicate policy) → `useRunImport`, which executes the plan row by row against `db` (contacts, leads with a `created` activity, optional follow-up tasks) and reports progress. Wizard state is a reducer in memory rather than the URL, because the payload is the loaded file.
 - `features/pipeline-settings/` owns the stages of the default pipeline: a sortable list, a drawer to create/edit, delete-with-move, and rename. Reads come from `features/workspace`; lead counts come from `features/leads`.
 
 ### `components/`
@@ -107,7 +110,7 @@ Hooks and types used by more than one feature. Feature-specific ones stay in the
 
 ### `lib/`
 
-Infrastructure helpers with no React and no domain knowledge: `env.ts`, `api.ts`, `format.ts`, `dates.ts`, `utils.ts`. Add things like storage wrappers or logging here.
+Infrastructure helpers with no React and no domain knowledge: `env.ts`, `api.ts`, `format.ts`, `dates.ts`, `csv.ts`, `utils.ts`. Add things like storage wrappers or logging here.
 
 ### `assets/`
 

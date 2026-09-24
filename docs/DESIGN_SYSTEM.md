@@ -183,11 +183,11 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 - **Step bar**: 40 px strip, `border-b`; each step is a 17 px circle (done: `primary` fill with ✓; active: `brand` fill; pending: `muted` fill, faint number) plus an 11.5 px label (active 600); `›` separators in `border-strong` colour. Bottom bar: 44 px, `border-t`, "Back" outline left, "Step n of N" faint centre, "Continue" primary right.
 - **Progress**: 6 px track `muted`, `primary` fill, `rounded-full`, animates width.
-- **Build with**: step bar is a small layout component built from `Badge`-sized spans; `Progress` (+ `ProgressLabel` / `ProgressValue`).
+- **Build with**: `StepBar` and `WizardFrame` in `components/layout/step-bar.tsx` (the lead import wizard, `features/lead-import`, is the reference instance: per-step `max-w`, Continue disabled until the step is valid, the last step hides the bottom bar); `Progress` (+ `ProgressLabel` / `ProgressValue`).
 
 ### Upload dropzone, timeline, chat bubbles
 
-- **Dropzone**: `rounded-xl border-2 border-dashed border-border-strong p-5`, centred icon + `text-sm text-foreground-faint`; hover `border-input bg-muted`. File card: icon tile (`size-9 rounded-lg` soft fill) + name + faint meta + remove ×.
+- **Dropzone**: `rounded-xl border-2 border-dashed border-border-strong p-5`, centred icon + `text-sm text-foreground-faint`; hover `border-input bg-muted`. File card: icon tile (`size-9 rounded-lg` soft fill) + name + faint meta + remove ×. Implemented in `features/lead-import/components/upload-step.tsx` as a `label` around a visually hidden file input, with drag-and-drop.
 - **Timeline**: 7 px coloured dot (status token) and a 1 px `border` line; text 12.5 px, meta 11 px faint below.
 - **Chat**: bubbles max 76–85 % wide; incoming `bg-surface-2 rounded-[3px_10px_10px_10px]`, outgoing `bg-whatsapp-soft rounded-[10px_3px_10px_10px]`; 11 px timestamps; composer is a `rounded-xl border-border-strong` box with chip buttons on top and send on the bottom-right.
 

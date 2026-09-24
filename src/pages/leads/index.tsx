@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, UploadIcon } from 'lucide-react';
+import { Link } from 'react-router';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,14 @@ export function LeadsPage() {
         actions={
           <>
             <LeadViewSwitch />
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link to="/leads/import" />}
+            >
+              <UploadIcon /> Import
+            </Button>
             <Button size="sm" onClick={() => setCreating(true)}>
               <PlusIcon /> Add lead
             </Button>
