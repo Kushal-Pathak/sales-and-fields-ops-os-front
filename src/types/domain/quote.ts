@@ -40,9 +40,11 @@ export interface QuoteTotals {
 }
 
 /** Totals derived from the line items: per-line discounts, then the quote discount, then tax. */
-export function quoteTotals(
-  quote: Pick<Quote, 'items' | 'discountPct' | 'taxRatePct'>,
-): QuoteTotals {
+export function quoteTotals(quote: {
+  items: Pick<QuoteLineItem, 'quantity' | 'unitPrice' | 'discountPct'>[];
+  discountPct: number;
+  taxRatePct: number;
+}): QuoteTotals {
   const subtotal = quote.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice * (1 - (item.discountPct ?? 0) / 100),
     0,

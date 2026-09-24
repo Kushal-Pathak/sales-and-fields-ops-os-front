@@ -1,19 +1,19 @@
 import type { ReactNode } from 'react';
-import { CalendarIcon, FileTextIcon, type LucideIcon } from 'lucide-react';
+import { CalendarIcon, type LucideIcon } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { StatusBadge } from '@/components/common/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LeadQuoteList } from '@/features/quotes';
 import { LeadTaskList } from '@/features/tasks';
 import { useUsers, useWorkspace } from '@/features/workspace';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { quoteTotals } from '@/types/domain';
-import { useLeadAppointments, useLeadQuotes } from '../hooks/use-lead-related';
-import { APPOINTMENT_STATUS_COLOR, QUOTE_STATUS_COLOR, humanize } from '../utils/related-status';
+import { useLeadAppointments } from '../hooks/use-lead-related';
+import { APPOINTMENT_STATUS_COLOR, humanize } from '../utils/related-status';
 
 /**
- * The lead's tasks (owned by `features/tasks`), and read-only lists of quotes and
- * appointments until their sections are built.
+ * The lead's tasks and quotes (owned by their features), and a read-only list of
+ * appointments until that section is built.
  */
 
 export function LeadTasksTab({ leadId }: { leadId: string }) {
@@ -21,44 +21,7 @@ export function LeadTasksTab({ leadId }: { leadId: string }) {
 }
 
 export function LeadQuotesTab({ leadId }: { leadId: string }) {
-  const quotes = useLeadQuotes(leadId);
-  const workspace = useWorkspace().data;
-
-  return (
-    <RelatedList
-      isPending={quotes.isPending}
-      isEmpty={quotes.data?.length === 0}
-      icon={FileTextIcon}
-      emptyTitle="No quotes for this lead"
-      emptyHint="Quotes are created in the Quotes section, coming in a later step."
-    >
-      {(quotes.data ?? []).map((quote) => (
-        <RelatedRow
-          key={quote.id}
-          title={quote.number}
-          meta={[
-            `${quote.items.length} item${quote.items.length === 1 ? '' : 's'}`,
-            formatDate(quote.createdAt, 'monthDay', workspace?.locale),
-            quote.validUntil &&
-              `Valid until ${formatDate(quote.validUntil, 'monthDay', workspace?.locale)}`,
-          ]}
-          badge={
-            <StatusBadge color={QUOTE_STATUS_COLOR[quote.status]}>
-              {humanize(quote.status)}
-            </StatusBadge>
-          }
-          trailing={
-            <span className="text-sm font-semibold tabular-nums">
-              {formatMoney(quoteTotals(quote).total, {
-                currency: quote.currency,
-                locale: workspace?.locale,
-              })}
-            </span>
-          }
-        />
-      ))}
-    </RelatedList>
-  );
+  return <LeadQuoteList leadId={leadId} />;
 }
 
 export function LeadAppointmentsTab({ leadId }: { leadId: string }) {

@@ -13,4 +13,6 @@ export interface Workspace extends BaseEntity {
   leadSources: string[];
   /** Default tax rate applied to new quotes, in percent. */
   taxRatePct: number;
+  /** Default terms and conditions prefilled into new quotes. */
+  quoteTerms?: string;
 }

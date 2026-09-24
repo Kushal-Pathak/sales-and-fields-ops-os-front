@@ -149,6 +149,17 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 - **Behaves**: opens from a row click; Esc and the close button dismiss it; content behind stays visible and scrollable; only one drawer at a time.
 - **Build with**: `Sheet` + `SheetContent side="right" className="w-[464px] gap-0 p-0 sm:max-w-[464px] shadow-drawer"` + `SheetHeader` / `SheetTitle` / `SheetDescription` / `SheetFooter`. The overlay uses the `overlay` token; pass `className="bg-transparent"` to `SheetOverlay`-based variants if a screen needs the content visible without a scrim.
 
+### Builder (full-page form)
+
+- **Looks**: replaces the page header. Its own header row (`border-b px-4 py-2.5`): back link `← Quotes`, `/`, title `text-lg font-bold` (`Q-1048` or "New quote"), a status pill, and the customer / lead on the right in `text-sm text-muted-foreground` with bold values. Below, two panes: the form on the left (`p-4`, scrolls) and a summary rail on the right (`lg:w-80 border-l bg-surface-2/40 p-4`) with label/value rows, the totals block (`Subtotal · Discount · Tax · Total`, tabular figures, total `text-base font-bold` above a `border-t`) and a vertical stack of full-width buttons: primary "Save and submit for approval", outline "Save draft", ghost "Cancel". Under `lg` the rail stacks below the form.
+- **Line items**: a bordered `rounded-lg` table whose cells are inputs (`Description` flex, `Unit`, `Qty`, `Unit price (symbol)`, `Disc %`, computed `Amount` in `font-semibold tabular-nums`, a ghost × to remove); a faint "+ Add line item" row at the bottom, like the "New …" row in tables. Errors are `text-2xs text-destructive` under the cell.
+- **Build with**: `QuoteBuilder` + `LineItemsEditor` + `QuoteTotals` in `features/quotes/components/`; `Field` / `FieldLabel` / `FieldError`, `Input type="number"`, `Combobox` for the lead, `Textarea` for notes and terms.
+
+### Print sheet
+
+- **Looks**: the customer-facing quote on a white `max-w-[800px] p-10 shadow-sm` sheet over a `muted` page, wrapped in `.light` so it stays light in dark mode. Workspace name top-left; number, date, valid-until and status in a right-aligned label/value grid; "Prepared for" / "Prepared by" columns; a plain items table with hairline rows; the totals block right-aligned; notes and terms in `text-sm`. A toolbar with Back and Print sits above the sheet and is `print:hidden`.
+- **Build with**: `QuotePrint` in `features/quotes/components/`; route `/quotes/:id/print` outside the shell; `window.print()`.
+
 ### Dialogs and the command palette
 
 - **Dialog**: centred, `rounded-xl`, `p-4`, `shadow-overlay`, `overlay` scrim; title `text-lg font-bold`, description `text-sm text-muted-foreground`, footer buttons right-aligned. Confirmations for risky actions use a red-bordered card (`border-destructive/40 bg-danger-soft/40`) with "Yes, proceed" (`destructive` fill) and "Cancel".
@@ -212,5 +223,5 @@ For later feature work; these are data, not tokens.
 - **Priority**: High destructive · Medium warning · Low neutral.
 - **Task type**: Call info · Visit highlight · Quote warning · Follow-up sky · Install success · Measurement indigo · Payment destructive · General neutral.
 - **Task status**: Pending neutral · In Progress info · Overdue destructive · Completed success.
-- **Quote status**: Pending warning · Approved success · Sent info · Accepted success (deeper) · Rejected destructive · Draft warning.
+- **Quote status**: Pending warning · Approved success · Sent info · Accepted success (deeper) · Rejected destructive · Draft warning. Implemented (`features/quotes/utils/quote-labels.ts`) as Draft neutral · Pending approval warning · Approved success · Rejected destructive · Sent info · Accepted success · Declined destructive, so Draft and Pending no longer look alike.
 - **Role**: Manager warning · Field Agent success · Sales Agent info · Accountant orange · Viewer neutral.

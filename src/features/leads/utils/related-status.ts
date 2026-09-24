@@ -1,19 +1,9 @@
-import type { ActivityKind, AppointmentStatus, QuoteStatus, StatusColor } from '@/types/domain';
+import type { ActivityKind, AppointmentStatus, StatusColor } from '@/types/domain';
 
 /**
- * Colours for rows the lead drawer shows read-only. When the Tasks, Quotes and
- * Appointments features are built these maps move to them and are imported here.
+ * Colours for rows the lead drawer shows read-only. When the Appointments feature
+ * is built its map moves there and is imported here (as tasks and quotes already are).
  */
-
-export const QUOTE_STATUS_COLOR: Record<QuoteStatus, StatusColor> = {
-  draft: 'neutral',
-  pending_approval: 'warning',
-  approved: 'success',
-  rejected: 'destructive',
-  sent: 'info',
-  accepted: 'success',
-  declined: 'destructive',
-};
 
 export const APPOINTMENT_STATUS_COLOR: Record<AppointmentStatus, StatusColor> = {
   scheduled: 'info',

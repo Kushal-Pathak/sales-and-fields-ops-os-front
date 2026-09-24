@@ -87,14 +87,14 @@ export function Dashboard() {
           icon={FileTextIcon}
           title="Quotes pending approval"
           count={model?.quotes.total}
-          to="/quotes"
+          to="/quotes?view=pending"
           emptyText="No quotes waiting for approval."
           isPending={isPending}
         >
           {model?.quotes.rows.map(({ quote, contact, createdBy, total }) => (
             <PanelRow
               key={quote.id}
-              to={`/leads?lead=${quote.leadId}`}
+              to={`/quotes?view=pending&quote=${quote.id}`}
               title={contact?.name ?? quote.number}
               meta={`${quote.number} · ${createdBy?.name ?? 'Unknown'}`}
               trailing={

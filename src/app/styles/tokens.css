@@ -7,7 +7,9 @@
  * can be traced back; dark values are derived from the same stone family.
  */
 
-:root {
+/* `.light` re-applies the light tokens to a subtree (used by the printable quote). */
+:root,
+.light {
   --font-sans: 'Hanken Grotesk Variable', sans-serif;
   --radius: 0.5rem;
 

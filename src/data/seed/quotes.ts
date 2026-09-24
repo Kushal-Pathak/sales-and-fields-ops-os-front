@@ -108,6 +108,30 @@ const QUOTES: [number, number, QuoteStatus, number, number, ItemRow[]][] = [
       ['Support retainer', 'month', 6, 150],
     ],
   ],
+  [
+    17,
+    0,
+    'approved',
+    0,
+    2,
+    [
+      ['Check-in app (iOS + Android)', 'project', 1, 14500],
+      ['Access control integration', 'project', 1, 3600],
+      ['Support retainer', 'month', 12, 150],
+    ],
+  ],
+  [
+    21,
+    5,
+    'declined',
+    0,
+    30,
+    [
+      ['Client gallery portal', 'project', 1, 3200],
+      ['Storage bundle', 'year', 1, 480],
+      ['Training session', 'session', 1, 450],
+    ],
+  ],
 ];
 
 export function buildQuotes(
@@ -137,8 +161,7 @@ export function buildQuotes(
       discountPct,
       taxRatePct: refs.workspace.taxRatePct,
       notes: 'Pricing assumes a single site. Additional locations quoted separately.',
-      terms:
-        '1. Prices valid for 30 days from the quote date.\n2. 50% deposit to confirm the order.\n3. Balance due on delivery.',
+      ...(refs.workspace.quoteTerms !== undefined && { terms: refs.workspace.quoteTerms }),
       validUntil: clock.daysFromNow(30 - createdDaysAgo, 23),
       ...(wasSent && { sentAt: clock.daysFromNow(-createdDaysAgo + 1, 16) }),
       ...clock.stamp(createdDaysAgo, Math.max(0, createdDaysAgo - 1)),

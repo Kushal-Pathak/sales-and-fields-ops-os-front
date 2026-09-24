@@ -11,6 +11,8 @@ export function buildWorkspace(clock: Clock): Workspace[] {
       timezone: 'America/New_York',
       leadSources: ['Website', 'Referral', 'Social', 'Phone', 'Email', 'Event', 'Import'],
       taxRatePct: 10,
+      quoteTerms:
+        '1. Prices are valid until the date shown on this quote.\n2. A 50% deposit confirms the order.\n3. The balance is due on delivery.',
       ...clock.stamp(400, 30),
     },
   ];

@@ -39,7 +39,21 @@ export const router = createBrowserRouter([
         handle: handle('Pipeline', 'Sales'),
         lazy: async () => ({ Component: (await import('@/pages/pipeline')).PipelinePage }),
       },
-      { path: 'quotes', handle: handle('Quotes', 'Sales'), lazy: comingSoon },
+      {
+        path: 'quotes',
+        handle: handle('Quotes', 'Sales'),
+        lazy: async () => ({ Component: (await import('@/pages/quotes')).QuotesPage }),
+      },
+      {
+        path: 'quotes/new',
+        handle: handle('New quote', 'Quotes'),
+        lazy: async () => ({ Component: (await import('@/pages/quotes/new')).NewQuotePage }),
+      },
+      {
+        path: 'quotes/:id/edit',
+        handle: handle('Edit quote', 'Quotes'),
+        lazy: async () => ({ Component: (await import('@/pages/quotes/edit')).EditQuotePage }),
+      },
 
       {
         path: 'tasks',
@@ -103,5 +117,12 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/pages/not-found')).NotFoundPage }),
       },
     ],
+  },
+  // Printable views live beside the shell so they render without sidebar and top bar.
+  {
+    path: '/quotes/:id/print',
+    ErrorBoundary: RootErrorBoundary,
+    handle: handle('Print quote'),
+    lazy: async () => ({ Component: (await import('@/pages/quotes/print')).QuotePrintPage }),
   },
 ]);

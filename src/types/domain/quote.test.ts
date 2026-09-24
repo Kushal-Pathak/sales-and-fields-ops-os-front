@@ -5,8 +5,8 @@ describe('quoteTotals', () => {
   it('applies line discounts, then the quote discount, then tax', () => {
     const totals = quoteTotals({
       items: [
-        { id: 'a', description: 'Licence', quantity: 2, unitPrice: 100 },
-        { id: 'b', description: 'Setup', quantity: 1, unitPrice: 50, discountPct: 10 },
+        { quantity: 2, unitPrice: 100 },
+        { quantity: 1, unitPrice: 50, discountPct: 10 },
       ],
       discountPct: 5,
       taxRatePct: 10,
