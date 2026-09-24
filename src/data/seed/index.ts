@@ -58,7 +58,7 @@ export function buildSeed(now: Date = new Date()): Seed {
   const tasks = buildTasks(clock, { leads, users });
   const appointments = buildAppointments(clock, { leads, users });
   const quotes = buildQuotes(clock, { leads, users, workspace: workspace[0]! });
-  const activities = buildActivities(clock, { leads, stages, tasks, quotes });
+  const activities = buildActivities(clock, { leads, stages, tasks, quotes, appointments });
   const { conversations, messages } = buildConversations(clock, { leads });
 
   return {

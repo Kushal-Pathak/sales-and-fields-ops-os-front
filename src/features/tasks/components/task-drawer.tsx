@@ -45,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/features/workspace';
+import { fromDateTimeInputs, toDateInput, toTimeInput } from '@/lib/dates';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useTask } from '../hooks/use-task';
@@ -295,22 +296,17 @@ function Field({ label, children }: { label: string; children?: React.ReactNode 
   );
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
 /** Pick a new due date and time without opening the whole form. */
 function ReschedulePopover({ taskId, dueAt }: { taskId: string; dueAt: string }) {
   const update = useUpdateTask();
   const [open, setOpen] = useState(false);
-  const current = new Date(dueAt);
-  const [date, setDate] = useState(
-    `${current.getFullYear()}-${pad(current.getMonth() + 1)}-${pad(current.getDate())}`,
-  );
-  const [time, setTime] = useState(`${pad(current.getHours())}:${pad(current.getMinutes())}`);
+  const [date, setDate] = useState(toDateInput(dueAt));
+  const [time, setTime] = useState(toTimeInput(dueAt));
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const next = new Date(`${date}T${time || '09:00'}:00`);
-    if (Number.isNaN(next.getTime())) return;
+    const next = fromDateTimeInputs(date, time);
+    if (!next) return;
     update.mutate(
       { id: taskId, patch: { dueAt: next.toISOString() } },
       { onSuccess: () => setOpen(false) },

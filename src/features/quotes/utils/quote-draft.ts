@@ -1,3 +1,4 @@
+import { toDateInput } from '@/lib/dates';
 import {
   quoteTotals,
   type CreateInput,
@@ -49,14 +50,6 @@ export interface DraftErrors {
 }
 
 export const VALID_FOR_DAYS = 30;
-
-const pad = (n: number) => String(n).padStart(2, '0');
-
-export function toDateInput(iso: string | undefined): string {
-  if (!iso) return '';
-  const date = new Date(iso);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
 
 function numberInput(value: number | undefined): string {
   return value === undefined ? '' : String(value);

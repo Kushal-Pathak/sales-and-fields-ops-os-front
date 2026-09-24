@@ -11,6 +11,9 @@ export type ActivityKind =
   | 'message'
   | 'quote_sent'
   | 'quote_status'
+  | 'appointment_scheduled'
+  | 'appointment_completed'
+  | 'appointment_cancelled'
   | 'reassigned';
 
 /** One line in an entity's timeline. `createdAt` is when it happened. */

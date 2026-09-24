@@ -160,6 +160,14 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 - **Looks**: the customer-facing quote on a white `max-w-[800px] p-10 shadow-sm` sheet over a `muted` page, wrapped in `.light` so it stays light in dark mode. Workspace name top-left; number, date, valid-until and status in a right-aligned label/value grid; "Prepared for" / "Prepared by" columns; a plain items table with hairline rows; the totals block right-aligned; notes and terms in `text-sm`. A toolbar with Back and Print sits above the sheet and is `print:hidden`.
 - **Build with**: `QuotePrint` in `features/quotes/components/`; route `/quotes/:id/print` outside the shell; `window.print()`.
 
+### Calendar
+
+- **Week grid**: `grid-cols-[56px_repeat(7,minmax(0,1fr))]`; a sticky day header (weekday `text-xs`, date `text-lg font-bold`, today's column tinted `bg-accent/60` in the header and `bg-accent/30` in the body); 56 px hour rows with `border-border-faint` lines and `text-2xs` hour labels in the gutter; the range is 7 AM–7 PM stretched to fit events. Every empty hour cell is a `button` ("Schedule on …") so a click starts the scheduling dialog at that time. A `border-destructive` line marks the current time on today.
+- **Month grid**: `grid-cols-7`, six rows of at least 6.5 rem, hairline borders; other-month days `bg-surface-2/40 text-foreground-faint`; today's number in a `bg-primary text-primary-foreground` circle; up to three one-line chips then a "+n more" text button that opens that week; a `+` button appears on hover to schedule that day.
+- **Event chips**: `button`s with `rounded-md border-l-2` and the soft fill / strong text of their category (`STATUS_COLOR_CLASSES[color].chip`): appointments `highlight` with the type icon, tasks in their task-type colour; done items at `opacity-50`. Week chips are absolutely positioned (top and height from time, side-by-side columns when they overlap); month chips show the start time first.
+- **Toolbar**: ‹ › `icon-sm` outline buttons, an outline "Today", the range as `text-sm font-semibold` (`Sep 21 – 27, 2026` / `September 2026`), pill tabs Week / Month, the Assignee chip and a pill `Toggle` for tasks.
+- **Build with**: `CalendarToolbar`, `CalendarView` (`WeekGrid` / `MonthGrid` / `EventChip`) in `features/calendar/components/`; the page composes the appointment and task drawers.
+
 ### Dialogs and the command palette
 
 - **Dialog**: centred, `rounded-xl`, `p-4`, `shadow-overlay`, `overlay` scrim; title `text-lg font-bold`, description `text-sm text-muted-foreground`, footer buttons right-aligned. Confirmations for risky actions use a red-bordered card (`border-destructive/40 bg-danger-soft/40`) with "Yes, proceed" (`destructive` fill) and "Cancel".
@@ -222,6 +230,7 @@ For later feature work; these are data, not tokens.
 - **Source**: Facebook `#1877f2` · WhatsApp `whatsapp` · Telecall sky · Website neutral · IndiaMART teal · Manual neutral (sources keep their brand colours as 6 px dots only).
 - **Priority**: High destructive · Medium warning · Low neutral.
 - **Task type**: Call info · Visit highlight · Quote warning · Follow-up sky · Install success · Measurement indigo · Payment destructive · General neutral.
+- **Appointment status** (ours): Scheduled info · Completed success · Cancelled neutral · "Needs outcome" (scheduled but ended) warning. Appointment types (Meeting, Video call, Phone call, On-site visit) differ by icon, not colour; on the calendar every appointment is `highlight`.
 - **Task status**: Pending neutral · In Progress info · Overdue destructive · Completed success.
 - **Quote status**: Pending warning · Approved success · Sent info · Accepted success (deeper) · Rejected destructive · Draft warning. Implemented (`features/quotes/utils/quote-labels.ts`) as Draft neutral · Pending approval warning · Approved success · Rejected destructive · Sent info · Accepted success · Declined destructive, so Draft and Pending no longer look alike.
 - **Role**: Manager warning · Field Agent success · Sales Agent info · Accountant orange · Viewer neutral.

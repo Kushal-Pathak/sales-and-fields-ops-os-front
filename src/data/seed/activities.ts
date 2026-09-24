@@ -1,10 +1,16 @@
-import type { Activity, Lead, Quote, Stage, Task } from '@/types/domain';
+import type { Activity, Appointment, Lead, Quote, Stage, Task } from '@/types/domain';
 import type { Clock } from './helpers';
 
 /** Timelines derived from the other seed rows, so they always agree with them. */
 export function buildActivities(
   clock: Clock,
-  refs: { leads: Lead[]; stages: Stage[]; tasks: Task[]; quotes: Quote[] },
+  refs: {
+    leads: Lead[];
+    stages: Stage[];
+    tasks: Task[];
+    quotes: Quote[];
+    appointments: Appointment[];
+  },
 ): Activity[] {
   const activities: Activity[] = [];
   const stageById = new Map(refs.stages.map((stage) => [stage.id, stage]));
@@ -87,6 +93,37 @@ export function buildActivities(
       actorId: quote.createdById,
       createdAt: quote.updatedAt,
     });
+  }
+
+  for (const appointment of refs.appointments) {
+    push({
+      entityType: 'lead',
+      entityId: appointment.leadId,
+      kind: 'appointment_scheduled',
+      message: `Appointment scheduled${appointment.location ? ` at ${appointment.location}` : ''}`,
+      actorId: appointment.assigneeId,
+      createdAt: appointment.createdAt,
+    });
+    if (appointment.status === 'completed') {
+      push({
+        entityType: 'lead',
+        entityId: appointment.leadId,
+        kind: 'appointment_completed',
+        message: `Appointment completed: ${appointment.notes ?? 'no notes'}`,
+        actorId: appointment.assigneeId,
+        createdAt: appointment.endAt,
+      });
+    }
+    if (appointment.status === 'cancelled') {
+      push({
+        entityType: 'lead',
+        entityId: appointment.leadId,
+        kind: 'appointment_cancelled',
+        message: 'Appointment cancelled',
+        actorId: appointment.assigneeId,
+        createdAt: appointment.updatedAt,
+      });
+    }
   }
 
   return activities;

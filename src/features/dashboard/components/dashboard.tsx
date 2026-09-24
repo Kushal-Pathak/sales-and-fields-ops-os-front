@@ -63,14 +63,14 @@ export function Dashboard() {
           icon={CalendarIcon}
           title="Appointments today"
           count={model?.appointments.total}
-          to="/appointments"
+          to="/appointments?view=today"
           emptyText="Nothing scheduled today."
           isPending={isPending}
         >
           {model?.appointments.rows.map(({ appointment, contact, assignee }) => (
             <PanelRow
               key={appointment.id}
-              to={`/leads?lead=${appointment.leadId}`}
+              to={`/appointments?view=today&appointment=${appointment.id}`}
               leading={
                 <span className="w-16 shrink-0 text-sm font-semibold tabular-nums">
                   {formatDate(appointment.startAt, 'time', locale)}

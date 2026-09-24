@@ -30,6 +30,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useContacts } from '@/features/contacts';
 import { useCurrentUser, useStages, useUsers, useWorkspace } from '@/features/workspace';
+import { toDateInput } from '@/lib/dates';
 import { currencySymbol } from '@/lib/format';
 import type { Contact, CreateInput, Lead, Priority, UpdateInput } from '@/types/domain';
 import { useCreateLead, useUpdateLead } from '../hooks/use-lead-mutations';
@@ -100,14 +101,6 @@ interface FormState {
 type FormErrors = Partial<Record<'contact' | 'title' | 'value', string>>;
 
 const HOUR_OF_NEXT_ACTION = 9;
-
-/** `2026-09-23T14:00:00.000Z` → `2026-09-23` in local time, for `<input type="date">`. */
-function toDateInput(iso: string | undefined): string {
-  if (!iso) return '';
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
 
 function fromDateInput(value: string): string | undefined {
   if (!value) return undefined;

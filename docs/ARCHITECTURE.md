@@ -36,6 +36,8 @@ src/
 │   ├── leads/              # leads list + pipeline board (shared URL filters), lead drawer, form, mutations
 │   ├── tasks/              # tasks table + status board, task drawer, form, LeadTaskList for the lead drawer
 │   ├── quotes/             # quotes table + drawer (approval workflow), full-page builder, print view, LeadQuoteList
+│   ├── appointments/       # appointments table + drawer, schedule/edit dialog, complete-with-notes, LeadAppointmentList
+│   ├── calendar/           # week time-grid + month grid over appointments and due tasks (pure buildEvents model)
 │   ├── team/               # members table + drawer, invite/edit, deactivate-with-reassign, roles + permissions
 │   └── pipeline-settings/  # stage list (sortable), stage drawer, delete-with-move, pipeline rename
 ├── hooks/
@@ -43,6 +45,7 @@ src/
 │   ├── env.ts              # validated access to VITE_* variables
 │   ├── api.ts              # thin fetch client with ApiError (used only by data/)
 │   ├── format.ts           # formatMoney / formatDate / formatRelative / initials
+│   ├── dates.ts            # local-day arithmetic and <input type=date|time> conversions
 │   └── utils.ts            # cn()
 ├── pages/
 ├── test/                   # Vitest setup
@@ -88,6 +91,8 @@ features/
 - `features/quotes/` owns quotes. The list and drawer follow the leads shape; the drawer's footer is driven by a pure workflow table (`utils/quote-workflow.ts`: Draft → Pending approval → Approved | Rejected → Sent → Accepted | Declined, with "Ask revision" back to Draft). Creating and editing happen in a full-page builder (`/quotes/new`, `/quotes/:id/edit`) over a pure draft model (`utils/quote-draft.ts`); only drafts are editable. Every transition writes an `Activity` on the quote (its history) and on the lead (`quote_sent` for sending, `quote_status` otherwise). `/quotes/:id/print` is a chrome-less route beside the shell that renders the customer-facing sheet for the browser's print dialog. `LeadQuoteList` is embedded in the lead drawer. Quote numbers are `Q-<n>`, assigned client-side from the highest in use; a backend should own numbering.
 - `features/dashboard/` reads every collection through the shared cache keys and derives one `DashboardModel` in a pure, tested function (`utils/dashboard-model.ts`). Every tile, cell and row is a link into the list it summarises, so the dashboard owns no actions of its own.
 - `features/team/` owns members and roles. Inviting creates the user record directly until auth exists; deactivating reassigns the member's open leads and tasks (logging a `reassigned` activity on each lead) and flips `active`. Roles carry the `Permission` list; the UI does not enforce permissions yet.
+- `features/appointments/` owns appointments (meeting, video call, phone call, on-site visit): the leads-shaped list and drawer, a schedule/edit dialog that derives `endAt` from a duration, a reschedule popover, completion with outcome notes, cancel/restore. Scheduling, completing and cancelling write `appointment_*` activities on the lead. "Needs outcome" is derived (`isAppointmentOverdue`), never stored. `LeadAppointmentList` is embedded in the lead drawer.
+- `features/calendar/` is a composite view: `buildEvents` (pure, tested) turns appointments and open tasks into `CalendarEvent`s, `weekDays` / `monthCells` / `layoutDayEvents` shape the grids, and the view/anchor/filters live in the URL (`?view=month&date=2026-10-05&tasks=0&assignee=`). The feature owns the toolbar and grids only; `pages/calendar` composes `AppointmentDrawer` and `TaskDrawer` and opens the scheduling dialog from slot clicks.
 - `features/pipeline-settings/` owns the stages of the default pipeline: a sortable list, a drawer to create/edit, delete-with-move, and rename. Reads come from `features/workspace`; lead counts come from `features/leads`.
 
 ### `components/`
@@ -102,7 +107,7 @@ Hooks and types used by more than one feature. Feature-specific ones stay in the
 
 ### `lib/`
 
-Infrastructure helpers with no React and no domain knowledge: `env.ts`, `api.ts`, `utils.ts`. Add things like date formatting, storage wrappers or logging here.
+Infrastructure helpers with no React and no domain knowledge: `env.ts`, `api.ts`, `format.ts`, `dates.ts`, `utils.ts`. Add things like storage wrappers or logging here.
 
 ### `assets/`
 

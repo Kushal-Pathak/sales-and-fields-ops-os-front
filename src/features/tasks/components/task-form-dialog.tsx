@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser, useUsers } from '@/features/workspace';
+import { fromDateTimeInputs, toDateInput, toTimeInput } from '@/lib/dates';
 import type { CreateInput, Priority, Task, TaskType, UpdateInput } from '@/types/domain';
 import { useCreateTask, useUpdateTask } from '../hooks/use-task-mutations';
 import { useLeadOptions } from '../hooks/use-tasks';
@@ -80,20 +81,6 @@ type LeadOption = {
   contact: { name: string } | undefined;
 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
-function toDateInput(iso: string | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function toTimeInput(iso: string | undefined): string {
-  if (!iso) return '09:00';
-  const d = new Date(iso);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function todayInput(): string {
   return toDateInput(new Date().toISOString());
 }
@@ -136,8 +123,8 @@ function TaskForm({
     event.preventDefault();
     const next: { title?: string; date?: string } = {};
     if (!title.trim()) next.title = 'Enter what needs to be done.';
-    const dueAt = date ? new Date(`${date}T${time || '09:00'}:00`) : null;
-    if (!dueAt || Number.isNaN(dueAt.getTime())) next.date = 'Choose a due date.';
+    const dueAt = fromDateTimeInputs(date, time);
+    if (!dueAt) next.date = 'Choose a due date.';
     setErrors(next);
     if (Object.keys(next).length > 0 || !dueAt) return;
 

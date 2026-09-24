@@ -65,8 +65,18 @@ export const router = createBrowserRouter([
         handle: handle('Tasks', 'Work'),
         lazy: async () => ({ Component: (await import('@/pages/tasks/board')).TaskBoardPage }),
       },
-      { path: 'appointments', handle: handle('Appointments', 'Work'), lazy: comingSoon },
-      { path: 'calendar', handle: handle('Calendar', 'Work'), lazy: comingSoon },
+      {
+        path: 'appointments',
+        handle: handle('Appointments', 'Work'),
+        lazy: async () => ({
+          Component: (await import('@/pages/appointments')).AppointmentsPage,
+        }),
+      },
+      {
+        path: 'calendar',
+        handle: handle('Calendar', 'Work'),
+        lazy: async () => ({ Component: (await import('@/pages/calendar')).CalendarPage }),
+      },
 
       { path: 'inbox', handle: handle('Inbox', 'Communication'), lazy: comingSoon },
 

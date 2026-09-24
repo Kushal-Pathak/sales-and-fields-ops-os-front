@@ -25,17 +25,17 @@ React 19, Vite, TypeScript (strict), Tailwind CSS v4, shadcn/ui (Base UI, lucide
 
 Feature-first. Respect folder boundaries in `src/`:
 
-| Folder              | Holds                                                                        |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `app/`              | Composition root: `App.tsx`, `router.tsx`, `providers/`, `styles/`           |
-| `pages/<name>/`     | Route components; thin, compose features, no business logic                  |
-| `features/<name>/`  | Business functionality (`components/ hooks/ types/ utils/ index.ts`)         |
-| `components/ui`     | Design-system primitives (shadcn/ui, generated)                              |
-| `components/common` | Reusable app components (error boundary, theme toggle, …)                    |
-| `components/layout` | Layout / app-shell components                                                |
-| `hooks/`, `types/`  | Hooks/types shared across multiple features; `types/domain/` = entities      |
-| `data/`             | Data access: `db.<collection>` services, local demo store + seed, query keys |
-| `lib/`              | Infrastructure helpers: `env.ts`, `api.ts`, `format.ts`, `utils.ts`          |
+| Folder              | Holds                                                                           |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `app/`              | Composition root: `App.tsx`, `router.tsx`, `providers/`, `styles/`              |
+| `pages/<name>/`     | Route components; thin, compose features, no business logic                     |
+| `features/<name>/`  | Business functionality (`components/ hooks/ types/ utils/ index.ts`)            |
+| `components/ui`     | Design-system primitives (shadcn/ui, generated)                                 |
+| `components/common` | Reusable app components (error boundary, theme toggle, …)                       |
+| `components/layout` | Layout / app-shell components                                                   |
+| `hooks/`, `types/`  | Hooks/types shared across multiple features; `types/domain/` = entities         |
+| `data/`             | Data access: `db.<collection>` services, local demo store + seed, query keys    |
+| `lib/`              | Infrastructure helpers: `env.ts`, `api.ts`, `format.ts`, `dates.ts`, `utils.ts` |
 
 - Feature-specific code stays inside its feature. Promote to a shared folder only when it is genuinely reused.
 - Features must not reach into another feature's internals; import from its `index.ts` or move shared pieces to a shared folder.
@@ -52,7 +52,9 @@ Feature-first. Respect folder boundaries in `src/`:
   - Category colours (stage, priority, task/quote status, …) are `StatusColor` values mapped to classes only in `src/components/common/status-color.ts`; render them with `StatusBadge` / `StatusDot` / `InitialsAvatar` from `@/components/common`. Empty and error blocks use `EmptyState` / `ErrorState`.
   - Drag and drop: `@dnd-kit` only. `PointerSensor` with an activation distance so clicks still work, a `KeyboardSensor` (custom `coordinateGetter` when targets are columns), `DragOverlay` for the lifted item, and `accessibility.announcements` in plain words. `features/leads/components/pipeline-board.tsx` (cards between droppable columns) and `features/pipeline-settings/components/stage-list.tsx` (sortable rows) are the two shapes to copy.
   - Optimistic updates live in the feature's mutation hook only (`onMutate` writes the list cache, `onError` restores it, `onSettled` invalidates), never in components. Use them where a drop must settle at once; plain invalidation elsewhere.
-  - Feature dependencies point one way: `leads → (tasks, quotes) → (workspace, contacts)`. A feature that needs another feature's rows without depending on it reads the shared cache through `db` with the same `queryKeys` (see `features/tasks/hooks/use-tasks.ts`; `features/quotes` keeps its own small `useLeadOptions` for the same reason). Never create an import cycle between feature `index.ts` files.
+  - Feature dependencies point one way: `leads → (tasks, quotes, appointments) → (workspace, contacts)` and `calendar → (appointments, tasks)`. A feature that needs another feature's rows without depending on it reads the shared cache through `db` with the same `queryKeys` (see `features/tasks/hooks/use-tasks.ts`; `features/quotes` and `features/appointments` keep their own small `useLeadOptions` for the same reason). Never create an import cycle between feature `index.ts` files.
+  - Composite screens (the calendar) own their grid and pure model (`features/calendar`, `buildEvents` over appointments and tasks) but not the detail panels: the page composes `AppointmentDrawer` and `TaskDrawer` from the owning features and routes each event click to the right `useDrawerParam`.
+  - Date inputs and local-day arithmetic come from `@/lib/dates` (`toDateInput` / `toTimeInput` / `fromDateTimeInputs`, `startOfWeek`, `dateKey`, `addMinutes`, `formatTimeRange`, …). Do not re-implement them in a form.
   - Builders (the quote builder) are full-page routes (`/quotes/new`, `/quotes/:id/edit`) that skip `PageHeader` / `PageBody`: their own header row, a scrolling form on the left and a summary rail on the right. Form state is a pure draft model in `utils/` (`quote-draft.ts`: defaults, validation, totals, conversion to `CreateInput`), tested without React. Status changes go through a pure workflow table (`quote-workflow.ts`: `availableActions`, `applyAction`) that both the drawer and the mutation hook use.
   - Chrome-less views (the printable quote at `/quotes/:id/print`) are registered as sibling root routes in `router.tsx`, outside the `AppShell` route, with their own `ErrorBoundary`. They wrap their content in the `.light` class (see `tokens.css`) so paper output stays light in dark mode, and hide their toolbar with `print:hidden`.
   - Filter rows are built from `SearchField` / `FilterChip` / `SortMenu` in `@/components/common/list-toolbar`; table/board switches use `ViewSwitch` from `@/components/layout/view-switch` with a per-page `views` list.

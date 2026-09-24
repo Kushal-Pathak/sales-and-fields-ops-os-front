@@ -32,10 +32,11 @@ export function currencySymbol(currency: string, locale = 'en-US'): string {
   );
 }
 
-export type DateStyle = 'date' | 'datetime' | 'time' | 'monthDay' | 'weekday';
+export type DateStyle = 'date' | 'datetime' | 'time' | 'monthDay' | 'weekday' | 'weekdayShort';
 
 const DATE_FORMATS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   weekday: { weekday: 'long', day: 'numeric', month: 'short' },
+  weekdayShort: { weekday: 'short' },
   date: { day: 'numeric', month: 'short', year: 'numeric' },
   datetime: { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' },
   time: { hour: 'numeric', minute: '2-digit' },
