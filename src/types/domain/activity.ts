@@ -10,7 +10,8 @@ export type ActivityKind =
   | 'task_completed'
   | 'message'
   | 'quote_sent'
-  | 'quote_status';
+  | 'quote_status'
+  | 'reassigned';
 
 /** One line in an entity's timeline. `createdAt` is when it happened. */
 export interface Activity extends BaseEntity {

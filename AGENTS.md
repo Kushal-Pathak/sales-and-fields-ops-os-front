@@ -54,7 +54,8 @@ Feature-first. Respect folder boundaries in `src/`:
   - Optimistic updates live in the feature's mutation hook only (`onMutate` writes the list cache, `onError` restores it, `onSettled` invalidates), never in components. Use them where a drop must settle at once; plain invalidation elsewhere.
   - Feature dependencies point one way: `leads → tasks → (workspace, contacts)`. A feature that needs another feature's rows without depending on it reads the shared cache through `db` with the same `queryKeys` (see `features/tasks/hooks/use-tasks.ts`). Never create an import cycle between feature `index.ts` files.
   - Filter rows are built from `SearchField` / `FilterChip` / `SortMenu` in `@/components/common/list-toolbar`; table/board switches use `ViewSwitch` from `@/components/layout/view-switch` with a per-page `views` list.
-  - Settings pages render `SettingsNav` (`@/components/layout/settings-nav`) as the `PageHeader` children; each section is its own feature (`features/pipeline-settings/` is the first) and route under `settings/`.
+  - Sections with sub-pages (Settings, Team) render a `SectionNav` (`@/components/layout/section-nav`) as the `PageHeader` children, wrapped per section (`SettingsNav`, `pages/team/team-nav.tsx`); each sub-page is its own feature and route.
+  - Permissions are data on `Role` (`PERMISSIONS` in `features/team` lists them with labels). Nothing enforces them yet; when auth lands, gate UI with a `useCan(permission)` hook built on `useCurrentUser` + `useRoles`.
   - Money and dates: format with `formatMoney` / `formatDate` / `formatRelative` from `@/lib/format` using the workspace's `currency` and `locale`.
   - Theme: `useTheme()` from `@/hooks/use-theme`; never toggle the `.dark` class by hand.
   - TanStack Query is the only state library. Auth and global client state are not included; if a task needs one, put it where `docs/ARCHITECTURE.md` ("Adding Things Later") says, keep it minimal, and document it.

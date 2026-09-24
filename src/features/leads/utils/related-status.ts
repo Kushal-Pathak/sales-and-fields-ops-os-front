@@ -30,6 +30,7 @@ export const ACTIVITY_COLOR: Record<ActivityKind, StatusColor> = {
   message: 'success',
   quote_sent: 'warning',
   quote_status: 'warning',
+  reassigned: 'info',
 };
 
 /** `pending_approval` → "Pending approval". */

@@ -56,7 +56,16 @@ export const router = createBrowserRouter([
 
       { path: 'inbox', handle: handle('Inbox', 'Communication'), lazy: comingSoon },
 
-      { path: 'team', handle: handle('Team', 'Admin'), lazy: comingSoon },
+      {
+        path: 'team',
+        handle: handle('Team', 'Admin'),
+        lazy: async () => ({ Component: (await import('@/pages/team')).TeamPage }),
+      },
+      {
+        path: 'team/roles',
+        handle: handle('Roles', 'Team'),
+        lazy: async () => ({ Component: (await import('@/pages/team/roles')).RolesPage }),
+      },
       {
         path: 'settings',
         handle: handle('Settings', 'Admin'),
