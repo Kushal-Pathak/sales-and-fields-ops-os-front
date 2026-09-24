@@ -9,9 +9,9 @@ import {
   LeadsToolbar,
   PipelineBoard,
   useLeadsList,
-  ViewSwitch,
 } from '@/features/leads';
 import { useDrawerParam } from '@/hooks/use-drawer-param';
+import { LeadViewSwitch } from '../leads/view-switch';
 
 /** `/leads/pipeline`: the same leads as the table, as a kanban by stage. */
 export function PipelinePage() {
@@ -26,7 +26,7 @@ export function PipelinePage() {
         count={list.rows && `${list.rows.length} lead${list.rows.length === 1 ? '' : 's'}`}
         actions={
           <>
-            <ViewSwitch />
+            <LeadViewSwitch />
             <Button variant="outline" size="sm" render={<Link to="/settings/pipeline" />}>
               <Settings2Icon /> Stages
             </Button>

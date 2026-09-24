@@ -37,7 +37,16 @@ export const router = createBrowserRouter([
       },
       { path: 'quotes', handle: handle('Quotes', 'Sales'), lazy: comingSoon },
 
-      { path: 'tasks', handle: handle('Tasks', 'Work'), lazy: comingSoon },
+      {
+        path: 'tasks',
+        handle: handle('Tasks', 'Work'),
+        lazy: async () => ({ Component: (await import('@/pages/tasks')).TasksPage }),
+      },
+      {
+        path: 'tasks/board',
+        handle: handle('Tasks', 'Work'),
+        lazy: async () => ({ Component: (await import('@/pages/tasks/board')).TaskBoardPage }),
+      },
       { path: 'appointments', handle: handle('Appointments', 'Work'), lazy: comingSoon },
       { path: 'calendar', handle: handle('Calendar', 'Work'), lazy: comingSoon },
 

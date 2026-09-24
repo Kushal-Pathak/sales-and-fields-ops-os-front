@@ -1,22 +1,9 @@
-import type {
-  ActivityKind,
-  AppointmentStatus,
-  QuoteStatus,
-  StatusColor,
-  TaskStatus,
-} from '@/types/domain';
+import type { ActivityKind, AppointmentStatus, QuoteStatus, StatusColor } from '@/types/domain';
 
 /**
  * Colours for rows the lead drawer shows read-only. When the Tasks, Quotes and
  * Appointments features are built these maps move to them and are imported here.
  */
-
-export const TASK_STATUS_COLOR: Record<TaskStatus, StatusColor> = {
-  pending: 'neutral',
-  in_progress: 'info',
-  completed: 'success',
-  cancelled: 'neutral',
-};
 
 export const QUOTE_STATUS_COLOR: Record<QuoteStatus, StatusColor> = {
   draft: 'neutral',

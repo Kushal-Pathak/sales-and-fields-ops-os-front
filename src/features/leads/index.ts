@@ -3,7 +3,6 @@ export { LeadsTable } from './components/leads-table';
 export { LeadDrawer } from './components/lead-drawer';
 export { LeadFormDialog } from './components/lead-form-dialog';
 export { PipelineBoard } from './components/pipeline-board';
-export { ViewSwitch } from './components/view-switch';
 export { useLeadsList } from './hooks/use-leads-list';
 export { useLeads } from './hooks/use-leads';
 export { useLead } from './hooks/use-lead';

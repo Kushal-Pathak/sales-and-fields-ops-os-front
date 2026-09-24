@@ -10,13 +10,13 @@ import {
   type Announcements,
   type DragEndEvent,
   type DragStartEvent,
-  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import { ListIcon, PlusIcon } from 'lucide-react';
 import { EmptyState, ErrorState } from '@/components/common/empty-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePipelines, useStages, useWorkspace } from '@/features/workspace';
+import { boardKeyboardCodes, columnKeyboardCoordinates } from '@/lib/dnd-columns';
 import { formatMoney } from '@/lib/format';
 import { useMoveLeadStage } from '../hooks/use-lead-mutations';
 import { buildBoard, type BoardColumn } from '../utils/board';
@@ -32,28 +32,6 @@ interface PipelineBoardProps {
   onCreate: (stageId?: string) => void;
   onRetry: () => void;
 }
-
-/**
- * Left/Right arrows move a lifted card to the neighbouring column instead of a few pixels.
- * Up/Down are not needed: a card's position inside a column is not modelled.
- */
-const columnKeyboardCoordinates: KeyboardCoordinateGetter = (event, { context }) => {
-  const { collisionRect, droppableContainers, droppableRects } = context;
-  if (!collisionRect) return undefined;
-  if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return undefined;
-  event.preventDefault();
-
-  const columns = droppableContainers
-    .getEnabled()
-    .map((container) => droppableRects.get(container.id))
-    .filter((rect): rect is NonNullable<typeof rect> => rect !== undefined)
-    .sort((a, b) => a.left - b.left);
-  const centerX = collisionRect.left + collisionRect.width / 2;
-  let index = columns.findIndex((rect) => centerX >= rect.left && centerX <= rect.right);
-  if (index === -1) index = event.code === 'ArrowRight' ? -1 : columns.length;
-  const target = columns[index + (event.code === 'ArrowRight' ? 1 : -1)];
-  return target ? { x: target.left + 8, y: collisionRect.top } : undefined;
-};
 
 /** The kanban: one column per stage of the default pipeline, cards draggable between them. */
 export function PipelineBoard({
@@ -85,7 +63,7 @@ export function PipelineBoard({
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: columnKeyboardCoordinates,
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space'] },
+      keyboardCodes: boardKeyboardCodes,
     }),
   );
 
@@ -122,10 +100,6 @@ export function PipelineBoard({
   }
 
   if (isPending || !columns) return <BoardSkeleton />;
-
-  if (rows && rows.length === 0 && columns.every((column) => column.rows.length === 0)) {
-    // Filters may simply match nothing; still show the columns so the board keeps its shape.
-  }
 
   const activeRow = activeId ? rowById.get(activeId) : undefined;
 

@@ -128,7 +128,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 ### Kanban
 
 - **Looks**: horizontal row of 224 px columns, `gap-3`, page padding `p-4`. Column head: stage pill + faint count + bold sum right-aligned. Cards as above, `mb-2`. Ghost "+ Add" at the bottom.
-- **Build with**: plain flex layout (`flex items-start gap-3 overflow-x-auto`), `Badge` for the head, `Card` for items. Implemented as `PipelineBoard` / `PipelineColumn` / `PipelineCard` in `features/leads/components/`. Cards are `@dnd-kit` draggables; the lifted card renders in a `DragOverlay` with `shadow-card rotate-1`, the source card fades to `opacity-40`, and the column under the pointer gets `bg-accent`. Keyboard: Space lifts, ←/→ change column, Space drops, Esc cancels, Enter opens the drawer.
+- **Build with**: plain flex layout (`flex items-start gap-3 overflow-x-auto`), `Badge` for the head, `Card` for items. Implemented as `PipelineBoard` / `PipelineColumn` / `PipelineCard` in `features/leads/components/`. Cards are `@dnd-kit` draggables; the lifted card renders in a `DragOverlay` with `shadow-card rotate-1`, the source card fades to `opacity-40`, and the column under the pointer gets `bg-accent`. Keyboard: Space lifts, ←/→ change column, Space drops, Esc cancels, Enter opens the drawer. The task board (`features/tasks/components/task-board.tsx`) is the same recipe with status columns; the keyboard helpers live in `lib/dnd-columns.ts`.
 
 ### Sidebar navigation
 

@@ -1,60 +1,23 @@
 import type { ReactNode } from 'react';
-import { CalendarIcon, ClipboardCheckIcon, FileTextIcon, type LucideIcon } from 'lucide-react';
+import { CalendarIcon, FileTextIcon, type LucideIcon } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { StatusBadge } from '@/components/common/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LeadTaskList } from '@/features/tasks';
 import { useUsers, useWorkspace } from '@/features/workspace';
 import { formatDate, formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { isTaskOverdue, quoteTotals } from '@/types/domain';
-import { useLeadAppointments, useLeadQuotes, useLeadTasks } from '../hooks/use-lead-related';
-import {
-  APPOINTMENT_STATUS_COLOR,
-  QUOTE_STATUS_COLOR,
-  TASK_STATUS_COLOR,
-  humanize,
-} from '../utils/related-status';
+import { quoteTotals } from '@/types/domain';
+import { useLeadAppointments, useLeadQuotes } from '../hooks/use-lead-related';
+import { APPOINTMENT_STATUS_COLOR, QUOTE_STATUS_COLOR, humanize } from '../utils/related-status';
 
 /**
- * Read-only lists of the lead's tasks, quotes and appointments. Creating and
- * editing them belongs to their own sections, built in later steps.
+ * The lead's tasks (owned by `features/tasks`), and read-only lists of quotes and
+ * appointments until their sections are built.
  */
 
 export function LeadTasksTab({ leadId }: { leadId: string }) {
-  const tasks = useLeadTasks(leadId);
-  const users = useUsers().data ?? [];
-  const locale = useWorkspace().data?.locale;
-
-  return (
-    <RelatedList
-      isPending={tasks.isPending}
-      isEmpty={tasks.data?.length === 0}
-      icon={ClipboardCheckIcon}
-      emptyTitle="No tasks for this lead"
-      emptyHint="Tasks are managed in the Tasks section, coming in a later step."
-    >
-      {(tasks.data ?? []).map((task) => {
-        const overdue = isTaskOverdue(task);
-        return (
-          <RelatedRow
-            key={task.id}
-            title={task.title}
-            meta={[
-              humanize(task.type),
-              `Due ${formatDate(task.dueAt, 'monthDay', locale)}`,
-              users.find((user) => user.id === task.assigneeId)?.name,
-            ]}
-            metaClassName={overdue ? 'text-destructive' : undefined}
-            badge={
-              <StatusBadge color={overdue ? 'destructive' : TASK_STATUS_COLOR[task.status]}>
-                {overdue ? 'Overdue' : humanize(task.status)}
-              </StatusBadge>
-            }
-          />
-        );
-      })}
-    </RelatedList>
-  );
+  return <LeadTaskList leadId={leadId} withCreate />;
 }
 
 export function LeadQuotesTab({ leadId }: { leadId: string }) {

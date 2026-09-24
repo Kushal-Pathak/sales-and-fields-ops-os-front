@@ -8,9 +8,9 @@ import {
   LeadsTable,
   LeadsToolbar,
   useLeadsList,
-  ViewSwitch,
 } from '@/features/leads';
 import { useDrawerParam } from '@/hooks/use-drawer-param';
+import { LeadViewSwitch } from './view-switch';
 
 /** `/leads`: the saved views, filters and table, with the lead drawer driven by `?lead=`. */
 export function LeadsPage() {
@@ -25,7 +25,7 @@ export function LeadsPage() {
         count={list.rows && `${list.rows.length} lead${list.rows.length === 1 ? '' : 's'}`}
         actions={
           <>
-            <ViewSwitch />
+            <LeadViewSwitch />
             <Button size="sm" onClick={() => setCreating(true)}>
               <PlusIcon /> Add lead
             </Button>

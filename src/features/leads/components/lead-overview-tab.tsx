@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
-import { ClipboardCheckIcon } from 'lucide-react';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusDot } from '@/components/common/status-dot';
+import { LeadTaskList } from '@/features/tasks';
 import { useWorkspace } from '@/features/workspace';
 import { formatDate, formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { isTaskOverdue } from '@/types/domain';
-import { useLeadTasks } from '../hooks/use-lead-related';
 import type { LeadRow } from '../utils/lead-view-model';
 import { PRIORITY_COLOR, PRIORITY_LABEL } from '../utils/priority';
 
@@ -15,10 +13,6 @@ export function LeadOverviewTab({ row }: { row: LeadRow }) {
   const { lead, contact, owner } = row;
   const workspace = useWorkspace().data;
   const locale = workspace?.locale;
-  const tasks = useLeadTasks(lead.id).data ?? [];
-  const openTasks = tasks.filter(
-    (task) => task.status === 'pending' || task.status === 'in_progress',
-  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -76,37 +70,7 @@ export function LeadOverviewTab({ row }: { row: LeadRow }) {
 
       <section>
         <SectionTitle>Open tasks</SectionTitle>
-        {openTasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No open tasks.</p>
-        ) : (
-          <ul className="flex flex-col">
-            {openTasks.map((task) => {
-              const overdue = isTaskOverdue(task);
-              return (
-                <li
-                  key={task.id}
-                  className="flex items-center gap-2 border-b border-border-faint py-1.5 text-sm last:border-0"
-                >
-                  <ClipboardCheckIcon
-                    className={cn(
-                      'size-3.5 shrink-0',
-                      overdue ? 'text-destructive' : 'text-foreground-faint',
-                    )}
-                  />
-                  <span className="min-w-0 flex-1 truncate">{task.title}</span>
-                  <span
-                    className={cn(
-                      'shrink-0 text-xs',
-                      overdue ? 'font-semibold text-destructive' : 'text-foreground-faint',
-                    )}
-                  >
-                    {formatDate(task.dueAt, 'monthDay', locale)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <LeadTaskList leadId={lead.id} openOnly />
       </section>
     </div>
   );

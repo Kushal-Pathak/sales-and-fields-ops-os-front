@@ -1,20 +1,8 @@
-import { useEffect, useState } from 'react';
-import { ArrowUpDownIcon, ChevronDownIcon, SearchIcon, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
+import { FilterChip, SearchField, SortMenu } from '@/components/common/list-toolbar';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStages, useUsers, useWorkspace } from '@/features/workspace';
-import { cn } from '@/lib/utils';
 import type { Priority } from '@/types/domain';
 import {
   LEAD_SORT_KEYS,
@@ -22,7 +10,6 @@ import {
   LEAD_VIEWS,
   LEAD_VIEW_LABEL,
   type LeadFilters,
-  type LeadSortKey,
   type LeadView,
 } from '../utils/lead-filters';
 import { PRIORITIES, PRIORITY_LABEL } from '../utils/priority';
@@ -58,7 +45,7 @@ export function LeadsToolbar({ filters, counts, isActive, onChange, onClear }: L
         </TabsList>
       </Tabs>
 
-      <SearchField value={filters.q} onChange={(q) => onChange({ q })} />
+      <SearchField value={filters.q} onChange={(q) => onChange({ q })} placeholder="Search leads" />
 
       <FilterChip
         label="Stage"
@@ -95,118 +82,12 @@ export function LeadsToolbar({ filters, counts, isActive, onChange, onClear }: L
       )}
 
       <SortMenu
+        keys={LEAD_SORT_KEYS}
+        labels={LEAD_SORT_LABEL}
         sortKey={filters.sort.key}
         direction={filters.sort.direction}
         onChange={(sort) => onChange({ sort })}
       />
     </div>
-  );
-}
-
-const SEARCH_DEBOUNCE_MS = 200;
-
-function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  // `draft` is only set while the user types; `null` means "show what is in the URL".
-  const [draft, setDraft] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (draft === null) return;
-    const timer = setTimeout(() => {
-      onChange(draft);
-      setDraft(null);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [draft, onChange]);
-
-  return (
-    <InputGroup className="h-7 w-52 rounded-full bg-surface-2 has-[[data-slot=input-group-control]:focus-visible]:bg-background">
-      <InputGroupInput
-        type="search"
-        placeholder="Search leads"
-        aria-label="Search leads"
-        className="text-xs"
-        value={draft ?? value}
-        onChange={(event) => setDraft(event.target.value)}
-      />
-      <InputGroupAddon>
-        <SearchIcon className="size-3.5" />
-      </InputGroupAddon>
-    </InputGroup>
-  );
-}
-
-interface FilterChipProps {
-  label: string;
-  anyLabel: string;
-  value: string | null;
-  items: { value: string; label: string }[];
-  onChange: (value: string | null) => void;
-}
-
-/** A filter chip from the design system: `Field <b>value</b>`, backed by a `Select`. */
-function FilterChip({ label, anyLabel, value, items, onChange }: FilterChipProps) {
-  const selected = items.find((item) => item.value === value);
-  return (
-    <Select value={value} onValueChange={(next) => onChange(next)}>
-      <SelectTrigger
-        size="sm"
-        aria-label={`Filter by ${label.toLowerCase()}`}
-        className={cn(
-          'h-6 gap-1 rounded-full border-transparent bg-surface-2 px-2.5 text-xs text-muted-foreground hover:bg-accent',
-          selected && 'bg-accent text-foreground',
-        )}
-      >
-        {label} <b className="font-semibold text-foreground">{selected?.label ?? anyLabel}</b>
-      </SelectTrigger>
-      <SelectContent align="start">
-        <SelectItem value={null}>Any {label.toLowerCase()}</SelectItem>
-        {items.map((item) => (
-          <SelectItem key={item.value} value={item.value}>
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-interface SortMenuProps {
-  sortKey: LeadSortKey;
-  direction: 'asc' | 'desc';
-  onChange: (sort: { key: LeadSortKey; direction: 'asc' | 'desc' }) => void;
-}
-
-function SortMenu({ sortKey, direction, onChange }: SortMenuProps) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="ghost" size="xs" className="ml-auto text-muted-foreground" />}
-      >
-        <ArrowUpDownIcon />
-        {LEAD_SORT_LABEL[sortKey]}
-        <ChevronDownIcon />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={sortKey}
-          onValueChange={(key) => onChange({ key: key as LeadSortKey, direction })}
-        >
-          {LEAD_SORT_KEYS.map((key) => (
-            <DropdownMenuRadioItem key={key} value={key}>
-              {LEAD_SORT_LABEL[key]}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={direction}
-          onValueChange={(next) => onChange({ key: sortKey, direction: next as 'asc' | 'desc' })}
-        >
-          <DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
