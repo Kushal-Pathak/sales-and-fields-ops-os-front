@@ -85,7 +85,11 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/pages/calendar')).CalendarPage }),
       },
 
-      { path: 'inbox', handle: handle('Inbox', 'Communication'), lazy: comingSoon },
+      {
+        path: 'inbox',
+        handle: handle('Inbox', 'Communication'),
+        lazy: async () => ({ Component: (await import('@/pages/inbox')).InboxPage }),
+      },
 
       {
         path: 'team',

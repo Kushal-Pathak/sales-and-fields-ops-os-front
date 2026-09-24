@@ -189,7 +189,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 - **Dropzone**: `rounded-xl border-2 border-dashed border-border-strong p-5`, centred icon + `text-sm text-foreground-faint`; hover `border-input bg-muted`. File card: icon tile (`size-9 rounded-lg` soft fill) + name + faint meta + remove ×. Implemented in `features/lead-import/components/upload-step.tsx` as a `label` around a visually hidden file input, with drag-and-drop.
 - **Timeline**: 7 px coloured dot (status token) and a 1 px `border` line; text 12.5 px, meta 11 px faint below.
-- **Chat**: bubbles max 76–85 % wide; incoming `bg-surface-2 rounded-[3px_10px_10px_10px]`, outgoing `bg-whatsapp-soft rounded-[10px_3px_10px_10px]`; 11 px timestamps; composer is a `rounded-xl border-border-strong` box with chip buttons on top and send on the bottom-right.
+- **Chat**: bubbles max 76–85 % wide; incoming `bg-surface-2 rounded-[3px_10px_10px_10px]`, outgoing `bg-whatsapp-soft rounded-[10px_3px_10px_10px]`; 11 px timestamps; composer is a `rounded-xl border-border-strong` box with chip buttons on top and send on the bottom-right. Implemented as `MessageList` (day separators, transcript on `bg-surface-2/40`, incoming bubbles `bg-background`, outgoing `bg-whatsapp-soft` on WhatsApp and `bg-info-soft` elsewhere) and `Composer` (growing textarea, "Quick reply" chip, Enter sends) in `features/inbox/components/`; the 3-panel split is `Inbox` (list `w-[300px]`, thread, rail `w-[248px]` from `xl`), rows carry a channel icon badge on the avatar and a `bg-whatsapp` unread count.
 
 ### Empty, loading, error states
 
@@ -230,6 +230,7 @@ For later feature work; these are data, not tokens.
 - **Source**: Facebook `#1877f2` · WhatsApp `whatsapp` · Telecall sky · Website neutral · IndiaMART teal · Manual neutral (sources keep their brand colours as 6 px dots only).
 - **Priority**: High destructive · Medium warning · Low neutral.
 - **Task type**: Call info · Visit highlight · Quote warning · Follow-up sky · Install success · Measurement indigo · Payment destructive · General neutral.
+- **Channel** (ours): WhatsApp success (plus the `whatsapp` token for badges and Send) · SMS info · Email highlight · Web chat neutral; used as the avatar badge in the inbox list.
 - **Appointment status** (ours): Scheduled info · Completed success · Cancelled neutral · "Needs outcome" (scheduled but ended) warning. Appointment types (Meeting, Video call, Phone call, On-site visit) differ by icon, not colour; on the calendar every appointment is `highlight`.
 - **Task status**: Pending neutral · In Progress info · Overdue destructive · Completed success.
 - **Quote status**: Pending warning · Approved success · Sent info · Accepted success (deeper) · Rejected destructive · Draft warning. Implemented (`features/quotes/utils/quote-labels.ts`) as Draft neutral · Pending approval warning · Approved success · Rejected destructive · Sent info · Accepted success · Declined destructive, so Draft and Pending no longer look alike.

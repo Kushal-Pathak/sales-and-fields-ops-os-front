@@ -77,6 +77,16 @@ const CONVERSATIONS: [number, Channel, number, MessageRow[]][] = [
       ['inbound', 'Tomorrow afternoon, after 3pm.', 9],
     ],
   ],
+  [
+    17,
+    'chat',
+    1,
+    [
+      ['inbound', 'Does the check-in app work on tablets at the front desk?', 6],
+      ['outbound', 'Yes, on iPad and Android tablets. I can show you a demo this week.', 5],
+      ['inbound', 'Great. Which days are you free?', 1],
+    ],
+  ],
 ];
 
 export function buildConversations(

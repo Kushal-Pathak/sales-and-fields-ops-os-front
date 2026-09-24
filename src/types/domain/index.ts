@@ -1,5 +1,5 @@
 export type { BaseEntity, CreateInput, UpdateInput, StatusColor, Priority } from './base';
-export type { Workspace } from './workspace';
+export type { QuickReply, Workspace } from './workspace';
 export type { Permission, Role, User } from './user';
 export type { Contact } from './contact';
 export type { Pipeline, Stage, StageKind } from './pipeline';

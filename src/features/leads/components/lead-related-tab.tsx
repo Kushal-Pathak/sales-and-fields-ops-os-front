@@ -1,4 +1,5 @@
 import { LeadAppointmentList } from '@/features/appointments';
+import { LeadConversationPanel } from '@/features/inbox';
 import { LeadQuoteList } from '@/features/quotes';
 import { LeadTaskList } from '@/features/tasks';
 
@@ -14,4 +15,8 @@ export function LeadQuotesTab({ leadId }: { leadId: string }) {
 
 export function LeadAppointmentsTab({ leadId }: { leadId: string }) {
   return <LeadAppointmentList leadId={leadId} />;
+}
+
+export function LeadMessagesTab({ leadId }: { leadId: string }) {
+  return <LeadConversationPanel leadId={leadId} />;
 }

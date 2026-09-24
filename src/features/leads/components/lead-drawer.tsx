@@ -45,7 +45,12 @@ import { DeleteLeadDialog } from './delete-lead-dialog';
 import { LeadActivityTab } from './lead-activity-tab';
 import { LeadFormDialog } from './lead-form-dialog';
 import { LeadOverviewTab } from './lead-overview-tab';
-import { LeadAppointmentsTab, LeadQuotesTab, LeadTasksTab } from './lead-related-tab';
+import {
+  LeadAppointmentsTab,
+  LeadMessagesTab,
+  LeadQuotesTab,
+  LeadTasksTab,
+} from './lead-related-tab';
 
 interface LeadDrawerProps {
   /** The lead in the URL, or `null` when closed. */
@@ -59,6 +64,7 @@ const TABS = [
   { value: 'tasks', label: 'Tasks' },
   { value: 'quotes', label: 'Quotes' },
   { value: 'appointments', label: 'Appointments' },
+  { value: 'messages', label: 'Messages' },
 ] as const;
 
 /** The 464px lead detail panel. Opened by `?lead=<id>`; everything inside reads that id. */
@@ -244,6 +250,9 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
         </TabsContent>
         <TabsContent value="appointments">
           <LeadAppointmentsTab leadId={lead.id} />
+        </TabsContent>
+        <TabsContent value="messages">
+          <LeadMessagesTab leadId={lead.id} />
         </TabsContent>
       </DrawerBody>
 

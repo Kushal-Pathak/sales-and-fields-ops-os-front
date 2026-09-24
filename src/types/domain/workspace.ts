@@ -15,4 +15,13 @@ export interface Workspace extends BaseEntity {
   taxRatePct: number;
   /** Default terms and conditions prefilled into new quotes. */
   quoteTerms?: string;
+  /** Saved message templates for the inbox composer. */
+  quickReplies?: QuickReply[];
+}
+
+/** A message template; `{{name}}`, `{{company}}` and `{{owner}}` are filled in when used. */
+export interface QuickReply {
+  id: string;
+  title: string;
+  body: string;
 }

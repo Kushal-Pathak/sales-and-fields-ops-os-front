@@ -13,6 +13,28 @@ export function buildWorkspace(clock: Clock): Workspace[] {
       taxRatePct: 10,
       quoteTerms:
         '1. Prices are valid until the date shown on this quote.\n2. A 50% deposit confirms the order.\n3. The balance is due on delivery.',
+      quickReplies: [
+        {
+          id: 'qr-greeting',
+          title: 'Greeting',
+          body: 'Hi {{name}}, thanks for getting in touch with us. How can we help?',
+        },
+        {
+          id: 'qr-follow-up',
+          title: 'Follow-up',
+          body: 'Hi {{name}}, just checking in on our last conversation. Is there anything you need from us to move forward?',
+        },
+        {
+          id: 'qr-meeting',
+          title: 'Meeting confirmation',
+          body: 'Hi {{name}}, confirming our meeting. Let me know if the time no longer works. — {{owner}}',
+        },
+        {
+          id: 'qr-quote',
+          title: 'Quote sent',
+          body: 'Hi {{name}}, I have sent over the quote for {{company}}. Happy to walk you through it whenever suits.',
+        },
+      ],
       ...clock.stamp(400, 30),
     },
   ];
