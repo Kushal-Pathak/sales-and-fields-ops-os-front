@@ -116,7 +116,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 ### Cards and stat tiles
 
-- **Looks**: white, 1 px hairline, `rounded-xl`, 12 px padding, 13 px body. Hover on clickable cards: `muted` background + `shadow-card`. Stat tile: label `text-xs text-muted-foreground` → value `text-3xl font-bold` → sub `text-xs text-foreground-faint`.
+- **Looks**: white, 1 px hairline, `rounded-xl`, 12 px padding, 13 px body. Hover on clickable cards: `muted` background + `shadow-card`. Stat tile: label `text-xs text-muted-foreground` → value `text-3xl font-bold` → sub `text-xs text-foreground-faint`. Implemented as `StatTiles` in `features/dashboard/`; list panels with a header (icon, title, count, "View all") are `DashboardPanel` + `PanelRow`.
 - **Build with**: `Card size="sm"` (+ `CardHeader` / `CardTitle` / `CardContent`). Clickable: `className="cursor-pointer transition hover:bg-muted hover:shadow-card"`. Kanban card: `Card size="sm"` with a name row (`text-base font-semibold`), a description (`text-sm text-muted-foreground`), and a footer row separated by `border-t border-border-faint pt-2`.
 
 ### Tables

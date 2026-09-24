@@ -23,7 +23,11 @@ export const router = createBrowserRouter([
     ErrorBoundary: RootErrorBoundary,
     children: [
       { index: true, loader: () => redirect('/dashboard') },
-      { path: 'dashboard', handle: handle('Dashboard'), lazy: comingSoon },
+      {
+        path: 'dashboard',
+        handle: handle('Dashboard'),
+        lazy: async () => ({ Component: (await import('@/pages/dashboard')).DashboardPage }),
+      },
 
       {
         path: 'leads',
