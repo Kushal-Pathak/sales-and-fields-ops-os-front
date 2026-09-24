@@ -14,7 +14,9 @@ src/
 │   │   ├── index.tsx       # <Providers>: composes every app-wide provider
 │   │   ├── query-provider.tsx  # TanStack Query client
 │   │   ├── theme-provider.tsx  # dark/light/system, toggles `.dark` on <html>
-│   │   └── theme-context.ts
+│   │   ├── theme-context.ts
+│   │   ├── command-palette-provider.tsx  # palette open state + ⌘K shortcut
+│   │   └── command-palette-context.ts
 │   └── styles/
 │       ├── index.css       # Tailwind imports, @theme mapping, base layer
 │       └── tokens.css      # design tokens (colours, radius, font) — the only file to edit for look & feel
@@ -28,6 +30,8 @@ src/
 │   ├── collection.ts       # Collection<T> + local / http implementations
 │   ├── local-store.ts      # localStorage persistence, seed versioning, reset
 │   ├── query-keys.ts       # TanStack Query key factory
+│   ├── preferences.ts      # per-browser conveniences (recent palette queries)
+│   ├── assistant.ts        # POST /assistant/ask on the backend; the only AI call, never a model key
 │   └── seed/               # generic demo data, dates relative to now
 ├── features/
 │   ├── dashboard/          # stat tiles, pipeline strip, attention panels (pure buildDashboard model)
@@ -42,6 +46,7 @@ src/
 │   ├── inbox/              # conversations list, thread + composer, quick replies, LeadConversationPanel
 │   ├── custom-fields/      # field definitions per record type, inputs and read-only values for forms and drawers
 │   ├── automations/        # rules table + drawer, and the engine that runs rules from lead events
+│   └── command-palette/    # ⌘K palette: sections, record search, quick actions, local intents, assistant hand-off
 │   ├── team/               # members table + drawer, invite/edit, deactivate-with-reassign, roles + permissions
 │   └── pipeline-settings/  # stage list (sortable), stage drawer, delete-with-move, pipeline rename
 ├── hooks/
@@ -102,6 +107,7 @@ features/
 - `features/inbox/` owns conversations and messages on four channels (WhatsApp, SMS, email, web chat). The list follows the leads shape (URL filters, joined `ConversationRow` with the latest message); the open thread is `?c=<id>`. There is no messaging provider yet: sending stores an outbound `Message`, bumps the conversation, clears its unread count and logs a `message` activity on the lead; opening a thread clears `unreadCount` optimistically. Starting a conversation reuses the lead's existing thread on that channel. `LeadConversationPanel` is embedded in the lead drawer's Messages tab. When a provider exists, `useSendMessage` / `useStartConversation` call it and the inbound side arrives through the API.
 - `features/custom-fields/` owns `FieldDefinition` rows (`/settings/fields`: one sortable list per record type, a drawer to add or edit, delete keeps stored values). `CustomFieldInputs` renders a definition list as form controls over a `CustomValues` object, `validateValues` / `cleanValues` guard a save, and `CustomFieldValues` shows a record's values. The lead form and drawer use the lead and contact definitions; the appointment completion dialog asks the appointment ones and stores them in `outcome`.
 - `features/automations/` owns `Automation` rules and their `AutomationRun` log (`/settings/automations`). `engine/match.ts` decides which rules an `AutomationEvent` fires; `engine/run-automations.ts` executes their actions against `db` (tasks, stage and owner changes, a quick reply into the lead's thread on that channel, notes), writes a run per rule, bumps `lastRunAt` / `runCount` and logs an `automation` activity on the lead. It never re-enters itself, so a rule that moves a stage cannot cascade. Mutations raise events after their own write: `useCreateLead` and the import runner (`lead_created`), `applyLeadPatch` (`lead_stage_changed`), `useQuoteAction` (`quote_status_changed`), `useCompleteAppointment` (`appointment_completed`); they then invalidate `AUTOMATION_EFFECT_KEYS`. A backend replaces the engine and the hook points; the rule shape stays.
+- `features/command-palette/` is the ⌘K palette the shell mounts once. It reads every collection through the shared cache keys while open and derives everything with pure functions: `sectionCommands` from `app/navigation.ts`, `searchRecords` (leads, contacts, tasks, quotes, appointments, ranked prefix-first), `parseIntent` / `answerIntent` (overdue tasks, leads without a follow-up, today, hot leads, pending quotes, unread messages, "create a … task for <contact> <when>", "assign all hot leads to <member>"). Read-only answers render in the palette with links; the create-task intent prefills `TaskFormDialog`; the bulk assignment asks for confirmation and then runs `useBulkAssignLeads`. Anything unparsed becomes a question for the backend assistant (`data/assistant.ts`: `POST /assistant/ask` with `{ question, context: { route } }` → `{ answer }`), which is only attempted when `VITE_API_BASE_URL` is set. Recent queries persist per browser through `data/preferences.ts`.
 - `features/pipeline-settings/` owns the stages of the default pipeline: a sortable list, a drawer to create/edit, delete-with-move, and rename. Reads come from `features/workspace`; lead counts come from `features/leads`.
 
 ### `components/`

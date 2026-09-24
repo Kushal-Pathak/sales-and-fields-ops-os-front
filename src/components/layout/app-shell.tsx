@@ -1,9 +1,14 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { useRouteHandle } from '@/hooks/use-route-handle';
 import { env } from '@/lib/env';
 import { Sidebar } from './sidebar';
 import { TopBar } from './top-bar';
+
+// The palette pulls in several features' dialogs, so it loads as its own chunk.
+const CommandPalette = lazy(() =>
+  import('@/features/command-palette').then((module) => ({ default: module.CommandPalette })),
+);
 
 /**
  * Application frame: fixed-height sidebar + top bar, with the page as the only
@@ -26,6 +31,9 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <Suspense fallback={null}>
+        <CommandPalette />
+      </Suspense>
     </div>
   );
 }

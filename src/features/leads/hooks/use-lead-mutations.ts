@@ -155,6 +155,43 @@ export function useAddLeadNote() {
   });
 }
 
+/** Gives several leads a new owner at once, logging `reassigned` on each. */
+export function useBulkAssignLeads() {
+  const queryClient = useQueryClient();
+  const actorId = useCurrentUser().data?.id ?? null;
+
+  return useMutation({
+    mutationFn: async ({ leadIds, ownerId }: { leadIds: string[]; ownerId: string }) => {
+      const [users, leads] = await Promise.all([db.users.list(), db.leads.list()]);
+      const to = users.find((user) => user.id === ownerId);
+      if (!to) throw new Error('Member not found.');
+      const now = new Date().toISOString();
+      let changed = 0;
+      for (const id of leadIds) {
+        const lead = leads.find((row) => row.id === id);
+        if (!lead || lead.ownerId === to.id) continue;
+        const from = users.find((user) => user.id === lead.ownerId);
+        await db.leads.update(id, { ownerId: to.id, lastActivityAt: now });
+        await db.activities.create({
+          entityType: 'lead',
+          entityId: id,
+          kind: 'reassigned',
+          message: `Reassigned from ${from?.name ?? 'unassigned'} to ${to.name}`,
+          actorId,
+        });
+        changed += 1;
+      }
+      return { changed, owner: to };
+    },
+    onSuccess: () =>
+      Promise.all(
+        [queryKeys.leads.all, queryKeys.activities.all].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
+  });
+}
+
 /** Deletes a lead and everything that only makes sense with it: tasks, quotes, appointments, activity. */
 export function useDeleteLead() {
   const queryClient = useQueryClient();

@@ -172,7 +172,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 - **Dialog**: centred, `rounded-xl`, `p-4`, `shadow-overlay`, `overlay` scrim; title `text-lg font-bold`, description `text-sm text-muted-foreground`, footer buttons right-aligned. Confirmations for risky actions use a red-bordered card (`border-destructive/40 bg-danger-soft/40`) with "Yes, proceed" (`destructive` fill) and "Cancel".
 - **Command palette**: 556 px, `rounded-2xl`, opens on ⌘K / Ctrl-K, closes on Esc. Search row with a leading sparkle/search icon and an `Esc` `Kbd`; grouped lists ("Recent", "Suggested") with `text-2xs` uppercase headings; items 13 px with a leading icon; risky items show a red "Requires confirmation" sub-line.
-- **Build with**: `Dialog` family; `CommandDialog className="sm:max-w-[556px]"` + `CommandInput` + `CommandList` + `CommandGroup` + `CommandItem` + `CommandShortcut`; `Kbd` for shortcuts.
+- **Build with**: `Dialog` family; `CommandDialog className="sm:max-w-[556px]"` + `CommandInput` + `CommandList` + `CommandGroup` + `CommandItem` + `CommandShortcut`; `Kbd` for shortcuts. Implemented as `CommandPalette` in `features/command-palette/`: groups Recent · Suggested · Results · Ask · Go to · Quick actions, an answer panel under the input (title with count, up to five linked rows with status pills, an "Open list" primary button, Back), and the confirmation box for risky actions (`border-destructive/40 bg-danger-soft/40`, "Confirm action", `destructive` "Yes, proceed"). The top-bar "Ask AI ⌘K" chip opens it; below `sm` it is a search icon button.
 
 ### Menus, popovers, tooltips
 

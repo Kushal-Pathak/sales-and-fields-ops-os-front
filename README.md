@@ -47,7 +47,7 @@ src/
 │   ├── common/     # reusable app components (error boundary, theme toggle, …)
 │   └── layout/     # app shell / layout components
 ├── data/           # data access: db.<collection> services, local demo store + seed
-├── features/       # business functionality, one folder per feature (dashboard, workspace, contacts, leads, lead-import, tasks, quotes, appointments, calendar, inbox, team, pipeline-settings, custom-fields, automations)
+├── features/       # business functionality, one folder per feature (dashboard, workspace, contacts, leads, lead-import, tasks, quotes, appointments, calendar, inbox, team, pipeline-settings, custom-fields, automations, command-palette)
 ├── hooks/          # hooks shared across features
 ├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, dates.ts, csv.ts, utils.ts
 ├── pages/          # route components; thin, compose features
@@ -60,10 +60,10 @@ The project follows a feature-first architecture. See [`docs/ARCHITECTURE.md`](d
 
 Copy `.env.example` to `.env.local` and provide local values. Read them only through `src/lib/env.ts`, which fails fast on missing required values.
 
-| Variable            | Purpose                                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)                                                                                   |
-| `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /). Leave empty to run on local demo data, seeded and persisted in the browser |
+| Variable            | Purpose                                                                                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)                                                                                                                                                                                               |
+| `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /). Leave empty to run on local demo data, seeded and persisted in the browser. The command palette's assistant (`POST /assistant/ask`) also needs it; the browser never holds a model key |
 
 Never store secrets, credentials, private keys, or other sensitive values in `VITE_*` variables. They are bundled into client-side code.
 

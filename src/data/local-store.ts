@@ -66,6 +66,21 @@ export function writeRows<T extends BaseEntity>(collection: string, rows: T[]): 
   write(PREFIX + collection, JSON.stringify(rows));
 }
 
+/** A small per-browser preference (recent queries, …), kept outside the seeded collections. */
+export function readValue<T>(key: string): T | null {
+  const raw = read(`${PREFIX}pref:${key}`);
+  if (raw === null) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+export function writeValue(key: string, value: unknown): void {
+  write(`${PREFIX}pref:${key}`, JSON.stringify(value));
+}
+
 /** Writes the seed when nothing is stored yet or the stored seed version is stale. */
 export function ensureSeeded(buildSeed: () => SeedData): void {
   if (read(VERSION_KEY) === String(SEED_VERSION)) return;

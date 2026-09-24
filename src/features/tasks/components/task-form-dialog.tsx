@@ -40,6 +40,10 @@ interface TaskFormDialogProps {
   task?: Task | undefined;
   /** Lead preselected for a new task (from the lead drawer). */
   defaultLeadId?: string | undefined;
+  /** Prefills for a new task (from the command palette). */
+  defaultTitle?: string | undefined;
+  defaultType?: TaskType | undefined;
+  defaultDueAt?: string | undefined;
   onSaved?: (taskId: string) => void;
 }
 
@@ -49,6 +53,9 @@ export function TaskFormDialog({
   onOpenChange,
   task,
   defaultLeadId,
+  defaultTitle,
+  defaultType,
+  defaultDueAt,
   onSaved,
 }: TaskFormDialogProps) {
   return (
@@ -64,6 +71,7 @@ export function TaskFormDialog({
           <TaskForm
             task={task}
             defaultLeadId={defaultLeadId}
+            defaults={{ title: defaultTitle, type: defaultType, dueAt: defaultDueAt }}
             onCancel={() => onOpenChange(false)}
             onSaved={(id) => {
               onOpenChange(false);
@@ -85,14 +93,22 @@ function todayInput(): string {
   return toDateInput(new Date().toISOString());
 }
 
+interface TaskDefaults {
+  title?: string | undefined;
+  type?: TaskType | undefined;
+  dueAt?: string | undefined;
+}
+
 function TaskForm({
   task,
   defaultLeadId,
+  defaults,
   onCancel,
   onSaved,
 }: {
   task: Task | undefined;
   defaultLeadId: string | undefined;
+  defaults: TaskDefaults;
   onCancel: () => void;
   onSaved: (taskId: string) => void;
 }) {
@@ -104,14 +120,14 @@ function TaskForm({
 
   const initialLead =
     leadOptions.find((o) => o.lead.id === (task?.leadId ?? defaultLeadId)) ?? null;
-  const [title, setTitle] = useState(task?.title ?? '');
-  const [type, setType] = useState<TaskType>(task?.type ?? 'call');
+  const [title, setTitle] = useState(task?.title ?? defaults.title ?? '');
+  const [type, setType] = useState<TaskType>(task?.type ?? defaults.type ?? 'call');
   const [lead, setLead] = useState<LeadOption | null>(initialLead);
   const [assigneeId, setAssigneeId] = useState(
     task?.assigneeId ?? currentUser?.id ?? users[0]?.id ?? '',
   );
-  const [date, setDate] = useState(toDateInput(task?.dueAt) || todayInput());
-  const [time, setTime] = useState(toTimeInput(task?.dueAt));
+  const [date, setDate] = useState(toDateInput(task?.dueAt ?? defaults.dueAt) || todayInput());
+  const [time, setTime] = useState(toTimeInput(task?.dueAt ?? defaults.dueAt));
   const [priority, setPriority] = useState<Priority>(task?.priority ?? 'medium');
   const [description, setDescription] = useState(task?.description ?? '');
   const [errors, setErrors] = useState<{ title?: string; date?: string }>({});

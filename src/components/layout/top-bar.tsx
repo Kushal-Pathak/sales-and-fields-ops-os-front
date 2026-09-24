@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { MenuIcon } from 'lucide-react';
+import { MenuIcon, SearchIcon, SparklesIcon } from 'lucide-react';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useCommandPalette } from '@/hooks/use-command-palette';
 import { useRouteHandle } from '@/hooks/use-route-handle';
 import { env } from '@/lib/env';
 import { Sidebar } from './sidebar';
@@ -11,6 +13,7 @@ import { Sidebar } from './sidebar';
 /** 42px bar above the page: mobile menu, breadcrumb from the route `handle`, user tools. */
 export function TopBar() {
   const handle = useRouteHandle();
+  const { openPalette } = useCommandPalette();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -49,6 +52,23 @@ export function TopBar() {
       </nav>
 
       <div className="ml-auto flex items-center gap-1">
+        <Button
+          variant="ghost"
+          className="hidden h-7 gap-1.5 rounded-lg bg-surface-2 px-3 text-sm text-muted-foreground hover:bg-accent sm:inline-flex"
+          onClick={() => openPalette()}
+        >
+          <SparklesIcon className="size-3.5" /> Ask AI
+          <Kbd>⌘K</Kbd>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="sm:hidden"
+          aria-label="Search or ask"
+          onClick={() => openPalette()}
+        >
+          <SearchIcon />
+        </Button>
         <ThemeToggle />
         <Avatar size="sm">
           <AvatarFallback className="bg-warning-soft text-2xs font-bold text-warning">
