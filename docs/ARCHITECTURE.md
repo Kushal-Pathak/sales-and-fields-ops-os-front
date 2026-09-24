@@ -22,7 +22,7 @@ src/
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives, added via the CLI
 │   ├── common/             # RootErrorBoundary, ThemeToggle, StatusBadge/StatusDot, InitialsAvatar, EmptyState
-│   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel
+│   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel, SettingsNav
 ├── data/
 │   ├── index.ts            # `db`: one Collection per entity (local demo store or REST, by env)
 │   ├── collection.ts       # Collection<T> + local / http implementations
@@ -32,7 +32,8 @@ src/
 ├── features/
 │   ├── workspace/          # reference data hooks: useWorkspace, useUsers, useStages, useCurrentUser
 │   ├── contacts/           # useContacts, useCreateContact
-│   └── leads/              # leads list (URL filters, table) + lead drawer, form, mutations
+│   ├── leads/              # leads list + pipeline board (shared URL filters), lead drawer, form, mutations
+│   └── pipeline-settings/  # stage list (sortable), stage drawer, delete-with-move, pipeline rename
 ├── hooks/
 ├── lib/
 │   ├── env.ts              # validated access to VITE_* variables
@@ -78,7 +79,8 @@ features/
 
 - Feature-specific code stays inside its feature. Promote to a shared folder only when it is genuinely reused.
 - Features must not import another feature's internals. Import from its `index.ts`, or move the shared piece to `components/`, `hooks/`, `lib/` or `types/`.
-- `features/workspace/` holds the reference data every screen needs (workspace, users, pipelines/stages) and `useCurrentUser`, the stand-in for a signed-in user until auth exists. `features/contacts/` owns contacts. `features/leads/` is the reference implementation of a list + drawer screen: list state in the URL (`use-lead-filters.ts`), a joined `LeadRow` view model with pure `filterLeads` / `sortLeads`, and mutations that also write `Activity` rows.
+- `features/workspace/` holds the reference data every screen needs (workspace, users, pipelines/stages) and `useCurrentUser`, the stand-in for a signed-in user until auth exists. `features/contacts/` owns contacts. `features/leads/` is the reference implementation of a list + drawer screen: list state in the URL (`use-lead-filters.ts`), a joined `LeadRow` view model with pure `filterLeads` / `sortLeads`, and mutations that also write `Activity` rows. The pipeline board (`/leads/pipeline`) is the same feature and the same `useLeadsList()` rows grouped by stage (`utils/board.ts`); `ViewSwitch` moves between table and board keeping the query string.
+- `features/pipeline-settings/` owns the stages of the default pipeline: a sortable list, a drawer to create/edit, delete-with-move, and rename. Reads come from `features/workspace`; lead counts come from `features/leads`.
 
 ### `components/`
 

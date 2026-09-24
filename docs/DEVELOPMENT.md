@@ -58,6 +58,8 @@ With `VITE_API_BASE_URL` empty the app runs on local demo data. It is seeded on 
 - **Reading or changing data** — a hook inside the feature (`features/<name>/hooks/use-<thing>.ts`) built on `useQuery` / `useMutation` with `db.<collection>` and `queryKeys` from `@/data`; invalidate `queryKeys.<collection>.all` after a mutation. Handle loading, empty and error states in the component from what the hook returns.
 - **An entity field** — add it to the type in `src/types/domain/`, to the seed under `src/data/seed/`, and bump `SEED_VERSION`.
 - **A list + drawer screen** — copy the shape of `src/features/leads/`: a `use-<name>-filters.ts` hook for URL state, a `utils/<name>-view-model.ts` with pure join/filter/sort functions (tested), a table component with skeleton/empty/error states, and a drawer opened via `useDrawerParam`. The page in `src/pages/<name>/` only composes them.
+- **A settings section** — a feature under `src/features/<name>-settings/`, a page under `src/pages/settings/<name>/` that renders `SettingsNav` in its `PageHeader`, a route under `settings/` in `router.tsx`, and an entry in `SettingsNav` and the `/settings` cards. Follow `pipeline-settings`.
+- **Drag and drop** — `@dnd-kit`; see `pipeline-board.tsx` (items between containers) and `stage-list.tsx` (sortable list). Keep the pointer activation distance so clicks still work, and write announcements.
 - **A test** — colocate `thing.test.ts` next to `thing.ts`; run with `npm run test`.
 
 ## Secrets

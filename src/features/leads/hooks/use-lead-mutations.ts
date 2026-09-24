@@ -50,31 +50,70 @@ export interface UpdateLeadInput {
   patch: UpdateInput<Lead>;
 }
 
+/** Applies a patch, bumps `lastActivityAt`, and logs a stage change when there is one. */
+async function applyLeadPatch(
+  { id, patch }: UpdateLeadInput,
+  actorId: string | null,
+): Promise<Lead> {
+  const before = await db.leads.get(id);
+  const after = await db.leads.update(id, {
+    ...patch,
+    lastActivityAt: new Date().toISOString(),
+  });
+  if (patch.stageId && patch.stageId !== before.stageId) {
+    const stage = await db.stages.get(patch.stageId);
+    await db.activities.create({
+      entityType: 'lead',
+      entityId: id,
+      kind: 'stage_changed',
+      message: `Stage moved to ${stage.name}`,
+      actorId,
+    });
+  }
+  return after;
+}
+
 export function useUpdateLead() {
   const queryClient = useQueryClient();
   const actorId = useCurrentUser().data?.id ?? null;
 
   return useMutation({
-    mutationFn: async ({ id, patch }: UpdateLeadInput): Promise<Lead> => {
-      const before = await db.leads.get(id);
-      const after = await db.leads.update(id, {
-        ...patch,
-        lastActivityAt: new Date().toISOString(),
-      });
-      if (patch.stageId && patch.stageId !== before.stageId) {
-        const stage = await db.stages.get(patch.stageId);
-        await db.activities.create({
-          entityType: 'lead',
-          entityId: id,
-          kind: 'stage_changed',
-          message: `Stage moved to ${stage.name}`,
-          actorId,
-        });
-      }
-      return after;
-    },
+    mutationFn: (input: UpdateLeadInput) => applyLeadPatch(input, actorId),
     onSuccess: (lead) => {
       queryClient.setQueryData(queryKeys.leads.detail(lead.id), lead);
+      return Promise.all(
+        [queryKeys.leads.all, queryKeys.activities.all].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      );
+    },
+  });
+}
+
+/**
+ * Stage change from the board: the list cache is updated before the request so the
+ * card settles in its new column immediately, and restored if the request fails.
+ */
+export function useMoveLeadStage() {
+  const queryClient = useQueryClient();
+  const actorId = useCurrentUser().data?.id ?? null;
+
+  return useMutation({
+    mutationFn: ({ id, stageId }: { id: string; stageId: string }) =>
+      applyLeadPatch({ id, patch: { stageId } }, actorId),
+    onMutate: async ({ id, stageId }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.leads.list() });
+      const previous = queryClient.getQueryData<Lead[]>(queryKeys.leads.list());
+      queryClient.setQueryData<Lead[]>(queryKeys.leads.list(), (rows) =>
+        rows?.map((row) => (row.id === id ? { ...row, stageId } : row)),
+      );
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKeys.leads.list(), context.previous);
+    },
+    onSettled: (lead) => {
+      if (lead) queryClient.setQueryData(queryKeys.leads.detail(lead.id), lead);
       return Promise.all(
         [queryKeys.leads.all, queryKeys.activities.all].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey }),

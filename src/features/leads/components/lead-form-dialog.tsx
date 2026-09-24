@@ -42,10 +42,18 @@ interface LeadFormDialogProps {
   lead?: Lead;
   /** Called with the saved lead's id after a create or edit succeeds. */
   onSaved?: (leadId: string) => void;
+  /** Stage preselected for a new lead (e.g. from a board column). */
+  defaultStageId?: string | undefined;
 }
 
 /** Create or edit a lead. Reset by remounting: the dialog content is keyed on `open`. */
-export function LeadFormDialog({ open, onOpenChange, lead, onSaved }: LeadFormDialogProps) {
+export function LeadFormDialog({
+  open,
+  onOpenChange,
+  lead,
+  onSaved,
+  defaultStageId,
+}: LeadFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -58,6 +66,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, onSaved }: LeadFormDi
         {open && (
           <LeadForm
             lead={lead}
+            defaultStageId={defaultStageId}
             onCancel={() => onOpenChange(false)}
             onSaved={(id) => {
               onOpenChange(false);
@@ -109,10 +118,12 @@ function fromDateInput(value: string): string | undefined {
 
 function LeadForm({
   lead,
+  defaultStageId,
   onCancel,
   onSaved,
 }: {
   lead: Lead | undefined;
+  defaultStageId: string | undefined;
   onCancel: () => void;
   onSaved: (leadId: string) => void;
 }) {
@@ -125,7 +136,10 @@ function LeadForm({
   const updateLead = useUpdateLead();
 
   const sources = workspace?.leadSources ?? [];
-  const defaultStage = stages.find((stage) => stage.kind === 'open') ?? stages[0];
+  const defaultStage =
+    stages.find((stage) => stage.id === defaultStageId) ??
+    stages.find((stage) => stage.kind === 'open') ??
+    stages[0];
 
   const [form, setForm] = useState<FormState>(() => ({
     contact: null,

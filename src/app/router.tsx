@@ -30,7 +30,11 @@ export const router = createBrowserRouter([
         handle: handle('Leads', 'Sales'),
         lazy: async () => ({ Component: (await import('@/pages/leads')).LeadsPage }),
       },
-      { path: 'leads/pipeline', handle: handle('Pipeline', 'Sales'), lazy: comingSoon },
+      {
+        path: 'leads/pipeline',
+        handle: handle('Pipeline', 'Sales'),
+        lazy: async () => ({ Component: (await import('@/pages/pipeline')).PipelinePage }),
+      },
       { path: 'quotes', handle: handle('Quotes', 'Sales'), lazy: comingSoon },
 
       { path: 'tasks', handle: handle('Tasks', 'Work'), lazy: comingSoon },
@@ -40,11 +44,17 @@ export const router = createBrowserRouter([
       { path: 'inbox', handle: handle('Inbox', 'Communication'), lazy: comingSoon },
 
       { path: 'team', handle: handle('Team', 'Admin'), lazy: comingSoon },
-      { path: 'settings', handle: handle('Settings', 'Admin'), lazy: comingSoon },
+      {
+        path: 'settings',
+        handle: handle('Settings', 'Admin'),
+        lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
+      },
       {
         path: 'settings/pipeline',
         handle: handle('Pipeline stages', 'Settings'),
-        lazy: comingSoon,
+        lazy: async () => ({
+          Component: (await import('@/pages/settings/pipeline')).PipelineSettingsPage,
+        }),
       },
       { path: 'settings/fields', handle: handle('Custom fields', 'Settings'), lazy: comingSoon },
       {

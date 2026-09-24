@@ -8,6 +8,7 @@ import {
   LeadsTable,
   LeadsToolbar,
   useLeadsList,
+  ViewSwitch,
 } from '@/features/leads';
 import { useDrawerParam } from '@/hooks/use-drawer-param';
 
@@ -23,9 +24,12 @@ export function LeadsPage() {
         title="Leads"
         count={list.rows && `${list.rows.length} lead${list.rows.length === 1 ? '' : 's'}`}
         actions={
-          <Button size="sm" onClick={() => setCreating(true)}>
-            <PlusIcon /> Add lead
-          </Button>
+          <>
+            <ViewSwitch />
+            <Button size="sm" onClick={() => setCreating(true)}>
+              <PlusIcon /> Add lead
+            </Button>
+          </>
         }
       >
         <LeadsToolbar
