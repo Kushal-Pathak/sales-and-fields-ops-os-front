@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { resetDemoData } from '@/data';
+import { db, resetDemoData } from '@/data';
 import { buildSeed } from '@/data/seed';
 import { LeadsPage } from './index';
 
@@ -60,6 +60,27 @@ describe('LeadsPage', () => {
     await waitFor(() => expect(router.state.location.search).toContain(`lead=${firstLead.id}`));
     const dialog = await screen.findByRole('dialog');
     expect(await within(dialog).findByText(firstLead.title, { exact: false })).toBeInTheDocument();
+  });
+
+  it('shows custom field values in the overview and asks for them in the form', async () => {
+    const user = userEvent.setup();
+    renderLeadsPage(`/leads?lead=${firstLead.id}`);
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('Decision timeline')).toBeInTheDocument();
+    expect(within(dialog).getByText('This quarter')).toBeInTheDocument();
+    expect(within(dialog).getByText('Dental association newsletter')).toBeInTheDocument();
+    expect(within(dialog).getByText('Preferred contact time')).toBeInTheDocument();
+
+    await user.click(within(dialog).getAllByRole('button', { name: 'Edit' })[0]!);
+    const form = await screen.findByRole('dialog', { name: 'Edit lead' });
+    const referred = within(form).getByLabelText('Referred by');
+    expect(referred).toHaveValue('Dental association newsletter');
+    await user.clear(referred);
+    await user.type(referred, 'Conference');
+    await user.click(within(form).getByRole('button', { name: 'Save changes' }));
+    await waitFor(async () => {
+      expect((await db.leads.get(firstLead.id)).custom?.referredBy).toBe('Conference');
+    });
   });
 
   it('adds a note to the activity tab', async () => {

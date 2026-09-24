@@ -17,14 +17,12 @@ const SECTIONS: { title: string; hint: string; to: string; icon: LucideIcon; soo
     hint: 'Extra fields on leads, contacts and appointments.',
     to: '/settings/fields',
     icon: SlidersHorizontalIcon,
-    soon: true,
   },
   {
     title: 'Automations',
     hint: 'Rules that assign, create tasks or notify when things happen.',
     to: '/settings/automations',
     icon: ZapIcon,
-    soon: true,
   },
 ];
 

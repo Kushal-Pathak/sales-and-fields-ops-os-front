@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
+import { AUTOMATION_EFFECT_KEYS, runAutomations } from '@/features/automations';
 import { useCurrentUser } from '@/features/workspace';
 import type { CreateInput, Quote, UpdateInput } from '@/types/domain';
 import { nextQuoteNumber, type QuoteDraftInput } from '../utils/quote-draft';
@@ -135,11 +136,13 @@ export function useQuoteAction() {
         `Quote ${quote.number} ${QUOTE_ACTION_DONE[action]}`,
         action === 'send' ? 'quote_sent' : 'quote_status',
       );
+      const lead = await db.leads.get(quote.leadId);
+      await runAutomations({ type: 'quote_status_changed', lead, quote }, actorId);
       return quote;
     },
     onSuccess: (quote) => {
       queryClient.setQueryData(queryKeys.quotes.detail(quote.id), quote);
-      return invalidate(...AFFECTED);
+      return invalidate(...AFFECTED, ...AUTOMATION_EFFECT_KEYS);
     },
   });
 }

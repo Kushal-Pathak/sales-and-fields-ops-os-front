@@ -61,6 +61,22 @@ describe('buildSeed', () => {
     for (const message of seed.messages) {
       expect(conversations.has(message.conversationId), message.id).toBe(true);
     }
+    for (const automation of seed.automations) {
+      expect(users.has(automation.createdById), automation.id).toBe(true);
+      expect(automation.actions.length, automation.id).toBeGreaterThan(0);
+    }
+    const automations = ids(seed.automations);
+    for (const run of seed.automationRuns) {
+      expect(automations.has(run.automationId), run.id).toBe(true);
+      expect(leads.has(run.leadId), run.id).toBe(true);
+    }
+    const fieldKeys = new Set(seed.fields.map((f) => `${f.entity}:${f.key}`));
+    expect(fieldKeys.size).toBe(seed.fields.length);
+    for (const lead of seed.leads) {
+      for (const key of Object.keys(lead.custom ?? {})) {
+        expect(fieldKeys.has(`lead:${key}`), `${lead.id}.${key}`).toBe(true);
+      }
+    }
   });
 
   it('has exactly one default pipeline with uniquely ordered stages', () => {

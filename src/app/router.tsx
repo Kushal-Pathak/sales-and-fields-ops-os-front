@@ -6,12 +6,8 @@ import type { RouteHandle } from '@/types/route-handle';
 /**
  * Route table. Pages are code-split with `lazy`; add a route here when you add a page.
  * Every page route declares a `handle` (title + breadcrumb group) and its path must match
- * the sidebar entry in `src/app/navigation.ts`. Unbuilt sections render `ComingSoonPage`.
+ * the sidebar entry in `src/app/navigation.ts`.
  */
-const comingSoon = async () => ({
-  Component: (await import('@/pages/coming-soon')).ComingSoonPage,
-});
-
 function handle(title: string, group?: string): RouteHandle {
   return group ? { title, group } : { title };
 }
@@ -113,11 +109,19 @@ export const router = createBrowserRouter([
           Component: (await import('@/pages/settings/pipeline')).PipelineSettingsPage,
         }),
       },
-      { path: 'settings/fields', handle: handle('Custom fields', 'Settings'), lazy: comingSoon },
+      {
+        path: 'settings/fields',
+        handle: handle('Custom fields', 'Settings'),
+        lazy: async () => ({
+          Component: (await import('@/pages/settings/fields')).FieldsSettingsPage,
+        }),
+      },
       {
         path: 'settings/automations',
         handle: handle('Automations', 'Settings'),
-        lazy: comingSoon,
+        lazy: async () => ({
+          Component: (await import('@/pages/settings/automations')).AutomationsSettingsPage,
+        }),
       },
 
       // Dev-only style guide for the design system; tree-shaken out of production builds.

@@ -7,7 +7,7 @@ import type { BaseEntity } from '@/types/domain';
  */
 const PREFIX = 'pilot-crm:';
 const VERSION_KEY = `${PREFIX}seed-version`;
-export const SEED_VERSION = 6;
+export const SEED_VERSION = 7;
 
 export type SeedData = Record<string, BaseEntity[]>;
 

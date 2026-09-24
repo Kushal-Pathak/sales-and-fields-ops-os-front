@@ -14,7 +14,7 @@ import { useWorkspace } from '@/features/workspace';
 import { cn } from '@/lib/utils';
 import type { Channel } from '@/types/domain';
 import { CHANNEL_LABEL, isWhatsApp } from '../utils/inbox-labels';
-import { fillTemplate, type TemplateContext } from '../utils/quick-replies';
+import { fillTemplate, type TemplateContext } from '@/lib/templates';
 
 interface ComposerProps {
   channel: Channel;

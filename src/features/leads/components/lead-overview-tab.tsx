@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusDot } from '@/components/common/status-dot';
+import { CustomFieldValues } from '@/features/custom-fields';
 import { LeadTaskList } from '@/features/tasks';
 import { useWorkspace } from '@/features/workspace';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -60,6 +61,9 @@ export function LeadOverviewTab({ row }: { row: LeadRow }) {
         </Field>
         <Field label="Created">{formatDate(lead.createdAt, 'date', locale)}</Field>
       </dl>
+
+      <CustomFieldValues entity="lead" values={lead.custom} title="Details" />
+      <CustomFieldValues entity="contact" values={contact?.custom} title="Contact details" />
 
       {lead.notes && (
         <section>

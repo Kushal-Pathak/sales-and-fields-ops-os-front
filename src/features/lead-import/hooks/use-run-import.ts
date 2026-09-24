@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
+import { AUTOMATION_EFFECT_KEYS, runAutomations } from '@/features/automations';
 import type { Contact, UpdateInput } from '@/types/domain';
 import type { ImportPlan, ImportSettings } from '../utils/import-plan';
 import type { ParsedRow } from '../utils/import-validation';
@@ -138,6 +139,7 @@ export function useRunImport() {
             });
             result.tasksCreated += 1;
           }
+          await runAutomations({ type: 'lead_created', lead }, actorId);
         } catch (error) {
           result.failed += 1;
           result.skippedRows.push({
@@ -151,12 +153,9 @@ export function useRunImport() {
     },
     onSettled: () =>
       Promise.all(
-        [
-          queryKeys.leads.all,
-          queryKeys.contacts.all,
-          queryKeys.tasks.all,
-          queryKeys.activities.all,
-        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        [queryKeys.contacts.all, ...AUTOMATION_EFFECT_KEYS].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
       ),
   });
 

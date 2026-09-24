@@ -12,3 +12,12 @@ export type { Quote, QuoteLineItem, QuoteStatus, QuoteTotals } from './quote';
 export { quoteTotals } from './quote';
 export type { Activity, ActivityEntityType, ActivityKind } from './activity';
 export type { Channel, Conversation, Message } from './conversation';
+export type { CustomValues, FieldDefinition, FieldEntity, FieldType, FieldValue } from './field';
+export type {
+  Automation,
+  AutomationAction,
+  AutomationActionType,
+  AutomationRun,
+  AutomationTrigger,
+  AutomationTriggerType,
+} from './automation';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fillTemplate } from './quick-replies';
+import { fillTemplate } from './templates';
 
 describe('quick replies', () => {
   it('fills placeholders with the first name, company and owner', () => {

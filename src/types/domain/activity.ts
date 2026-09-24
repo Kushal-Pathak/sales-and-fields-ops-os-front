@@ -14,6 +14,7 @@ export type ActivityKind =
   | 'appointment_scheduled'
   | 'appointment_completed'
   | 'appointment_cancelled'
+  | 'automation'
   | 'reassigned';
 
 /** One line in an entity's timeline. `createdAt` is when it happened. */

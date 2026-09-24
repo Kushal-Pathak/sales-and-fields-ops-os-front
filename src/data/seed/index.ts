@@ -1,8 +1,11 @@
 import type {
   Activity,
   Appointment,
+  Automation,
+  AutomationRun,
   Contact,
   Conversation,
+  FieldDefinition,
   Lead,
   Message,
   Pipeline,
@@ -15,8 +18,10 @@ import type {
 } from '@/types/domain';
 import { buildActivities } from './activities';
 import { buildAppointments } from './appointments';
+import { buildAutomations } from './automations';
 import { buildContacts } from './contacts';
 import { buildConversations } from './conversations';
+import { buildFields, withCustomValues } from './fields';
 import { createClock } from './helpers';
 import { buildLeads } from './leads';
 import { buildPipelines, buildStages } from './pipelines';
@@ -40,6 +45,9 @@ export type Seed = {
   activities: Activity[];
   conversations: Conversation[];
   messages: Message[];
+  fields: FieldDefinition[];
+  automations: Automation[];
+  automationRuns: AutomationRun[];
 };
 
 /**
@@ -51,15 +59,19 @@ export function buildSeed(now: Date = new Date()): Seed {
   const workspace = buildWorkspace(clock);
   const roles = buildRoles(clock);
   const users = buildUsers(clock);
-  const contacts = buildContacts(clock);
   const pipelines = buildPipelines(clock);
   const stages = buildStages(clock);
-  const leads = buildLeads(clock, { contacts, stages, users });
+  const fields = buildFields(clock);
+  const { leads, contacts } = withCustomValues(
+    buildLeads(clock, { contacts: buildContacts(clock), stages, users }),
+    buildContacts(clock),
+  );
   const tasks = buildTasks(clock, { leads, users });
   const appointments = buildAppointments(clock, { leads, users });
   const quotes = buildQuotes(clock, { leads, users, workspace: workspace[0]! });
   const activities = buildActivities(clock, { leads, stages, tasks, quotes, appointments });
   const { conversations, messages } = buildConversations(clock, { leads });
+  const { automations, automationRuns } = buildAutomations(clock, { stages, users, leads });
 
   return {
     workspace,
@@ -75,5 +87,8 @@ export function buildSeed(now: Date = new Date()): Seed {
     activities,
     conversations,
     messages,
+    fields,
+    automations,
+    automationRuns,
   };
 }

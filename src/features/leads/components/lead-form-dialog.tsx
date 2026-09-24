@@ -29,10 +29,24 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useContacts } from '@/features/contacts';
+import {
+  cleanValues,
+  CustomFieldInputs,
+  useFieldDefinitions,
+  validateValues,
+  type FieldErrors,
+} from '@/features/custom-fields';
 import { useCurrentUser, useStages, useUsers, useWorkspace } from '@/features/workspace';
 import { toDateInput } from '@/lib/dates';
 import { currencySymbol } from '@/lib/format';
-import type { Contact, CreateInput, Lead, Priority, UpdateInput } from '@/types/domain';
+import type {
+  Contact,
+  CreateInput,
+  CustomValues,
+  Lead,
+  Priority,
+  UpdateInput,
+} from '@/types/domain';
 import { useCreateLead, useUpdateLead } from '../hooks/use-lead-mutations';
 import { PRIORITIES, PRIORITY_LABEL } from '../utils/priority';
 
@@ -96,9 +110,14 @@ interface FormState {
   nextAction: string;
   nextActionAt: string;
   notes: string;
+  custom: CustomValues;
+  contactCustom: CustomValues;
 }
 
-type FormErrors = Partial<Record<'contact' | 'title' | 'value', string>>;
+type FormErrors = Partial<Record<'contact' | 'title' | 'value', string>> & {
+  custom?: FieldErrors;
+  contactCustom?: FieldErrors;
+};
 
 const HOUR_OF_NEXT_ACTION = 9;
 
@@ -125,6 +144,8 @@ function LeadForm({
   const users = (useUsers().data ?? []).filter((user) => user.active);
   const stages = useStages().data ?? [];
   const currentUser = useCurrentUser().data;
+  const leadFields = useFieldDefinitions('lead').data ?? [];
+  const contactFields = useFieldDefinitions('contact').data ?? [];
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
 
@@ -150,6 +171,8 @@ function LeadForm({
     nextAction: lead?.nextAction ?? '',
     nextActionAt: toDateInput(lead?.nextActionAt),
     notes: lead?.notes ?? '',
+    custom: { ...(lead?.custom ?? {}) },
+    contactCustom: {},
   }));
   const [errors, setErrors] = useState<FormErrors>({});
   const patch = (changes: Partial<FormState>) => setForm((prev) => ({ ...prev, ...changes }));
@@ -165,8 +188,29 @@ function LeadForm({
     }
     if (!form.title.trim()) next.title = 'Enter what this lead is about.';
     if (form.value.trim() && !(Number(form.value) >= 0)) next.value = 'Enter a positive amount.';
+    const customErrors = validateValues(leadFields, form.custom);
+    if (Object.keys(customErrors).length > 0) next.custom = customErrors;
+    if (!lead && form.newContact) {
+      const contactErrors = validateValues(contactFields, form.contactCustom);
+      if (Object.keys(contactErrors).length > 0) next.contactCustom = contactErrors;
+    }
     return next;
   };
+
+  const setCustom = (key: string, value: CustomValues[string] | undefined) =>
+    setForm((prev) => {
+      const custom = { ...prev.custom };
+      if (value === undefined) delete custom[key];
+      else custom[key] = value;
+      return { ...prev, custom };
+    });
+  const setContactCustom = (key: string, value: CustomValues[string] | undefined) =>
+    setForm((prev) => {
+      const contactCustom = { ...prev.contactCustom };
+      if (value === undefined) delete contactCustom[key];
+      else contactCustom[key] = value;
+      return { ...prev, contactCustom };
+    });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -179,6 +223,8 @@ function LeadForm({
     const nextActionAt = fromDateInput(form.nextActionAt);
     const notes = form.notes.trim() || undefined;
     const stage = stages.find((item) => item.id === form.stageId);
+    const custom = cleanValues(leadFields, form.custom);
+    const contactCustom = cleanValues(contactFields, form.contactCustom);
 
     if (lead) {
       const changes: UpdateInput<Lead> = {
@@ -191,6 +237,7 @@ function LeadForm({
         nextAction,
         nextActionAt,
         notes,
+        custom: Object.keys(custom).length > 0 ? custom : undefined,
       };
       updateLead.mutate(
         { id: lead.id, patch: changes },
@@ -205,6 +252,7 @@ function LeadForm({
           ...(form.contactPhone.trim() && { phone: form.contactPhone.trim() }),
           ...(form.contactEmail.trim() && { email: form.contactEmail.trim() }),
           ...(form.contactCompany.trim() && { company: form.contactCompany.trim() }),
+          ...(Object.keys(contactCustom).length > 0 && { custom: contactCustom }),
         }
       : { id: form.contact?.id ?? '' };
 
@@ -222,6 +270,7 @@ function LeadForm({
           ...(nextAction && { nextAction }),
           ...(nextActionAt && { nextActionAt }),
           ...(notes && { notes }),
+          ...(Object.keys(custom).length > 0 && { custom }),
         },
       },
       { onSuccess: (saved) => onSaved(saved.id) },
@@ -320,6 +369,15 @@ function LeadForm({
                   />
                 </Field>
               </div>
+            )}
+            {form.newContact && (
+              <CustomFieldInputs
+                fields={contactFields}
+                values={form.contactCustom}
+                errors={errors.contactCustom}
+                onChange={setContactCustom}
+                idPrefix="lead-contact-custom"
+              />
             )}
           </>
         )}
@@ -456,6 +514,14 @@ function LeadForm({
             onChange={(event) => patch({ nextAction: event.target.value })}
           />
         </Field>
+
+        <CustomFieldInputs
+          fields={leadFields}
+          values={form.custom}
+          errors={errors.custom}
+          onChange={setCustom}
+          idPrefix="lead-custom"
+        />
 
         <Field>
           <FieldLabel htmlFor="lead-notes">Notes</FieldLabel>

@@ -50,13 +50,21 @@ describe('AppointmentsPage', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Mark completed' }));
 
     const dialog = await screen.findByRole('dialog', { name: 'Mark as completed' });
+    // The required custom outcome field blocks completion until it is answered.
+    await user.click(within(dialog).getByRole('button', { name: 'Mark completed' }));
+    expect(await within(dialog).findByText('Timeline is required.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('combobox', { name: /Timeline/ }));
+    await user.click(await screen.findByRole('option', { name: 'This quarter' }));
+    await user.click(within(dialog).getByRole('checkbox', { name: /Budget confirmed/ }));
     await user.type(within(dialog).getByLabelText('Outcome notes'), 'Agreed on scope.');
     await user.click(within(dialog).getByRole('button', { name: 'Mark completed' }));
 
     await waitFor(async () => {
       expect((await db.appointments.get(appointment.id)).status).toBe('completed');
     });
-    expect((await db.appointments.get(appointment.id)).notes).toBe('Agreed on scope.');
+    const completed = await db.appointments.get(appointment.id);
+    expect(completed.notes).toBe('Agreed on scope.');
+    expect(completed.outcome).toEqual({ timeline: 'This quarter', budgetConfirmed: true });
     const activities = await db.activities.list();
     expect(
       activities.some(

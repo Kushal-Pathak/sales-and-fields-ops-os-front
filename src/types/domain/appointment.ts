@@ -1,4 +1,5 @@
 import type { BaseEntity } from './base';
+import type { CustomValues } from './field';
 
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled';
 
@@ -15,8 +16,8 @@ export interface Appointment extends BaseEntity {
   location?: string;
   status: AppointmentStatus;
   notes?: string;
-  /** Answers captured on completion; keys come from custom field definitions later. */
-  outcome?: Record<string, string | number | boolean>;
+  /** Answers captured on completion, keyed by the workspace's appointment field definitions. */
+  outcome?: CustomValues;
 }
 
 /** Still `scheduled` after it ended: the outcome has not been recorded. */

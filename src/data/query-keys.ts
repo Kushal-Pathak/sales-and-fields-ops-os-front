@@ -24,4 +24,7 @@ export const queryKeys = {
   activities: keysFor('activities'),
   conversations: keysFor('conversations'),
   messages: keysFor('messages'),
+  fields: keysFor('fields'),
+  automations: keysFor('automations'),
+  automationRuns: keysFor('automationRuns'),
 } as const;

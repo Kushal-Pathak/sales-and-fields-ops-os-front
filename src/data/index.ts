@@ -2,9 +2,12 @@ import { env } from '@/lib/env';
 import type {
   Activity,
   Appointment,
+  Automation,
+  AutomationRun,
   BaseEntity,
   Contact,
   Conversation,
+  FieldDefinition,
   Lead,
   Message,
   Pipeline,
@@ -48,6 +51,9 @@ export const db = {
   activities: collection<Activity>('activities'),
   conversations: collection<Conversation>('conversations'),
   messages: collection<Message>('messages'),
+  fields: collection<FieldDefinition>('fields'),
+  automations: collection<Automation>('automations'),
+  automationRuns: collection<AutomationRun>('automationRuns'),
 };
 
 export type Db = typeof db;

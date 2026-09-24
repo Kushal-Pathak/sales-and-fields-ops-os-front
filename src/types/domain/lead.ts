@@ -1,4 +1,5 @@
 import type { BaseEntity, Priority } from './base';
+import type { CustomValues } from './field';
 
 /** An opportunity with a contact, moving through the stages of a pipeline. */
 export interface Lead extends BaseEntity {
@@ -18,4 +19,6 @@ export interface Lead extends BaseEntity {
   nextActionAt?: string;
   lastActivityAt: string;
   notes?: string;
+  /** Values of the workspace's custom lead fields. */
+  custom?: CustomValues;
 }

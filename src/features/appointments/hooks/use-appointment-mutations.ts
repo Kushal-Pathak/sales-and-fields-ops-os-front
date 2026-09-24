@@ -1,7 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
+import { AUTOMATION_EFFECT_KEYS, runAutomations } from '@/features/automations';
 import { useCurrentUser } from '@/features/workspace';
-import type { ActivityKind, Appointment, CreateInput, UpdateInput } from '@/types/domain';
+import type {
+  ActivityKind,
+  Appointment,
+  CreateInput,
+  CustomValues,
+  UpdateInput,
+} from '@/types/domain';
 
 /**
  * Appointment mutations. Scheduling, completing and cancelling also write an
@@ -76,17 +83,26 @@ export function useUpdateAppointment() {
   });
 }
 
-/** Records the outcome: status `completed` plus the notes taken. */
+/** Records the outcome: status `completed`, the notes taken and the custom outcome fields. */
 export function useCompleteAppointment() {
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string }): Promise<Appointment> => {
+    mutationFn: async ({
+      id,
+      notes,
+      outcome,
+    }: {
+      id: string;
+      notes: string;
+      outcome?: CustomValues;
+    }): Promise<Appointment> => {
       const trimmed = notes.trim();
       const appointment = await db.appointments.update(id, {
         status: 'completed',
         ...(trimmed ? { notes: trimmed } : {}),
+        ...(outcome && { outcome }),
       });
       await log(
         appointment,
@@ -94,11 +110,13 @@ export function useCompleteAppointment() {
         `Appointment completed${trimmed ? `: ${trimmed}` : ''}`,
         actorId,
       );
+      const lead = await db.leads.get(appointment.leadId);
+      await runAutomations({ type: 'appointment_completed', lead, appointment }, actorId);
       return appointment;
     },
     onSuccess: (appointment) => {
       queryClient.setQueryData(queryKeys.appointments.detail(appointment.id), appointment);
-      return invalidate(...AFFECTED);
+      return invalidate(...AFFECTED, ...AUTOMATION_EFFECT_KEYS);
     },
   });
 }

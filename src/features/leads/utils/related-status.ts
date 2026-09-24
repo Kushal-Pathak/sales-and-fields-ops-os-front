@@ -13,5 +13,6 @@ export const ACTIVITY_COLOR: Record<ActivityKind, StatusColor> = {
   appointment_scheduled: 'highlight',
   appointment_completed: 'highlight',
   appointment_cancelled: 'neutral',
+  automation: 'highlight',
   reassigned: 'info',
 };

@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CustomFieldValues } from '@/features/custom-fields';
 import { useWorkspace } from '@/features/workspace';
 import {
   addMinutes,
@@ -247,9 +248,13 @@ function AppointmentDetails({ row, onClose }: { row: AppointmentRow; onClose: ()
           </Field>
         </dl>
 
+        {completed && (
+          <CustomFieldValues entity="appointment" values={appointment.outcome} title="Outcome" />
+        )}
+
         <section>
           <h3 className="mb-2 text-2xs font-bold tracking-wider text-foreground-faint uppercase">
-            {completed ? 'Outcome' : 'Notes'}
+            {completed ? 'Outcome notes' : 'Notes'}
           </h3>
           {appointment.notes ? (
             <p className="text-sm whitespace-pre-wrap text-foreground-secondary">

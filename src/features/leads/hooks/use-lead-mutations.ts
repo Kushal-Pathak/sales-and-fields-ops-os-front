@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
+import { AUTOMATION_EFFECT_KEYS, runAutomations } from '@/features/automations';
 import { useCurrentUser } from '@/features/workspace';
 import type { Contact, CreateInput, Lead, UpdateInput } from '@/types/domain';
 
 /**
  * Lead mutations. Each one also writes the matching `Activity` rows: without a
  * backend the client owns the timeline. When the API exists the server records
- * them and these hooks only invalidate.
+ * them and these hooks only invalidate. Creating a lead and moving its stage also
+ * run the workspace's automations.
  */
 
 export interface CreateLeadInput {
@@ -34,11 +36,12 @@ export function useCreateLead() {
         message: `Lead captured from ${created.source}`,
         actorId,
       });
-      return created;
+      await runAutomations({ type: 'lead_created', lead: created }, actorId);
+      return db.leads.get(created.id);
     },
     onSuccess: () =>
       Promise.all(
-        [queryKeys.leads.all, queryKeys.contacts.all, queryKeys.activities.all].map((queryKey) =>
+        [queryKeys.contacts.all, ...AUTOMATION_EFFECT_KEYS].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey }),
         ),
       ),
@@ -69,9 +72,17 @@ async function applyLeadPatch(
       message: `Stage moved to ${stage.name}`,
       actorId,
     });
+    await runAutomations(
+      { type: 'lead_stage_changed', lead: after, fromStageId: before.stageId },
+      actorId,
+    );
+    // A rule may have changed the lead again.
+    return db.leads.get(id);
   }
   return after;
 }
+
+const AFTER_LEAD_CHANGE = AUTOMATION_EFFECT_KEYS;
 
 export function useUpdateLead() {
   const queryClient = useQueryClient();
@@ -82,9 +93,7 @@ export function useUpdateLead() {
     onSuccess: (lead) => {
       queryClient.setQueryData(queryKeys.leads.detail(lead.id), lead);
       return Promise.all(
-        [queryKeys.leads.all, queryKeys.activities.all].map((queryKey) =>
-          queryClient.invalidateQueries({ queryKey }),
-        ),
+        AFTER_LEAD_CHANGE.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       );
     },
   });
@@ -115,9 +124,7 @@ export function useMoveLeadStage() {
     onSettled: (lead) => {
       if (lead) queryClient.setQueryData(queryKeys.leads.detail(lead.id), lead);
       return Promise.all(
-        [queryKeys.leads.all, queryKeys.activities.all].map((queryKey) =>
-          queryClient.invalidateQueries({ queryKey }),
-        ),
+        AFTER_LEAD_CHANGE.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       );
     },
   });
