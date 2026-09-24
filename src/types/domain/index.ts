@@ -7,6 +7,7 @@ export type { Lead } from './lead';
 export type { Task, TaskStatus, TaskType } from './task';
 export { isTaskOverdue } from './task';
 export type { Appointment, AppointmentStatus } from './appointment';
-export type { Quote, QuoteLineItem, QuoteStatus } from './quote';
+export type { Quote, QuoteLineItem, QuoteStatus, QuoteTotals } from './quote';
+export { quoteTotals } from './quote';
 export type { Activity, ActivityEntityType, ActivityKind } from './activity';
 export type { Channel, Conversation, Message } from './conversation';

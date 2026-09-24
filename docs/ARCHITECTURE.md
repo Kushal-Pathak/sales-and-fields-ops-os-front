@@ -21,7 +21,7 @@ src/
 ├── assets/
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives, added via the CLI
-│   ├── common/             # reusable app components (RootErrorBoundary, ThemeToggle, …)
+│   ├── common/             # RootErrorBoundary, ThemeToggle, StatusBadge/StatusDot, InitialsAvatar, EmptyState
 │   └── layout/             # app shell: AppShell, Sidebar, TopBar, PageHeader/PageBody, DrawerPanel
 ├── data/
 │   ├── index.ts            # `db`: one Collection per entity (local demo store or REST, by env)
@@ -30,6 +30,9 @@ src/
 │   ├── query-keys.ts       # TanStack Query key factory
 │   └── seed/               # generic demo data, dates relative to now
 ├── features/
+│   ├── workspace/          # reference data hooks: useWorkspace, useUsers, useStages, useCurrentUser
+│   ├── contacts/           # useContacts, useCreateContact
+│   └── leads/              # leads list (URL filters, table) + lead drawer, form, mutations
 ├── hooks/
 ├── lib/
 │   ├── env.ts              # validated access to VITE_* variables
@@ -67,15 +70,15 @@ Business functionality, grouped by domain rather than by file type:
 ```text
 features/
 └── leads/
-    ├── components/   # UI specific to this feature
-    ├── hooks/        # data + state for this feature (calls lib/api)
-    ├── types/
-    ├── utils/
+    ├── components/   # UI specific to this feature (LeadsTable, LeadDrawer, LeadFormDialog, …)
+    ├── hooks/        # TanStack Query hooks over `db` + URL state (useLeads, useLeadFilters, mutations)
+    ├── utils/        # pure logic: view model (join/filter/sort), filter parsing, colour maps
     └── index.ts      # public surface: only what pages/other features may import
 ```
 
 - Feature-specific code stays inside its feature. Promote to a shared folder only when it is genuinely reused.
 - Features must not import another feature's internals. Import from its `index.ts`, or move the shared piece to `components/`, `hooks/`, `lib/` or `types/`.
+- `features/workspace/` holds the reference data every screen needs (workspace, users, pipelines/stages) and `useCurrentUser`, the stand-in for a signed-in user until auth exists. `features/contacts/` owns contacts. `features/leads/` is the reference implementation of a list + drawer screen: list state in the URL (`use-lead-filters.ts`), a joined `LeadRow` view model with pure `filterLeads` / `sortLeads`, and mutations that also write `Activity` rows.
 
 ### `components/`
 
@@ -106,6 +109,8 @@ page → feature component → feature hook (useQuery / useMutation) → db.<col
 - **`db`** (`src/data/index.ts`) exposes one `Collection<T>` per entity with `list / get / create / update / remove`. With `VITE_API_BASE_URL` empty it is the local demo store (seeded, persisted in `localStorage`, `resetDemoData()` reseeds); with it set, `createHttpCollection` maps the same operations onto `lib/api` (`GET /leads`, `PATCH /leads/:id`, …). `get` / `update` / `remove` reject with `NotFoundError`.
 - **Feature hooks** wrap TanStack Query around `db`, using `queryKeys.<collection>.list()` / `.detail(id)` and invalidating `queryKeys.<collection>.all` after mutations. Components render what the hook returns; they never import `db`.
 - Filtering, sorting and pagination are client-side for now; `list()` gains parameters when the backend contract exists.
+- **Timelines** (`Activity`) are written by the client in the mutation hooks (lead created, stage moved, note added) because there is no server to do it. When the API exists the server records them and the hooks only invalidate `queryKeys.activities.all`.
+- Deleting a lead cascades client-side to its tasks, quotes, appointments and activities (see `useDeleteLead`); a backend should enforce the same rule.
 
 ## Styling
 
@@ -123,13 +128,13 @@ page → feature component → feature hook (useQuery / useMutation) → db.<col
 
 The foundation deliberately stops here. When the project needs more, put it where it belongs:
 
-| Need                 | Where                                                                                                                               |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Server-state caching | Done: TanStack Query in `app/providers/query-provider.tsx`; query functions call `db` from `src/data/`.                             |
-| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                    |
-| Auth                 | `features/auth/` for logic and screens; session provider in `app/providers/`; route guards as a layout route in `app/router.tsx`.   |
-| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                        |
-| Tests                | Done: Vitest + Testing Library (`vite.config.ts` → `test`, setup in `src/test/setup.ts`); colocate `*.test.ts(x)` with source.      |
-| Real backend         | Set `VITE_API_BASE_URL`; `db` switches to `createHttpCollection`. Add list parameters to `Collection.list` as the API defines them. |
-| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                       |
-| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                           |
+| Need                 | Where                                                                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server-state caching | Done: TanStack Query in `app/providers/query-provider.tsx`; query functions call `db` from `src/data/`.                                                                                                                                        |
+| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                                                                                                                               |
+| Auth                 | `features/auth/` for logic and screens; session provider in `app/providers/`; route guards as a layout route in `app/router.tsx`. Replace the body of `useCurrentUser` (`features/workspace/`) with the session; its callers stay as they are. |
+| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                                                                                                                                   |
+| Tests                | Done: Vitest + Testing Library (`vite.config.ts` → `test`, setup in `src/test/setup.ts`); colocate `*.test.ts(x)` with source.                                                                                                                 |
+| Real backend         | Set `VITE_API_BASE_URL`; `db` switches to `createHttpCollection`. Add list parameters to `Collection.list` as the API defines them.                                                                                                            |
+| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                                                                                                                                  |
+| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                                                                                                                                      |

@@ -47,7 +47,7 @@ src/
 │   ├── common/     # reusable app components (error boundary, theme toggle, …)
 │   └── layout/     # app shell / layout components
 ├── data/           # data access: db.<collection> services, local demo store + seed
-├── features/       # business functionality, one folder per feature
+├── features/       # business functionality, one folder per feature (workspace, contacts, leads, …)
 ├── hooks/          # hooks shared across features
 ├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, utils.ts
 ├── pages/          # route components; thin, compose features

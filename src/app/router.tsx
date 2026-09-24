@@ -25,7 +25,11 @@ export const router = createBrowserRouter([
       { index: true, loader: () => redirect('/dashboard') },
       { path: 'dashboard', handle: handle('Dashboard'), lazy: comingSoon },
 
-      { path: 'leads', handle: handle('Leads', 'Sales'), lazy: comingSoon },
+      {
+        path: 'leads',
+        handle: handle('Leads', 'Sales'),
+        lazy: async () => ({ Component: (await import('@/pages/leads')).LeadsPage }),
+      },
       { path: 'leads/pipeline', handle: handle('Pipeline', 'Sales'), lazy: comingSoon },
       { path: 'quotes', handle: handle('Quotes', 'Sales'), lazy: comingSoon },
 

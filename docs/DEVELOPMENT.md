@@ -57,6 +57,7 @@ With `VITE_API_BASE_URL` empty the app runs on local demo data. It is seeded on 
 - **An env variable** — add to `.env.example`, declare in `src/env.d.ts`, expose via `src/lib/env.ts` (`required` or `optional`).
 - **Reading or changing data** — a hook inside the feature (`features/<name>/hooks/use-<thing>.ts`) built on `useQuery` / `useMutation` with `db.<collection>` and `queryKeys` from `@/data`; invalidate `queryKeys.<collection>.all` after a mutation. Handle loading, empty and error states in the component from what the hook returns.
 - **An entity field** — add it to the type in `src/types/domain/`, to the seed under `src/data/seed/`, and bump `SEED_VERSION`.
+- **A list + drawer screen** — copy the shape of `src/features/leads/`: a `use-<name>-filters.ts` hook for URL state, a `utils/<name>-view-model.ts` with pure join/filter/sort functions (tested), a table component with skeleton/empty/error states, and a drawer opened via `useDrawerParam`. The page in `src/pages/<name>/` only composes them.
 - **A test** — colocate `thing.test.ts` next to `thing.ts`; run with `npm run test`.
 
 ## Secrets

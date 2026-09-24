@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 interface PageHeaderProps {
   title: string;
   /** Faint count next to the title, e.g. "124 leads". */
-  count?: string;
+  count?: string | undefined;
   /** Right-aligned action buttons. */
   actions?: ReactNode;
   /** Optional second row, typically filter chips. */

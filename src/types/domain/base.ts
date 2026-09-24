@@ -8,8 +8,10 @@ export interface BaseEntity {
 /** What a caller supplies to create an entity; the store assigns id and timestamps. */
 export type CreateInput<T extends BaseEntity> = Omit<T, keyof BaseEntity>;
 
-/** A partial update; the store bumps `updatedAt`. */
-export type UpdateInput<T extends BaseEntity> = Partial<CreateInput<T>>;
+/** A partial patch; the store bumps `updatedAt`. `undefined` clears an optional field. */
+export type UpdateInput<T extends BaseEntity> = {
+  [K in keyof CreateInput<T>]?: CreateInput<T>[K] | undefined;
+};
 
 /**
  * Colour names that map onto the design-system status tokens

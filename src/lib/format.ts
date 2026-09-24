@@ -5,7 +5,7 @@
 
 export interface MoneyOptions {
   currency: string;
-  locale?: string;
+  locale?: string | undefined;
   /** Drop cents for round amounts (default true). */
   compact?: boolean;
 }
@@ -21,6 +21,15 @@ export function formatMoney(
     minimumFractionDigits: whole ? 0 : 2,
     maximumFractionDigits: whole ? 0 : 2,
   }).format(amount);
+}
+
+/** The currency symbol on its own, e.g. "$", "€", "₹". */
+export function currencySymbol(currency: string, locale = 'en-US'): string {
+  return (
+    new Intl.NumberFormat(locale, { style: 'currency', currency })
+      .formatToParts(0)
+      .find((part) => part.type === 'currency')?.value ?? currency
+  );
 }
 
 export type DateStyle = 'date' | 'datetime' | 'time' | 'monthDay';

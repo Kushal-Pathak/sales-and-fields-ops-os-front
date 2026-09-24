@@ -102,11 +102,12 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 - **Looks**: `h-5`, `px-2`, 11.5 px, 600, `rounded-md`, soft fill + strong text. Optional 6 px dot before the label. Count badges are 16 px red circles with 10 px bold white text.
 - **Build with**: `Badge` (`variant`: `success` · `warning` · `info` · `highlight` · `neutral` · `destructive` for danger; the shadcn `default` / `secondary` / `outline` / `ghost` / `link` remain available). Dot: `<span className="size-1.5 rounded-full bg-current" />` as the first child. Count badge: `<Badge variant="destructive" className="h-4 min-w-4 rounded-full bg-destructive px-1 text-2xs text-white">`.
+- **From data**: when the colour comes from a `StatusColor` on an entity (stage, priority map, …) use `StatusBadge color={…}` (pill with dot) or `StatusDot color={…}` (dot before plain text) from `@/components/common`; the class mapping lives in `status-color.ts` only.
 
 ### Avatars
 
 - **Looks**: circle with initials. Default is white with a `border` ring and `foreground-secondary` text; people and roles get a tinted fallback (`*-soft` fill, strong text). Sizes: `sm` 24 (table cells), `default` 32 (lists, chat), `lg` 40 (drawer header).
-- **Build with**: `Avatar size` + `AvatarFallback className="text-xs font-semibold"`; tint with `bg-warning-soft text-warning`, etc. Stack with `AvatarGroup`.
+- **Build with**: `InitialsAvatar name size color?` from `@/components/common` (plain ring for contacts, tinted from `user.color` for people). Underneath it is `Avatar size` + `AvatarFallback className="text-xs font-semibold"`. Stack with `AvatarGroup`.
 
 ### Tabs and segmented controls
 
@@ -139,6 +140,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 - **Top bar**: 42 px, `border-b border-border-faint`, `px-4`. Breadcrumb: root in `foreground-faint`, `/` in `border-strong` colour, leaf `font-semibold`. Right: ghost icon buttons (Filter, Sort, Search), the "Ask AI · ⌘K" chip (`h-7 rounded-lg bg-surface-2 px-3 text-sm text-muted-foreground` with a `Kbd`), and the user avatar.
 - **Page header**: `px-4 pt-3.5 pb-2.5`; title `text-2xl font-bold`, faint count beside it, actions right-aligned (`Button` primary + outline). Optional filter-chip row below: `rounded-full bg-surface-2 px-2.5 h-6 text-xs` chips showing `Field <b>value</b>`, plus a ghost "+ Add filter".
+- **Filter row recipe** (see `features/leads/components/leads-toolbar.tsx`): pill `Tabs` for saved views with faint counts → a `rounded-full bg-surface-2` `InputGroup` search → filter chips that are `SelectTrigger size="sm"` styled `h-6 rounded-full border-transparent bg-surface-2 px-2.5 text-xs` (an active chip switches to `bg-accent text-foreground`) → a ghost `xs` "Clear" when any filter is set → a `DropdownMenu` radio group for sort, `ml-auto`. The whole row wraps at narrow widths.
 - Full-height screens (inbox, builders, wizards) omit the page header and draw their own top strip.
 
 ### Drawer (side panel)
@@ -177,6 +179,7 @@ The reference has none; these are ours.
 - **Loading**: `Skeleton` rows matching the final layout (table rows 32 px, cards 88 px). Never spinners in content areas.
 - **Empty**: centred, `max-w-xs`, icon in a `size-10 rounded-xl bg-muted` tile, title `text-base font-semibold`, hint `text-sm text-muted-foreground`, one primary action.
 - **Error**: same layout with a `destructive` icon and a "Retry" outline button; route-level errors use `RootErrorBoundary`.
+- **Build with**: `EmptyState icon title hint action` and `ErrorState error onRetry` from `@/components/common/empty-state`; `Skeleton` rows shaped like the final content (see `LeadsTable` / `LeadDrawer`).
 
 ### Icons and motion
 
