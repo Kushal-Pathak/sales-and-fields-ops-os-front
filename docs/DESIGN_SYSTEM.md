@@ -168,6 +168,12 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 - **Toolbar**: ‹ › `icon-sm` outline buttons, an outline "Today", the range as `text-sm font-semibold` (`Sep 21 – 27, 2026` / `September 2026`), pill tabs Week / Month, the Assignee chip and a pill `Toggle` for tasks.
 - **Build with**: `CalendarToolbar`, `CalendarView` (`WeekGrid` / `MonthGrid` / `EventChip`) in `features/calendar/components/`; the page composes the appointment and task drawers.
 
+### Sign-in and the user menu
+
+- **Sign-in**: a `Card` (`max-w-sm p-6 shadow-card`) centred on a `bg-muted` page with the theme toggle top-right; brand tile, "Sign in to Pilot CRM", one line of copy, then either the member picker (rows with `InitialsAvatar`, name, role · email, `hover:bg-muted`, "Continue as …") or the email/password `Field`s and a primary "Sign in". Errors as `text-destructive` alerts under the form. `SignInForm` in `features/auth/`.
+- **User menu**: the sidebar footer row (`InitialsAvatar size="sm"` in the user's colour, name, role in `text-2xs`, chevrons) opens a `DropdownMenu` upward with the email, "Switch user" (demo) and "Sign out". The top-bar avatar mirrors the user. `UserMenu` in `features/auth/`.
+- **Read-only sections**: disabled actions plus `PermissionNote` (`LockIcon` + one `text-xs text-muted-foreground` line) in the page header.
+
 ### Dialogs and the command palette
 
 - **Dialog**: centred, `rounded-xl`, `p-4`, `shadow-overlay`, `overlay` scrim; title `text-lg font-bold`, description `text-sm text-muted-foreground`, footer buttons right-aligned. Confirmations for risky actions use a red-bordered card (`border-destructive/40 bg-danger-soft/40`) with "Yes, proceed" (`destructive` fill) and "Cancel".

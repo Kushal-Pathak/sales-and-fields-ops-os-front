@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { db, resetDemoData } from '@/data';
 import { buildSeed } from '@/data/seed';
+import { SignedInAs } from '@/test/session';
 import { RolesPage } from './roles';
 import { TeamPage } from './index';
 
-function renderAt(path: string) {
+function renderAt(path: string, userId?: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
@@ -17,9 +18,10 @@ function renderAt(path: string) {
     ],
     { initialEntries: [path] },
   );
+  const tree = <RouterProvider router={router} />;
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      {userId ? <SignedInAs userId={userId}>{tree}</SignedInAs> : tree}
     </QueryClientProvider>,
   );
   return { router };
@@ -36,6 +38,17 @@ describe('TeamPage', () => {
     expect(rows).toHaveLength(seed.users.length);
     const inactive = seed.users.find((user) => !user.active)!;
     expect(rows[rows.length - 1]).toHaveAccessibleName(`Open member ${inactive.name}`);
+  });
+
+  it('keeps the team read-only for roles without team.manage', async () => {
+    renderAt('/team', 'usr-3');
+    expect(await screen.findAllByRole('row', { name: /^Open member/ })).toHaveLength(
+      seed.users.length,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Invite member' })).toBeDisabled(),
+    );
+    expect(screen.getByRole('note')).toHaveTextContent('ask an admin');
   });
 
   it('adds a member from the invite dialog', async () => {

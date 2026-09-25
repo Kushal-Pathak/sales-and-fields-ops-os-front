@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
 import { adminNav, mainNav, type NavGroup, type NavItem } from '@/app/navigation';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { UserMenu } from '@/features/auth';
 import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
@@ -37,13 +37,8 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         <SidebarGroup group={adminNav} onNavigate={onNavigate} />
       </nav>
 
-      <div className="flex items-center gap-2 border-t px-4 py-2.5">
-        <Avatar size="sm">
-          <AvatarFallback className="bg-warning-soft text-2xs font-bold text-warning">
-            Y
-          </AvatarFallback>
-        </Avatar>
-        <span className="truncate text-sm font-medium">You</span>
+      <div className="border-t">
+        <UserMenu onNavigate={onNavigate} />
       </div>
     </aside>
   );

@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { SettingsNav } from '@/components/layout/settings-nav';
 import { Button } from '@/components/ui/button';
+import { PermissionNote, useCan } from '@/features/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DeleteStageDialog,
@@ -21,6 +22,7 @@ export function PipelineSettingsPage() {
   const pipelines = usePipelines();
   const pipeline = pipelines.data?.find((item) => item.isDefault) ?? pipelines.data?.[0];
   const drawer = useDrawerParam('stage');
+  const canManage = useCan('settings.manage');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   return (
@@ -28,12 +30,17 @@ export function PipelineSettingsPage() {
       <PageHeader
         title="Pipeline stages"
         actions={
-          <Button size="sm" onClick={() => drawer.open(NEW_STAGE_ID)} disabled={!pipeline}>
+          <Button
+            size="sm"
+            onClick={() => drawer.open(NEW_STAGE_ID)}
+            disabled={!pipeline || !canManage}
+          >
             <PlusIcon /> Add stage
           </Button>
         }
       >
         <SettingsNav />
+        <PermissionNote permission="settings.manage" className="ml-auto" />
       </PageHeader>
       <PageBody className="flex flex-col gap-5 p-4">
         {pipelines.isPending ? (

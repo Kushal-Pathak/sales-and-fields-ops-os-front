@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { db, resetDemoData } from '@/data';
 import { buildSeed } from '@/data/seed';
+import { SignedInAs } from '@/test/session';
 import { quoteTotals } from '@/types/domain';
 import { EditQuotePage } from './edit';
 import { NewQuotePage } from './new';
 import { QuotesPage } from './index';
 
-function renderAt(path: string) {
+function renderAt(path: string, userId?: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
@@ -20,9 +21,10 @@ function renderAt(path: string) {
     ],
     { initialEntries: [path] },
   );
+  const tree = <RouterProvider router={router} />;
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      {userId ? <SignedInAs userId={userId}>{tree}</SignedInAs> : tree}
     </QueryClientProvider>,
   );
   return { router };
@@ -56,7 +58,7 @@ describe('QuotesPage', () => {
     const drawer = await screen.findByRole('dialog');
     expect(await within(drawer).findByText(quote.number)).toBeInTheDocument();
 
-    await user.click(within(drawer).getByRole('button', { name: 'Approve' }));
+    await user.click(await within(drawer).findByRole('button', { name: 'Approve' }));
     await user.click(await within(drawer).findByRole('button', { name: 'Send to customer' }));
     await waitFor(async () => {
       expect((await db.quotes.get(quote.id)).status).toBe('sent');
@@ -76,6 +78,17 @@ describe('QuotesPage', () => {
     expect(
       await within(drawer).findByRole('button', { name: 'Mark accepted' }),
     ).toBeInTheDocument();
+  });
+
+  it('hides approval actions from roles without the permission', async () => {
+    const quote = seed.quotes.find((item) => item.status === 'pending_approval')!;
+    renderAt(`/quotes?quote=${quote.id}`, 'usr-3');
+    const drawer = await screen.findByRole('dialog');
+    expect(await within(drawer).findByText(quote.number)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(drawer).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument(),
+    );
+    expect(within(drawer).queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
   });
 
   it('returns a rejected quote to draft so it can be edited', async () => {

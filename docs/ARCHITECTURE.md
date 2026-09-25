@@ -16,7 +16,10 @@ src/
 │   │   ├── theme-provider.tsx  # dark/light/system, toggles `.dark` on <html>
 │   │   ├── theme-context.ts
 │   │   ├── command-palette-provider.tsx  # palette open state + ⌘K shortcut
-│   │   └── command-palette-context.ts
+│   │   ├── command-palette-context.ts
+│   │   ├── session-provider.tsx  # restores the session, sign-in / sign-out, 401 handling
+│   │   └── session-context.ts
+│   ├── guarded-shell.tsx   # AppShell behind RequireSession
 │   └── styles/
 │       ├── index.css       # Tailwind imports, @theme mapping, base layer
 │       └── tokens.css      # design tokens (colours, radius, font) — the only file to edit for look & feel
@@ -31,9 +34,11 @@ src/
 │   ├── local-store.ts      # localStorage persistence, seed versioning, reset
 │   ├── query-keys.ts       # TanStack Query key factory
 │   ├── preferences.ts      # per-browser conveniences (recent palette queries)
+│   ├── session.ts          # session adapters: demo member picker, or the auth API
 │   ├── assistant.ts        # POST /assistant/ask on the backend; the only AI call, never a model key
 │   └── seed/               # generic demo data, dates relative to now
 ├── features/
+│   ├── auth/               # RequireSession, SignInForm, UserMenu, useCan, PermissionNote
 │   ├── dashboard/          # stat tiles, pipeline strip, attention panels (pure buildDashboard model)
 │   ├── workspace/          # reference data hooks: useWorkspace, useUsers, useStages, useCurrentUser
 │   ├── contacts/           # useContacts, useCreateContact
@@ -96,7 +101,8 @@ features/
 
 - Feature-specific code stays inside its feature. Promote to a shared folder only when it is genuinely reused.
 - Features must not import another feature's internals. Import from its `index.ts`, or move the shared piece to `components/`, `hooks/`, `lib/` or `types/`.
-- `features/workspace/` holds the reference data every screen needs (workspace, users, pipelines/stages) and `useCurrentUser`, the stand-in for a signed-in user until auth exists. `features/contacts/` owns contacts. `features/leads/` is the reference implementation of a list + drawer screen: list state in the URL (`use-lead-filters.ts`), a joined `LeadRow` view model with pure `filterLeads` / `sortLeads`, and mutations that also write `Activity` rows. The pipeline board (`/leads/pipeline`) is the same feature and the same `useLeadsList()` rows grouped by stage (`utils/board.ts`); `ViewSwitch` moves between table and board keeping the query string.
+- `features/auth/` is the client half of authentication. `data/session.ts` defines one `SessionAdapter` with two implementations: the demo one signs in by choosing a seeded member and remembers it per browser; the API one calls `POST /auth/login` (`{ email, password }` → `{ token, user }`), keeps the bearer token through `setAuthToken` in `lib/api.ts`, restores with `GET /auth/me`, ends with `POST /auth/logout`, and signs out on any 401. `SessionProvider` (`app/providers`) restores on load and clears the query cache on every change of user; `useAuth()` reads it. `RequireSession` guards every route except `/sign-in`; `SignInForm` shows a member picker or an email/password form depending on the adapter; `UserMenu` in the sidebar footer switches user (demo) or signs out. `useCan(permission)` and `PermissionNote` gate the UI by the role's permissions. None of this is security: the backend must enforce the same rules on its API.
+- `features/workspace/` holds the reference data every screen needs (workspace, users, pipelines/stages) and `useCurrentUser`, which now returns the session's user. `features/contacts/` owns contacts. `features/leads/` is the reference implementation of a list + drawer screen: list state in the URL (`use-lead-filters.ts`), a joined `LeadRow` view model with pure `filterLeads` / `sortLeads`, and mutations that also write `Activity` rows. The pipeline board (`/leads/pipeline`) is the same feature and the same `useLeadsList()` rows grouped by stage (`utils/board.ts`); `ViewSwitch` moves between table and board keeping the query string.
 - `features/tasks/` owns tasks: the same URL-filter / view-model / table / board / drawer shape as leads, plus `LeadTaskList`, which the lead drawer embeds. Dependencies point one way, `leads → (tasks, quotes) → workspace/contacts`; tasks and quotes read leads through the shared query cache (`db.leads` with `queryKeys.leads.list()`) rather than importing `features/leads`.
 - `features/quotes/` owns quotes. The list and drawer follow the leads shape; the drawer's footer is driven by a pure workflow table (`utils/quote-workflow.ts`: Draft → Pending approval → Approved | Rejected → Sent → Accepted | Declined, with "Ask revision" back to Draft). Creating and editing happen in a full-page builder (`/quotes/new`, `/quotes/:id/edit`) over a pure draft model (`utils/quote-draft.ts`); only drafts are editable. Every transition writes an `Activity` on the quote (its history) and on the lead (`quote_sent` for sending, `quote_status` otherwise). `/quotes/:id/print` is a chrome-less route beside the shell that renders the customer-facing sheet for the browser's print dialog. `LeadQuoteList` is embedded in the lead drawer. Quote numbers are `Q-<n>`, assigned client-side from the highest in use; a backend should own numbering.
 - `features/dashboard/` reads every collection through the shared cache keys and derives one `DashboardModel` in a pure, tested function (`utils/dashboard-model.ts`). Every tile, cell and row is a link into the list it summarises, so the dashboard owns no actions of its own.
@@ -158,13 +164,13 @@ page → feature component → feature hook (useQuery / useMutation) → db.<col
 
 The foundation deliberately stops here. When the project needs more, put it where it belongs:
 
-| Need                 | Where                                                                                                                                                                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Server-state caching | Done: TanStack Query in `app/providers/query-provider.tsx`; query functions call `db` from `src/data/`.                                                                                                                                        |
-| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                                                                                                                               |
-| Auth                 | `features/auth/` for logic and screens; session provider in `app/providers/`; route guards as a layout route in `app/router.tsx`. Replace the body of `useCurrentUser` (`features/workspace/`) with the session; its callers stay as they are. |
-| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                                                                                                                                   |
-| Tests                | Done: Vitest + Testing Library (`vite.config.ts` → `test`, setup in `src/test/setup.ts`); colocate `*.test.ts(x)` with source.                                                                                                                 |
-| Real backend         | Set `VITE_API_BASE_URL`; `db` switches to `createHttpCollection`. Add list parameters to `Collection.list` as the API defines them.                                                                                                            |
-| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                                                                                                                                  |
-| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                                                                                                                                      |
+| Need                 | Where                                                                                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server-state caching | Done: TanStack Query in `app/providers/query-provider.tsx`; query functions call `db` from `src/data/`.                                                                                                                                                         |
+| Global client state  | Add Zustand (or React context) under the owning feature; promote to `app/` only if truly global.                                                                                                                                                                |
+| Auth                 | Done on the client: `data/session.ts` adapters, `SessionProvider`, `RequireSession`, `/sign-in`, `useCan`. Still the backend's job: verifying credentials, issuing and expiring tokens, and enforcing permissions on every read and write. See "Session" above. |
+| Forms / validation   | React Hook Form + Zod inside the feature that owns the form.                                                                                                                                                                                                    |
+| Tests                | Done: Vitest + Testing Library (`vite.config.ts` → `test`, setup in `src/test/setup.ts`); colocate `*.test.ts(x)` with source.                                                                                                                                  |
+| Real backend         | Set `VITE_API_BASE_URL`; `db` switches to `createHttpCollection`. Add list parameters to `Collection.list` as the API defines them.                                                                                                                             |
+| CI                   | `.github/workflows/ci.yml` running `npm ci && npm run check`.                                                                                                                                                                                                   |
+| More UI primitives   | `npx shadcn add <component>` — lands in `components/ui/`.                                                                                                                                                                                                       |

@@ -36,6 +36,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { STATUS_COLOR_CLASSES } from '@/components/common/status-color';
+import { useCan } from '@/features/auth';
 import { cn } from '@/lib/utils';
 import { useLead } from '../hooks/use-lead';
 import { useUpdateLead } from '../hooks/use-lead-mutations';
@@ -126,6 +127,7 @@ interface LeadDetailsProps {
 function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
   const { lead, contact, stage } = row;
   const updateLead = useUpdateLead();
+  const canEdit = useCan('leads.edit');
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -150,7 +152,7 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
               {contact?.company && ` · ${contact.company}`}
             </DrawerDescription>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <Select value={lead.stageId} onValueChange={moveTo}>
+              <Select value={lead.stageId} onValueChange={moveTo} disabled={!canEdit}>
                 <SelectTrigger
                   size="sm"
                   aria-label="Change stage"
@@ -202,7 +204,7 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
           >
             <MailIcon /> Email
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+          <Button variant="outline" size="sm" disabled={!canEdit} onClick={() => setEditing(true)}>
             <PencilIcon /> Edit
           </Button>
           <DropdownMenu>
@@ -212,7 +214,11 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
               <MoreHorizontalIcon />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem variant="destructive" onClick={() => setDeleting(true)}>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={!canEdit}
+                onClick={() => setDeleting(true)}
+              >
                 <TrashIcon /> Delete lead
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -257,12 +263,12 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
       </DrawerBody>
 
       <DrawerFooter className="justify-end">
-        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+        <Button variant="outline" size="sm" disabled={!canEdit} onClick={() => setEditing(true)}>
           Edit
         </Button>
         <Button
           size="sm"
-          disabled={!next || updateLead.isPending}
+          disabled={!next || updateLead.isPending || !canEdit}
           onClick={() => next && moveTo(next.id)}
         >
           {next ? `Move to ${next.name}` : 'Closed'} <ArrowRightIcon />

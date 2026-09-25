@@ -1,4 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
+import { useCan } from '@/features/auth';
 import { CSS } from '@dnd-kit/utilities';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusDot } from '@/components/common/status-dot';
@@ -47,9 +48,11 @@ interface PipelineCardProps extends PipelineCardBodyProps {
 
 /** A draggable card. Click or Enter opens the drawer; Space (or a 6px drag) lifts it. */
 export function PipelineCard({ row, money, onOpen }: PipelineCardProps) {
+  const canEdit = useCan('leads.edit');
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: row.lead.id,
     data: { stageId: row.lead.stageId },
+    disabled: !canEdit,
   });
 
   return (

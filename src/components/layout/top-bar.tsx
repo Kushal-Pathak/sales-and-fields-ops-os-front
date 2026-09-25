@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { MenuIcon, SearchIcon, SparklesIcon } from 'lucide-react';
+import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { ThemeToggle } from '@/components/common/theme-toggle';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/use-auth';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { useRouteHandle } from '@/hooks/use-route-handle';
 import { env } from '@/lib/env';
@@ -14,6 +15,7 @@ import { Sidebar } from './sidebar';
 export function TopBar() {
   const handle = useRouteHandle();
   const { openPalette } = useCommandPalette();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -70,11 +72,7 @@ export function TopBar() {
           <SearchIcon />
         </Button>
         <ThemeToggle />
-        <Avatar size="sm">
-          <AvatarFallback className="bg-warning-soft text-2xs font-bold text-warning">
-            Y
-          </AvatarFallback>
-        </Avatar>
+        {user && <InitialsAvatar size="sm" name={user.name} color={user.color} title={user.name} />}
       </div>
     </header>
   );

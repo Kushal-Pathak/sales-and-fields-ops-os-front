@@ -29,6 +29,22 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
+let authToken: string | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
+/** Bearer token sent with every request; `null` clears it. Set by the session, never read from `VITE_*`. */
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
+/** Called once per 401 so the session can sign the user out. Returns an unsubscribe. */
+export function onUnauthorized(handler: () => void): () => void {
+  unauthorizedHandler = handler;
+  return () => {
+    if (unauthorizedHandler === handler) unauthorizedHandler = null;
+  };
+}
+
 async function parseBody(response: Response): Promise<unknown> {
   if (response.status === 204) return undefined;
   const contentType = response.headers.get('content-type') ?? '';
@@ -43,6 +59,7 @@ async function request<T>(method: string, path: string, options: RequestOptions 
     headers: {
       Accept: 'application/json',
       ...(body !== undefined && { 'Content-Type': 'application/json' }),
+      ...(authToken && { Authorization: `Bearer ${authToken}` }),
       ...headers,
     },
     ...(body !== undefined && { body: JSON.stringify(body) }),
@@ -50,6 +67,7 @@ async function request<T>(method: string, path: string, options: RequestOptions 
   });
 
   const payload = await parseBody(response);
+  if (response.status === 401 && authToken) unauthorizedHandler?.();
   if (!response.ok) throw new ApiError(response.status, payload);
   return payload as T;
 }

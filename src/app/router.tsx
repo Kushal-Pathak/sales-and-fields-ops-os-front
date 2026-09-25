@@ -1,12 +1,13 @@
 import { createBrowserRouter, redirect } from 'react-router';
 import { RootErrorBoundary } from '@/components/common/root-error-boundary';
-import { AppShell } from '@/components/layout/app-shell';
+import { RequireSession } from '@/features/auth';
 import type { RouteHandle } from '@/types/route-handle';
+import { GuardedShell } from './guarded-shell';
 
 /**
  * Route table. Pages are code-split with `lazy`; add a route here when you add a page.
  * Every page route declares a `handle` (title + breadcrumb group) and its path must match
- * the sidebar entry in `src/app/navigation.ts`.
+ * the sidebar entry in `src/app/navigation.ts`. Everything except `/sign-in` needs a session.
  */
 function handle(title: string, group?: string): RouteHandle {
   return group ? { title, group } : { title };
@@ -14,8 +15,14 @@ function handle(title: string, group?: string): RouteHandle {
 
 export const router = createBrowserRouter([
   {
+    path: '/sign-in',
+    ErrorBoundary: RootErrorBoundary,
+    handle: handle('Sign in'),
+    lazy: async () => ({ Component: (await import('@/pages/sign-in')).SignInPage }),
+  },
+  {
     path: '/',
-    Component: AppShell,
+    Component: GuardedShell,
     ErrorBoundary: RootErrorBoundary,
     children: [
       { index: true, loader: () => redirect('/dashboard') },
@@ -148,6 +155,15 @@ export const router = createBrowserRouter([
     path: '/quotes/:id/print',
     ErrorBoundary: RootErrorBoundary,
     handle: handle('Print quote'),
-    lazy: async () => ({ Component: (await import('@/pages/quotes/print')).QuotePrintPage }),
+    lazy: async () => {
+      const { QuotePrintPage } = await import('@/pages/quotes/print');
+      return {
+        Component: () => (
+          <RequireSession>
+            <QuotePrintPage />
+          </RequireSession>
+        ),
+      };
+    },
   },
 ]);

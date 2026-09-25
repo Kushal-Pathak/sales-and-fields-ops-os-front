@@ -19,6 +19,8 @@ npm run dev
 
 This project uses npm. Use npm consistently to avoid lockfile conflicts.
 
+On demo data the app opens on a sign-in page where you choose a seeded member; each member's role changes what the UI lets you do. With `VITE_API_BASE_URL` set, sign-in posts email and password to `/auth/login` and the backend owns credentials and enforcement.
+
 ## Scripts
 
 | Command                | What it does                               |
@@ -47,7 +49,7 @@ src/
 │   ├── common/     # reusable app components (error boundary, theme toggle, …)
 │   └── layout/     # app shell / layout components
 ├── data/           # data access: db.<collection> services, local demo store + seed
-├── features/       # business functionality, one folder per feature (dashboard, workspace, contacts, leads, lead-import, tasks, quotes, appointments, calendar, inbox, team, pipeline-settings, custom-fields, automations, command-palette)
+├── features/       # business functionality, one folder per feature (auth, dashboard, workspace, contacts, leads, lead-import, tasks, quotes, appointments, calendar, inbox, team, pipeline-settings, custom-fields, automations, command-palette)
 ├── hooks/          # hooks shared across features
 ├── lib/            # infrastructure helpers: env.ts, api.ts, format.ts, dates.ts, csv.ts, utils.ts
 ├── pages/          # route components; thin, compose features

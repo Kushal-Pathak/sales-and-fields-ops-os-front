@@ -3,6 +3,7 @@ import { PlusIcon } from 'lucide-react';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { SettingsNav } from '@/components/layout/settings-nav';
 import { Button } from '@/components/ui/button';
+import { PermissionNote, useCan } from '@/features/auth';
 import {
   AutomationDrawer,
   AutomationsTable,
@@ -16,6 +17,7 @@ import { useDrawerParam } from '@/hooks/use-drawer-param';
 export function AutomationsSettingsPage() {
   const automations = useAutomations();
   const drawer = useDrawerParam('automation');
+  const canManage = useCan('settings.manage');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   return (
@@ -27,12 +29,13 @@ export function AutomationsSettingsPage() {
           `${automations.rows.filter((row) => row.automation.active).length} active`
         }
         actions={
-          <Button size="sm" onClick={() => drawer.open(NEW_AUTOMATION_ID)}>
+          <Button size="sm" disabled={!canManage} onClick={() => drawer.open(NEW_AUTOMATION_ID)}>
             <PlusIcon /> New automation
           </Button>
         }
       >
         <SettingsNav />
+        <PermissionNote permission="settings.manage" className="ml-auto" />
       </PageHeader>
       <PageBody className="flex flex-col gap-4 p-4">
         <p className="max-w-2xl text-sm text-muted-foreground">

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { SettingsNav } from '@/components/layout/settings-nav';
 import { Button } from '@/components/ui/button';
+import { PermissionNote, useCan } from '@/features/auth';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DeleteFieldDialog,
@@ -24,6 +25,7 @@ export function FieldsSettingsPage() {
     ? (entityParam as FieldEntity)
     : 'lead';
   const drawer = useDrawerParam('field');
+  const canManage = useCan('settings.manage');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const setEntity = (next: string) => {
@@ -44,12 +46,13 @@ export function FieldsSettingsPage() {
       <PageHeader
         title="Custom fields"
         actions={
-          <Button size="sm" onClick={() => drawer.open(NEW_FIELD_ID)}>
+          <Button size="sm" disabled={!canManage} onClick={() => drawer.open(NEW_FIELD_ID)}>
             <PlusIcon /> Add field
           </Button>
         }
       >
         <SettingsNav />
+        <PermissionNote permission="settings.manage" className="ml-auto" />
       </PageHeader>
       <PageBody className="flex flex-col gap-4 p-4">
         <Tabs value={entity} onValueChange={setEntity}>

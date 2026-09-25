@@ -22,6 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useCan } from '@/features/auth';
 import { useCurrentUser, useWorkspace } from '@/features/workspace';
 import { formatRelative } from '@/lib/format';
 import type {
@@ -195,6 +196,7 @@ function AutomationForm({
     actions: (string | undefined)[];
   }>({ actions: [] });
   const isPending = create.isPending || update.isPending;
+  const canManage = useCan('settings.manage');
   const saveError = create.error ?? update.error;
   const members = refs.users.filter((user) => user.active);
 
@@ -474,6 +476,7 @@ function AutomationForm({
             variant="ghost"
             size="sm"
             className="text-destructive"
+            disabled={!canManage}
             onClick={() => onDelete(automation.id)}
           >
             <TrashIcon /> Delete
@@ -482,7 +485,7 @@ function AutomationForm({
         <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={isPending}>
+        <Button type="submit" size="sm" disabled={isPending || !canManage}>
           {automation ? 'Save changes' : 'Create automation'}
         </Button>
       </DrawerFooter>

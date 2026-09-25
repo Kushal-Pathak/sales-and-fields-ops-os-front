@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CommandPaletteProvider } from './command-palette-provider';
 import { QueryProvider } from './query-provider';
+import { SessionProvider } from './session-provider';
 import { ThemeProvider } from './theme-provider';
 
 /**
@@ -13,9 +14,11 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <QueryProvider>
-        <CommandPaletteProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </CommandPaletteProvider>
+        <SessionProvider>
+          <CommandPaletteProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </CommandPaletteProvider>
+        </SessionProvider>
       </QueryProvider>
     </ThemeProvider>
   );

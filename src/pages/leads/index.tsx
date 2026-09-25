@@ -3,6 +3,7 @@ import { PlusIcon, UploadIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
+import { PermissionNote, useCan } from '@/features/auth';
 import {
   LeadDrawer,
   LeadFormDialog,
@@ -17,6 +18,7 @@ import { LeadViewSwitch } from './view-switch';
 export function LeadsPage() {
   const list = useLeadsList();
   const drawer = useDrawerParam('lead');
+  const canEdit = useCan('leads.edit');
   const [creating, setCreating] = useState(false);
 
   return (
@@ -31,11 +33,12 @@ export function LeadsPage() {
               variant="outline"
               size="sm"
               nativeButton={false}
+              disabled={!canEdit}
               render={<Link to="/leads/import" />}
             >
               <UploadIcon /> Import
             </Button>
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button size="sm" disabled={!canEdit} onClick={() => setCreating(true)}>
               <PlusIcon /> Add lead
             </Button>
           </>
@@ -48,6 +51,7 @@ export function LeadsPage() {
           onChange={list.update}
           onClear={list.clear}
         />
+        <PermissionNote permission="leads.edit" className="ml-auto shrink-0" />
       </PageHeader>
       <PageBody className="flex flex-col">
         <LeadsTable

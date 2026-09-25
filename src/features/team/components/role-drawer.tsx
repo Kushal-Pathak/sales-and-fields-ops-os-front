@@ -21,6 +21,7 @@ import {
   DrawerPanel,
   DrawerTitle,
 } from '@/components/layout/drawer-panel';
+import { useCan } from '@/features/auth';
 import { useRoles, useUsers } from '@/features/workspace';
 import type { Permission, Role } from '@/types/domain';
 import { useCreateRole, useDeleteRole, useUpdateRole } from '../hooks/use-team-mutations';
@@ -81,6 +82,7 @@ function RoleForm({
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const isPending = createRole.isPending || updateRole.isPending;
+  const canManage = useCan('team.manage');
 
   const toggle = (key: Permission, on: boolean) =>
     setGranted((prev) => {
@@ -167,7 +169,7 @@ function RoleForm({
             variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
-            disabled={members > 0}
+            disabled={members > 0 || !canManage}
             title={members > 0 ? 'Move its members to another role first' : undefined}
             onClick={() => setDeleting(true)}
           >
@@ -178,7 +180,7 @@ function RoleForm({
         <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={isPending}>
+        <Button type="submit" size="sm" disabled={isPending || !canManage}>
           {role ? 'Save changes' : 'Add role'}
         </Button>
       </DrawerFooter>

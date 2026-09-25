@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCan } from '@/features/auth';
 import { useUsers, useWorkspace } from '@/features/workspace';
 import { formatDate, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -117,6 +118,8 @@ function QuoteDrawerContent({ quoteId, onClose }: { quoteId: string; onClose: ()
 /** Actions that move the quote forward render as the primary button, last in the row. */
 const PRIMARY_ACTIONS: ReadonlySet<QuoteAction> = new Set(['submit', 'approve', 'send', 'accept']);
 const DESTRUCTIVE_ACTIONS: ReadonlySet<QuoteAction> = new Set(['reject', 'decline']);
+/** Only roles with `quotes.approve` see these. */
+const APPROVAL_ACTIONS: ReadonlySet<QuoteAction> = new Set(['approve', 'reject', 'revise']);
 
 function QuoteDetails({ row, onClose }: { row: QuoteRow; onClose: () => void }) {
   const { quote, lead, contact, stage, createdBy, totals } = row;
@@ -127,9 +130,10 @@ function QuoteDetails({ row, onClose }: { row: QuoteRow; onClose: () => void }) 
   const remove = useDeleteQuote();
   const [deleting, setDeleting] = useState(false);
   const expired = isQuoteExpired(quote);
-  const actions = [...availableActions(quote.status)].sort(
-    (a, b) => Number(PRIMARY_ACTIONS.has(a)) - Number(PRIMARY_ACTIONS.has(b)),
-  );
+  const canApprove = useCan('quotes.approve');
+  const actions = availableActions(quote.status)
+    .filter((action) => canApprove || !APPROVAL_ACTIONS.has(action))
+    .sort((a, b) => Number(PRIMARY_ACTIONS.has(a)) - Number(PRIMARY_ACTIONS.has(b)));
 
   return (
     <>

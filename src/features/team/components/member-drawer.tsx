@@ -23,6 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCan } from '@/features/auth';
 import { useCurrentUser, useWorkspace } from '@/features/workspace';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,7 @@ function MemberDetails({
   const [editing, setEditing] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
   const isSelf = currentUser?.id === user.id;
+  const canManage = useCan('team.manage');
   const candidates = rows.filter((item) => item.user.active && item.user.id !== user.id);
   const permissions = new Set(role?.permissions ?? []);
 
@@ -115,7 +117,12 @@ function MemberDetails({
           >
             <MailIcon /> Email
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canManage}
+            onClick={() => setEditing(true)}
+          >
             <PencilIcon /> Edit
           </Button>
         </div>
@@ -179,7 +186,7 @@ function MemberDetails({
             variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
-            disabled={isSelf}
+            disabled={isSelf || !canManage}
             title={isSelf ? 'You cannot deactivate yourself' : undefined}
             onClick={() => setDeactivating(true)}
           >
@@ -189,7 +196,7 @@ function MemberDetails({
           <Button
             variant="outline"
             size="sm"
-            disabled={updateMember.isPending}
+            disabled={updateMember.isPending || !canManage}
             onClick={() => updateMember.mutate({ id: user.id, patch: { active: true } })}
           >
             <UserCheckIcon /> Reactivate

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useCan } from '@/features/auth';
 import { useStages } from '@/features/workspace';
 import { cn } from '@/lib/utils';
 import type { Stage, StageKind, StatusColor } from '@/types/domain';
@@ -97,6 +98,7 @@ function StageForm({ pipelineId, stage, stages, onClose, onDelete }: StageFormPr
   const [error, setError] = useState<string | null>(null);
 
   const isPending = createStage.isPending || updateStage.isPending;
+  const canManage = useCan('settings.manage');
   const saveError = createStage.error ?? updateStage.error;
 
   const submit = (event: FormEvent) => {
@@ -222,6 +224,7 @@ function StageForm({ pipelineId, stage, stages, onClose, onDelete }: StageFormPr
             variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
+            disabled={!canManage}
             onClick={() => onDelete(stage.id)}
           >
             Delete stage
@@ -231,7 +234,7 @@ function StageForm({ pipelineId, stage, stages, onClose, onDelete }: StageFormPr
         <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={isPending}>
+        <Button type="submit" size="sm" disabled={isPending || !canManage}>
           {stage ? 'Save changes' : 'Add stage'}
         </Button>
       </DrawerFooter>

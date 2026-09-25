@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useCan } from '@/features/auth';
 import type { FieldDefinition, FieldEntity, FieldType } from '@/types/domain';
 import { useFieldDefinitions } from '../hooks/use-field-definitions';
 import { useCreateField, useUpdateField } from '../hooks/use-field-mutations';
@@ -90,6 +91,7 @@ function FieldForm({
   const [hint, setHint] = useState(field?.hint ?? '');
   const [errors, setErrors] = useState<FormErrors>({});
   const isPending = create.isPending || update.isPending;
+  const canManage = useCan('settings.manage');
   const saveError = create.error ?? update.error;
   const takenKeys = all.filter((f) => f.entity === entity && f.id !== field?.id).map((f) => f.key);
 
@@ -249,6 +251,7 @@ function FieldForm({
             variant="ghost"
             size="sm"
             className="text-destructive"
+            disabled={!canManage}
             onClick={() => onDelete(field.id)}
           >
             <TrashIcon /> Delete
@@ -257,7 +260,7 @@ function FieldForm({
         <Button type="button" variant="outline" size="sm" className="ml-auto" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={isPending}>
+        <Button type="submit" size="sm" disabled={isPending || !canManage}>
           {field ? 'Save changes' : 'Add field'}
         </Button>
       </DrawerFooter>
