@@ -1,5 +1,7 @@
+import { useWriteOperation } from '@/hooks/use-write-operation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, queryKeys } from '@/data';
+import { queryKeys } from '@/data';
+import { deactivateMember, type DeactivateInput } from '@/data/member-commands';
 import { useCurrentUser } from '@/features/workspace';
 import type { CreateInput, Role, UpdateInput, User } from '@/types/domain';
 
@@ -11,101 +13,75 @@ function useInvalidate() {
 
 /** Adds a member directly. With auth this becomes an invitation. */
 export function useCreateMember() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (input: CreateInput<User>) => db.users.create(input),
-    onSuccess: () => invalidate(queryKeys.users.all),
+    mutationFn: (input: CreateInput<User>) => write(async (db) => db.users.create(input)),
+    onSettled: () => invalidate(queryKeys.users.all),
   });
 }
 
+/** A member's role decides their access, so the access context is refreshed with the member. */
 export function useUpdateMember() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateInput<User> }) =>
-      db.users.update(id, patch),
-    onSuccess: () => invalidate(queryKeys.users.all),
+      write(async (db) => db.users.update(id, patch)),
+    onSettled: () => invalidate(queryKeys.users.all, queryKeys.access.all),
   });
-}
-
-export interface DeactivateInput {
-  id: string;
-  /** Who takes over the member's open leads and tasks. Required when there are any. */
-  reassignToId: string | null;
 }
 
 /** Moves open leads and tasks to another member (logging it on each lead), then deactivates. */
 export function useDeactivateMember() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ id, reassignToId }: DeactivateInput) => {
-      const [leads, tasks, stages] = await Promise.all([
-        db.leads.list(),
-        db.tasks.list(),
-        db.stages.list(),
-      ]);
-      const openStages = new Set(stages.filter((s) => s.kind === 'open').map((s) => s.id));
-      const openLeads = leads.filter((l) => l.ownerId === id && openStages.has(l.stageId));
-      const openTasks = tasks.filter(
-        (t) => t.assigneeId === id && (t.status === 'pending' || t.status === 'in_progress'),
-      );
-      if ((openLeads.length > 0 || openTasks.length > 0) && !reassignToId)
-        throw new Error('Choose who takes over first.');
-      if (reassignToId) {
-        const [from, to] = await Promise.all([db.users.get(id), db.users.get(reassignToId)]);
-        const now = new Date().toISOString();
-        for (const lead of openLeads) {
-          await db.leads.update(lead.id, { ownerId: to.id, lastActivityAt: now });
-          await db.activities.create({
-            entityType: 'lead',
-            entityId: lead.id,
-            kind: 'reassigned',
-            message: `Reassigned from ${from.name} to ${to.name}`,
-            actorId,
-          });
-        }
-        for (const task of openTasks) await db.tasks.update(task.id, { assigneeId: to.id });
-      }
-      await db.users.update(id, { active: false });
-      return { leads: openLeads.length, tasks: openTasks.length };
-    },
-    onSuccess: () =>
+    mutationFn: (input: DeactivateInput) =>
+      write((db, options) => deactivateMember(db, input, actorId, options)),
+    onSettled: () =>
       invalidate(
         queryKeys.users.all,
         queryKeys.leads.all,
         queryKeys.tasks.all,
         queryKeys.activities.all,
+        queryKeys.access.all,
       ),
   });
 }
 
 export function useCreateRole() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (input: CreateInput<Role>) => db.roles.create(input),
-    onSuccess: () => invalidate(queryKeys.roles.all),
+    mutationFn: (input: CreateInput<Role>) => write(async (db) => db.roles.create(input)),
+    onSettled: () => invalidate(queryKeys.roles.all),
   });
 }
 
 export function useUpdateRole() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateInput<Role> }) =>
-      db.roles.update(id, patch),
-    onSuccess: () => invalidate(queryKeys.roles.all),
+      write(async (db) => db.roles.update(id, patch)),
+    onSettled: () => invalidate(queryKeys.roles.all, queryKeys.access.all),
   });
 }
 
 /** Refuses when any member still has the role. */
 export function useDeleteRole() {
+  const write = useWriteOperation('team');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const users = await db.users.list();
-      if (users.some((user) => user.roleId === id))
-        throw new Error('Move its members to another role first.');
-      await db.roles.remove(id);
-    },
-    onSuccess: () => invalidate(queryKeys.roles.all),
+    mutationFn: async (id: string) =>
+      write(async (db) => {
+        const users = await db.users.list();
+        if (users.some((user) => user.roleId === id))
+          throw new Error('Move its members to another role first.');
+        await db.roles.remove(id);
+      }),
+    onSettled: () => invalidate(queryKeys.roles.all, queryKeys.access.all),
   });
 }

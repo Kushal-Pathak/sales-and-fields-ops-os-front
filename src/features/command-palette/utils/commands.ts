@@ -8,7 +8,8 @@ import {
   UserPlusIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { adminNav, mainNav } from '@/app/navigation';
+import { adminNav, mainNav, visibleNav } from '@/app/navigation';
+import type { ModuleId } from '@/types/domain';
 
 export type QuickActionId =
   | 'new_lead'
@@ -27,11 +28,13 @@ export interface Command {
   /** Sections navigate; quick actions run in the palette. */
   to?: string;
   action?: QuickActionId;
+  /** The module the command needs; it is offered only when that module is open. */
+  module?: ModuleId;
 }
 
-/** Every sidebar entry, so the palette navigates wherever the sidebar does. */
-export function sectionCommands(): Command[] {
-  return [...mainNav, adminNav].flatMap((group) =>
+/** Every sidebar entry the user can open, so the palette navigates wherever the sidebar does. */
+export function sectionCommands(isOpen: (module: ModuleId) => boolean): Command[] {
+  return visibleNav([...mainNav, adminNav], isOpen).flatMap((group) =>
     group.items.map((item) => ({
       id: `go:${item.to}`,
       label: item.label,
@@ -49,6 +52,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: UserPlusIcon,
     keywords: ['add', 'create', 'contact'],
     action: 'new_lead',
+    module: 'leads',
   },
   {
     id: 'new_task',
@@ -56,6 +60,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: ListPlusIcon,
     keywords: ['add', 'create', 'todo'],
     action: 'new_task',
+    module: 'tasks',
   },
   {
     id: 'new_appointment',
@@ -63,6 +68,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: CalendarPlusIcon,
     keywords: ['new', 'meeting', 'book', 'visit', 'call'],
     action: 'new_appointment',
+    module: 'appointments',
   },
   {
     id: 'new_quote',
@@ -70,6 +76,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: FileTextIcon,
     keywords: ['create', 'proposal', 'price'],
     action: 'new_quote',
+    module: 'quotes',
   },
   {
     id: 'new_message',
@@ -77,6 +84,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: MessageSquarePlusIcon,
     keywords: ['send', 'whatsapp', 'sms', 'email', 'chat'],
     action: 'new_message',
+    module: 'inbox',
   },
   {
     id: 'import_leads',
@@ -84,6 +92,7 @@ export const QUICK_ACTIONS: Command[] = [
     icon: UploadIcon,
     keywords: ['csv', 'upload', 'spreadsheet'],
     action: 'import_leads',
+    module: 'leads',
   },
   {
     id: 'toggle_theme',
@@ -93,6 +102,11 @@ export const QUICK_ACTIONS: Command[] = [
     action: 'toggle_theme',
   },
 ];
+
+/** The quick actions whose module is open; actions without one (theme) are always offered. */
+export function quickActions(isOpen: (module: ModuleId) => boolean): Command[] {
+  return QUICK_ACTIONS.filter((command) => !command.module || isOpen(command.module));
+}
 
 function normalize(text: string): string {
   return text

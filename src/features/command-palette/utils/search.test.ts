@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildSeed } from '@/data/seed';
-import { filterCommands, QUICK_ACTIONS, sectionCommands } from './commands';
+import type { ModuleId } from '@/types/domain';
+import { filterCommands, QUICK_ACTIONS, quickActions, sectionCommands } from './commands';
 import { MAX_RESULTS, searchRecords } from './search';
 
 const seed = buildSeed();
@@ -31,11 +32,27 @@ describe('searchRecords', () => {
 
 describe('commands', () => {
   it('lists every sidebar section and filters by words', () => {
-    const sections = sectionCommands();
+    const sections = sectionCommands(() => true);
     expect(sections.map((c) => c.to)).toContain('/leads/pipeline');
     expect(filterCommands(sections, 'pipe').map((c) => c.label)).toEqual(['Pipeline']);
     expect(filterCommands(QUICK_ACTIONS, 'dark')).toHaveLength(1);
     expect(filterCommands(QUICK_ACTIONS, 'new csv')).toHaveLength(0);
     expect(filterCommands(QUICK_ACTIONS, '')).toHaveLength(QUICK_ACTIONS.length);
+  });
+
+  it('offers only the sections and quick actions of open modules', () => {
+    const isOpen = (module: ModuleId) => module !== 'quotes' && module !== 'inbox';
+    const sections = sectionCommands(isOpen).map((c) => c.to);
+    expect(sections).toContain('/tasks');
+    expect(sections).not.toContain('/quotes');
+    expect(sections).not.toContain('/inbox');
+    const actions = quickActions(isOpen).map((c) => c.action);
+    expect(actions).toEqual([
+      'new_lead',
+      'new_task',
+      'new_appointment',
+      'import_leads',
+      'toggle_theme',
+    ]);
   });
 });

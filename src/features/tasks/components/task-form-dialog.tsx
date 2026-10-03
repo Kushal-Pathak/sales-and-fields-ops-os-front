@@ -1,4 +1,8 @@
+import { PartialWriteError } from '@/data/errors';
 import { useState, type FormEvent } from 'react';
+import { QueryContent } from '@/components/common/query-content';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getQueryError } from '@/data/query-state';
 import {
   Combobox,
   ComboboxContent,
@@ -28,7 +32,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser, useUsers } from '@/features/workspace';
 import { fromDateTimeInputs, toDateInput, toTimeInput } from '@/lib/dates';
-import type { CreateInput, Priority, Task, TaskType, UpdateInput } from '@/types/domain';
+import type { CreateInput, Priority, Task, TaskType, UpdateInput, User } from '@/types/domain';
 import { useCreateTask, useUpdateTask } from '../hooks/use-task-mutations';
 import { useLeadOptions } from '../hooks/use-tasks';
 import { PRIORITY_LABEL, TASK_TYPE_LABEL, TASK_TYPES } from '../utils/task-labels';
@@ -68,7 +72,7 @@ export function TaskFormDialog({
           </DialogDescription>
         </DialogHeader>
         {open && (
-          <TaskForm
+          <TaskFormLoader
             task={task}
             defaultLeadId={defaultLeadId}
             defaults={{ title: defaultTitle, type: defaultType, dueAt: defaultDueAt }}
@@ -99,22 +103,62 @@ interface TaskDefaults {
   dueAt?: string | undefined;
 }
 
+interface TaskFormProps {
+  task: Task | undefined;
+  defaultLeadId: string | undefined;
+  defaults: TaskDefaults;
+  onCancel: () => void;
+  onSaved: (taskId: string) => void;
+}
+
+function TaskFormLoader(props: TaskFormProps) {
+  const users = useUsers();
+  const currentUser = useCurrentUser();
+  const leadOptions = useLeadOptions();
+  const error = getQueryError([users, currentUser, leadOptions]);
+  const hasData = users.data !== undefined && leadOptions.rows !== undefined;
+  return (
+    <QueryContent
+      error={error}
+      hasData={hasData}
+      title="Task options could not be loaded"
+      onRetry={() =>
+        void Promise.all([users.refetch(), currentUser.refetch(), leadOptions.refetch()])
+      }
+    >
+      {users.data && leadOptions.rows ? (
+        <TaskForm
+          {...props}
+          users={users.data.filter((user) => user.active)}
+          currentUser={currentUser.data}
+          leadOptions={leadOptions.rows}
+        />
+      ) : (
+        <div role="status" className="space-y-3">
+          <span className="sr-only">Loading task options</span>
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+        </div>
+      )}
+    </QueryContent>
+  );
+}
+
 function TaskForm({
   task,
   defaultLeadId,
   defaults,
   onCancel,
   onSaved,
-}: {
-  task: Task | undefined;
-  defaultLeadId: string | undefined;
-  defaults: TaskDefaults;
-  onCancel: () => void;
-  onSaved: (taskId: string) => void;
+  users,
+  currentUser,
+  leadOptions,
+}: TaskFormProps & {
+  users: User[];
+  currentUser: User | undefined;
+  leadOptions: LeadOption[];
 }) {
-  const users = (useUsers().data ?? []).filter((user) => user.active);
-  const currentUser = useCurrentUser().data;
-  const leadOptions = (useLeadOptions() ?? []) as LeadOption[];
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
@@ -316,7 +360,9 @@ function TaskForm({
 
       {saveError && (
         <p role="alert" className="text-sm text-destructive">
-          The task could not be saved. Try again.
+          {saveError instanceof PartialWriteError
+            ? saveError.message
+            : 'The task could not be saved. Try again.'}
         </p>
       )}
 
@@ -324,7 +370,7 @@ function TaskForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || saveError instanceof PartialWriteError}>
           {task ? 'Save changes' : 'Add task'}
         </Button>
       </DialogFooter>

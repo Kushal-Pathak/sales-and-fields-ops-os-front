@@ -31,6 +31,14 @@ describe('joinMembers', () => {
   });
 });
 
+describe('joinMembers without tasks', () => {
+  it('reports task counts as unknown, not zero, when tasks are closed to the viewer', () => {
+    const withoutTasks = joinMembers({ ...seed, tasks: null });
+    expect(withoutTasks.every((row) => row.openTasks === null)).toBe(true);
+    expect(withoutTasks.map((row) => row.openLeads)).toEqual(rows.map((row) => row.openLeads));
+  });
+});
+
 describe('filterMembers', () => {
   it('sorts active members first, then by name', () => {
     const sorted = filterMembers(rows, DEFAULT_TEAM_FILTERS);

@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import type { LeadRow } from '../utils/lead-view-model';
 import { PRIORITY_COLOR, PRIORITY_LABEL } from '../utils/priority';
 
-/** The drawer's first tab: contact and lead fields, notes, and the lead's open tasks. */
-export function LeadOverviewTab({ row }: { row: LeadRow }) {
+/** The drawer's first tab: contact and lead fields, notes, and (when Tasks is open to the user) the lead's open tasks. */
+export function LeadOverviewTab({ row, showTasks }: { row: LeadRow; showTasks: boolean }) {
   const { lead, contact, owner } = row;
   const workspace = useWorkspace().data;
   const locale = workspace?.locale;
@@ -72,10 +72,12 @@ export function LeadOverviewTab({ row }: { row: LeadRow }) {
         </section>
       )}
 
-      <section>
-        <SectionTitle>Open tasks</SectionTitle>
-        <LeadTaskList leadId={lead.id} openOnly />
-      </section>
+      {showTasks && (
+        <section>
+          <SectionTitle>Open tasks</SectionTitle>
+          <LeadTaskList leadId={lead.id} openOnly />
+        </section>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   type Conversation,
   type Lead,
   type Message,
+  type ModuleId,
   type Quote,
   type Stage,
   type StatusColor,
@@ -50,6 +51,18 @@ export type Intent =
 
 export type IntentType = Intent['type'];
 
+/** The module each intent reads or acts on. The palette drops an intent whose module is closed. */
+export const INTENT_MODULE: Record<IntentType, ModuleId> = {
+  overdue_tasks: 'tasks',
+  leads_without_follow_up: 'leads',
+  today: 'calendar',
+  hot_leads: 'leads',
+  pending_quotes: 'quotes',
+  unread_messages: 'inbox',
+  create_task: 'tasks',
+  assign_hot_leads: 'leads',
+};
+
 export interface AnswerRow {
   id: string;
   title: string;
@@ -68,11 +81,11 @@ export interface IntentAnswer {
   empty: string;
 }
 
-export const SUGGESTED_QUERIES: { text: string; risky?: boolean }[] = [
-  { text: 'Show overdue tasks' },
-  { text: 'Find leads without follow-up this week' },
-  { text: 'Summarise today’s messages' },
-  { text: 'Assign all hot leads to Jordan', risky: true },
+export const SUGGESTED_QUERIES: { text: string; module: ModuleId; risky?: boolean }[] = [
+  { text: 'Show overdue tasks', module: 'tasks' },
+  { text: 'Find leads without follow-up this week', module: 'leads' },
+  { text: 'Summarise today’s messages', module: 'inbox' },
+  { text: 'Assign all hot leads to Jordan', module: 'leads', risky: true },
 ];
 
 const MAX_ROWS = 5;

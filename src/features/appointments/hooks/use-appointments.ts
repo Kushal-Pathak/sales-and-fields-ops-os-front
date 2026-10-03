@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
@@ -12,9 +13,12 @@ import { joinAppointments, type AppointmentRow } from '../utils/appointment-view
 export function useAppointments() {
   const appointments = useQuery({
     queryKey: queryKeys.appointments.list(),
-    queryFn: () => db.appointments.list(),
+    queryFn: ({ signal }) => db.appointments.list({ signal }),
   });
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const users = useUsers();
   const stages = useStages();
@@ -34,7 +38,7 @@ export function useAppointments() {
   return {
     rows,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }
@@ -46,7 +50,10 @@ export interface LeadOption {
 
 /** Lead + contact pairs for the scheduling form's lead picker. */
 export function useLeadOptions(): LeadOption[] | undefined {
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   return useMemo(() => {
     if (!leads.data || !contacts.data) return undefined;

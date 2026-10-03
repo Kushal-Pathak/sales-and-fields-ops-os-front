@@ -6,8 +6,7 @@ import type { Workspace } from '@/types/domain';
 export function useWorkspace() {
   return useQuery({
     queryKey: queryKeys.workspace.list(),
-    queryFn: () => db.workspace.list(),
+    queryFn: ({ signal }) => db.workspace.list({ signal }),
     select: (rows: Workspace[]) => rows[0],
-    staleTime: Infinity,
   });
 }

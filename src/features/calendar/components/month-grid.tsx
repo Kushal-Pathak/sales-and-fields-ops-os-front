@@ -1,3 +1,4 @@
+import { useNow } from '@/hooks/use-now';
 import { PlusIcon } from 'lucide-react';
 import { useWorkspace } from '@/features/workspace';
 import { dateKey, isSameDay } from '@/lib/dates';
@@ -10,8 +11,8 @@ interface MonthGridProps {
   date: Date;
   events: CalendarEvent[];
   onOpenEvent: (event: CalendarEvent) => void;
-  /** A day's empty area was clicked; `startAt` is 9:00 that day. */
-  onSlotClick: (startAt: Date) => void;
+  /** A day's empty area was clicked; `startAt` is 9:00 that day. Omit when nothing can be scheduled. */
+  onSlotClick?: ((startAt: Date) => void) | undefined;
   /** "+n more" was clicked: show that day's week. */
   onShowDay: (day: Date) => void;
 }
@@ -21,7 +22,7 @@ const VISIBLE_PER_DAY = 3;
 /** Six-week month grid with up to three one-line chips per day and a "+n more" link. */
 export function MonthGrid({ date, events, onOpenEvent, onSlotClick, onShowDay }: MonthGridProps) {
   const locale = useWorkspace().data?.locale;
-  const now = new Date();
+  const now = useNow();
   const cells = monthCells(date);
   const byDay = groupByDay(events);
   const headers = weekDays(date).map((day) =>
@@ -47,9 +48,10 @@ export function MonthGrid({ date, events, onOpenEvent, onSlotClick, onShowDay }:
           return (
             <div
               key={day.toISOString()}
-              onClick={() => onSlotClick(slot)}
+              onClick={onSlotClick && (() => onSlotClick(slot))}
               className={cn(
-                'group flex cursor-pointer flex-col gap-0.5 border-b border-l p-1 hover:bg-muted/40 [&:nth-child(7n+1)]:border-l-0',
+                'group flex flex-col gap-0.5 border-b border-l p-1 [&:nth-child(7n+1)]:border-l-0',
+                onSlotClick && 'cursor-pointer hover:bg-muted/40',
                 !inMonth && 'bg-surface-2/40 text-foreground-faint',
                 today && 'bg-accent/40',
               )}
@@ -63,17 +65,19 @@ export function MonthGrid({ date, events, onOpenEvent, onSlotClick, onShowDay }:
                 >
                   {day.getDate()}
                 </span>
-                <button
-                  type="button"
-                  aria-label={`Schedule on ${formatDate(day.toISOString(), 'date', locale)}`}
-                  onClick={(click) => {
-                    click.stopPropagation();
-                    onSlotClick(slot);
-                  }}
-                  className="flex size-5 items-center justify-center rounded-md text-foreground-faint opacity-0 hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-                >
-                  <PlusIcon className="size-3.5" />
-                </button>
+                {onSlotClick && (
+                  <button
+                    type="button"
+                    aria-label={`Schedule on ${formatDate(day.toISOString(), 'date', locale)}`}
+                    onClick={(click) => {
+                      click.stopPropagation();
+                      onSlotClick(slot);
+                    }}
+                    className="flex size-5 items-center justify-center rounded-md text-foreground-faint opacity-0 hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                  >
+                    <PlusIcon className="size-3.5" />
+                  </button>
+                )}
               </div>
               {dayEvents.slice(0, VISIBLE_PER_DAY).map((event) => (
                 <EventChip key={event.id} event={event} layout="line" onOpen={onOpenEvent} />

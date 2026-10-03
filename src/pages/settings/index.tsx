@@ -1,4 +1,10 @@
-import { Columns3Icon, SlidersHorizontalIcon, ZapIcon, type LucideIcon } from 'lucide-react';
+import {
+  BlocksIcon,
+  Columns3Icon,
+  SlidersHorizontalIcon,
+  ZapIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { PageBody, PageHeader } from '@/components/layout/page-header';
 import { SettingsNav } from '@/components/layout/settings-nav';
@@ -23,6 +29,12 @@ const SECTIONS: { title: string; hint: string; to: string; icon: LucideIcon; soo
     hint: 'Rules that assign, create tasks or notify when things happen.',
     to: '/settings/automations',
     icon: ZapIcon,
+  },
+  {
+    title: 'Modules',
+    hint: 'Which parts of the product this workspace uses.',
+    to: '/settings/modules',
+    icon: BlocksIcon,
   },
 ];
 

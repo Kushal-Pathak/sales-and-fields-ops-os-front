@@ -1,19 +1,28 @@
-import { createBrowserRouter, redirect } from 'react-router';
+import { createBrowserRouter, type RouteObject } from 'react-router';
 import { RootErrorBoundary } from '@/components/common/root-error-boundary';
-import { RequireSession } from '@/features/auth';
+import { RequireAccess, RequireModule, RequireSession } from '@/features/auth';
+import type { ModuleId } from '@/types/domain';
 import type { RouteHandle } from '@/types/route-handle';
 import { GuardedShell } from './guarded-shell';
+import { HomeRedirect, ModuleOutlet } from './module-routes';
 
 /**
  * Route table. Pages are code-split with `lazy`; add a route here when you add a page.
- * Every page route declares a `handle` (title + breadcrumb group) and its path must match
- * the sidebar entry in `src/app/navigation.ts`. Everything except `/sign-in` needs a session.
+ * Every page route declares a `handle`: its title, breadcrumb group and the module it
+ * belongs to, which must match the sidebar entry in `src/app/navigation.ts`.
+ * Everything except `/sign-in` needs a session, and a page renders only when its
+ * module is open to the signed-in user (`ModuleOutlet`).
  */
 function handle(title: string, group?: string): RouteHandle {
   return group ? { title, group } : { title };
 }
 
-export const router = createBrowserRouter([
+/** The handle of a page that belongs to a module, including its create/edit/import routes. */
+function page(module: ModuleId, title: string, group?: string): RouteHandle {
+  return { ...handle(title, group), module };
+}
+
+export const routes: RouteObject[] = [
   {
     path: '/sign-in',
     ErrorBoundary: RootErrorBoundary,
@@ -25,110 +34,122 @@ export const router = createBrowserRouter([
     Component: GuardedShell,
     ErrorBoundary: RootErrorBoundary,
     children: [
-      { index: true, loader: () => redirect('/dashboard') },
+      { index: true, Component: HomeRedirect },
       {
-        path: 'dashboard',
-        handle: handle('Dashboard'),
-        lazy: async () => ({ Component: (await import('@/pages/dashboard')).DashboardPage }),
-      },
+        Component: ModuleOutlet,
+        children: [
+          {
+            path: 'dashboard',
+            handle: page('dashboard', 'Dashboard'),
+            lazy: async () => ({ Component: (await import('@/pages/dashboard')).DashboardPage }),
+          },
 
-      {
-        path: 'leads',
-        handle: handle('Leads', 'Sales'),
-        lazy: async () => ({ Component: (await import('@/pages/leads')).LeadsPage }),
-      },
-      {
-        path: 'leads/pipeline',
-        handle: handle('Pipeline', 'Sales'),
-        lazy: async () => ({ Component: (await import('@/pages/pipeline')).PipelinePage }),
-      },
-      {
-        path: 'leads/import',
-        handle: handle('Import leads', 'Sales'),
-        lazy: async () => ({
-          Component: (await import('@/pages/leads/import')).ImportLeadsPage,
-        }),
-      },
-      {
-        path: 'quotes',
-        handle: handle('Quotes', 'Sales'),
-        lazy: async () => ({ Component: (await import('@/pages/quotes')).QuotesPage }),
-      },
-      {
-        path: 'quotes/new',
-        handle: handle('New quote', 'Quotes'),
-        lazy: async () => ({ Component: (await import('@/pages/quotes/new')).NewQuotePage }),
-      },
-      {
-        path: 'quotes/:id/edit',
-        handle: handle('Edit quote', 'Quotes'),
-        lazy: async () => ({ Component: (await import('@/pages/quotes/edit')).EditQuotePage }),
-      },
+          {
+            path: 'leads',
+            handle: page('leads', 'Leads', 'Sales'),
+            lazy: async () => ({ Component: (await import('@/pages/leads')).LeadsPage }),
+          },
+          {
+            path: 'leads/pipeline',
+            handle: page('leads', 'Pipeline', 'Sales'),
+            lazy: async () => ({ Component: (await import('@/pages/pipeline')).PipelinePage }),
+          },
+          {
+            path: 'leads/import',
+            handle: page('leads', 'Import leads', 'Sales'),
+            lazy: async () => ({
+              Component: (await import('@/pages/leads/import')).ImportLeadsPage,
+            }),
+          },
+          {
+            path: 'quotes',
+            handle: page('quotes', 'Quotes', 'Sales'),
+            lazy: async () => ({ Component: (await import('@/pages/quotes')).QuotesPage }),
+          },
+          {
+            path: 'quotes/new',
+            handle: page('quotes', 'New quote', 'Quotes'),
+            lazy: async () => ({ Component: (await import('@/pages/quotes/new')).NewQuotePage }),
+          },
+          {
+            path: 'quotes/:id/edit',
+            handle: page('quotes', 'Edit quote', 'Quotes'),
+            lazy: async () => ({ Component: (await import('@/pages/quotes/edit')).EditQuotePage }),
+          },
 
-      {
-        path: 'tasks',
-        handle: handle('Tasks', 'Work'),
-        lazy: async () => ({ Component: (await import('@/pages/tasks')).TasksPage }),
-      },
-      {
-        path: 'tasks/board',
-        handle: handle('Tasks', 'Work'),
-        lazy: async () => ({ Component: (await import('@/pages/tasks/board')).TaskBoardPage }),
-      },
-      {
-        path: 'appointments',
-        handle: handle('Appointments', 'Work'),
-        lazy: async () => ({
-          Component: (await import('@/pages/appointments')).AppointmentsPage,
-        }),
-      },
-      {
-        path: 'calendar',
-        handle: handle('Calendar', 'Work'),
-        lazy: async () => ({ Component: (await import('@/pages/calendar')).CalendarPage }),
-      },
+          {
+            path: 'tasks',
+            handle: page('tasks', 'Tasks', 'Work'),
+            lazy: async () => ({ Component: (await import('@/pages/tasks')).TasksPage }),
+          },
+          {
+            path: 'tasks/board',
+            handle: page('tasks', 'Tasks', 'Work'),
+            lazy: async () => ({ Component: (await import('@/pages/tasks/board')).TaskBoardPage }),
+          },
+          {
+            path: 'appointments',
+            handle: page('appointments', 'Appointments', 'Work'),
+            lazy: async () => ({
+              Component: (await import('@/pages/appointments')).AppointmentsPage,
+            }),
+          },
+          {
+            path: 'calendar',
+            handle: page('calendar', 'Calendar', 'Work'),
+            lazy: async () => ({ Component: (await import('@/pages/calendar')).CalendarPage }),
+          },
 
-      {
-        path: 'inbox',
-        handle: handle('Inbox', 'Communication'),
-        lazy: async () => ({ Component: (await import('@/pages/inbox')).InboxPage }),
-      },
+          {
+            path: 'inbox',
+            handle: page('inbox', 'Inbox', 'Communication'),
+            lazy: async () => ({ Component: (await import('@/pages/inbox')).InboxPage }),
+          },
 
-      {
-        path: 'team',
-        handle: handle('Team', 'Admin'),
-        lazy: async () => ({ Component: (await import('@/pages/team')).TeamPage }),
-      },
-      {
-        path: 'team/roles',
-        handle: handle('Roles', 'Team'),
-        lazy: async () => ({ Component: (await import('@/pages/team/roles')).RolesPage }),
-      },
-      {
-        path: 'settings',
-        handle: handle('Settings', 'Admin'),
-        lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
-      },
-      {
-        path: 'settings/pipeline',
-        handle: handle('Pipeline stages', 'Settings'),
-        lazy: async () => ({
-          Component: (await import('@/pages/settings/pipeline')).PipelineSettingsPage,
-        }),
-      },
-      {
-        path: 'settings/fields',
-        handle: handle('Custom fields', 'Settings'),
-        lazy: async () => ({
-          Component: (await import('@/pages/settings/fields')).FieldsSettingsPage,
-        }),
-      },
-      {
-        path: 'settings/automations',
-        handle: handle('Automations', 'Settings'),
-        lazy: async () => ({
-          Component: (await import('@/pages/settings/automations')).AutomationsSettingsPage,
-        }),
+          {
+            path: 'team',
+            handle: page('team', 'Team', 'Admin'),
+            lazy: async () => ({ Component: (await import('@/pages/team')).TeamPage }),
+          },
+          {
+            path: 'team/roles',
+            handle: page('team', 'Roles', 'Team'),
+            lazy: async () => ({ Component: (await import('@/pages/team/roles')).RolesPage }),
+          },
+          {
+            path: 'settings',
+            handle: page('settings', 'Settings', 'Admin'),
+            lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
+          },
+          {
+            path: 'settings/pipeline',
+            handle: page('settings', 'Pipeline stages', 'Settings'),
+            lazy: async () => ({
+              Component: (await import('@/pages/settings/pipeline')).PipelineSettingsPage,
+            }),
+          },
+          {
+            path: 'settings/fields',
+            handle: page('settings', 'Custom fields', 'Settings'),
+            lazy: async () => ({
+              Component: (await import('@/pages/settings/fields')).FieldsSettingsPage,
+            }),
+          },
+          {
+            path: 'settings/modules',
+            handle: page('settings', 'Modules', 'Settings'),
+            lazy: async () => ({
+              Component: (await import('@/pages/settings/modules')).ModulesSettingsPage,
+            }),
+          },
+          {
+            path: 'settings/automations',
+            handle: page('settings', 'Automations', 'Settings'),
+            lazy: async () => ({
+              Component: (await import('@/pages/settings/automations')).AutomationsSettingsPage,
+            }),
+          },
+        ],
       },
 
       // Dev-only style guide for the design system; tree-shaken out of production builds.
@@ -154,16 +175,22 @@ export const router = createBrowserRouter([
   {
     path: '/quotes/:id/print',
     ErrorBoundary: RootErrorBoundary,
-    handle: handle('Print quote'),
+    handle: page('quotes', 'Print quote'),
     lazy: async () => {
       const { QuotePrintPage } = await import('@/pages/quotes/print');
       return {
         Component: () => (
           <RequireSession>
-            <QuotePrintPage />
+            <RequireAccess>
+              <RequireModule module="quotes">
+                <QuotePrintPage />
+              </RequireModule>
+            </RequireAccess>
           </RequireSession>
         ),
       };
     },
   },
-]);
+];
+
+export const router = createBrowserRouter(routes);

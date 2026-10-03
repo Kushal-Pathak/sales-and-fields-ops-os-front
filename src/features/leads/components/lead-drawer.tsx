@@ -1,3 +1,6 @@
+import { useNow } from '@/hooks/use-now';
+import { QueryContent } from '@/components/common/query-content';
+import { isAccessError } from '@/data/errors';
 import { useState } from 'react';
 import {
   ArrowRightIcon,
@@ -36,8 +39,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { STATUS_COLOR_CLASSES } from '@/components/common/status-color';
-import { useCan } from '@/features/auth';
+import { useCan, useModules } from '@/features/auth';
 import { cn } from '@/lib/utils';
+import type { ModuleId } from '@/types/domain';
 import { useLead } from '../hooks/use-lead';
 import { useUpdateLead } from '../hooks/use-lead-mutations';
 import { nextOpenStage, type LeadRow } from '../utils/lead-view-model';
@@ -59,14 +63,15 @@ interface LeadDrawerProps {
   onClose: () => void;
 }
 
-const TABS = [
+/** Tabs that show another module's records carry that module and go when it is closed to the user. */
+const TABS: { value: string; label: string; module?: ModuleId }[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'activity', label: 'Activity' },
-  { value: 'tasks', label: 'Tasks' },
-  { value: 'quotes', label: 'Quotes' },
-  { value: 'appointments', label: 'Appointments' },
-  { value: 'messages', label: 'Messages' },
-] as const;
+  { value: 'tasks', label: 'Tasks', module: 'tasks' },
+  { value: 'quotes', label: 'Quotes', module: 'quotes' },
+  { value: 'appointments', label: 'Appointments', module: 'appointments' },
+  { value: 'messages', label: 'Messages', module: 'inbox' },
+];
 
 /** The resizable lead detail panel. Opened by `?lead=<id>`; everything inside reads that id. */
 export function LeadDrawer({ leadId, onClose }: LeadDrawerProps) {
@@ -78,6 +83,7 @@ export function LeadDrawer({ leadId, onClose }: LeadDrawerProps) {
 }
 
 function LeadDrawerContent({ leadId, onClose }: { leadId: string; onClose: () => void }) {
+  useNow();
   const { row, stages, isPending, notFound, error, refetch } = useLead(leadId);
 
   if (notFound) {
@@ -101,7 +107,7 @@ function LeadDrawerContent({ leadId, onClose }: { leadId: string; onClose: () =>
     );
   }
 
-  if (error) {
+  if (error && (!row || isAccessError(error))) {
     return (
       <>
         <DrawerHeader>
@@ -115,7 +121,16 @@ function LeadDrawerContent({ leadId, onClose }: { leadId: string; onClose: () =>
 
   if (isPending || !row) return <DrawerSkeleton />;
 
-  return <LeadDetails row={row} stages={stages} onClose={onClose} />;
+  return (
+    <QueryContent
+      error={error}
+      hasData={true}
+      title="Lead could not be loaded"
+      onRetry={() => void refetch()}
+    >
+      <LeadDetails row={row} stages={stages} onClose={onClose} />
+    </QueryContent>
+  );
 }
 
 interface LeadDetailsProps {
@@ -128,6 +143,9 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
   const { lead, contact, stage } = row;
   const updateLead = useUpdateLead();
   const canEdit = useCan('leads.edit');
+  const modules = useModules();
+  const isOpen = (module: ModuleId) => modules[module].status === 'allowed';
+  const tabs = TABS.filter((tab) => !tab.module || isOpen(tab.module));
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -229,7 +247,7 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
           variant="line"
           className="no-scrollbar -mb-4 h-auto w-full justify-start gap-0 overflow-x-auto p-0"
         >
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
@@ -243,23 +261,31 @@ function LeadDetails({ row, stages, onClose }: LeadDetailsProps) {
 
       <DrawerBody className="flex flex-col">
         <TabsContent value="overview">
-          <LeadOverviewTab row={row} />
+          <LeadOverviewTab row={row} showTasks={isOpen('tasks')} />
         </TabsContent>
         <TabsContent value="activity">
           <LeadActivityTab leadId={lead.id} />
         </TabsContent>
-        <TabsContent value="tasks">
-          <LeadTasksTab leadId={lead.id} />
-        </TabsContent>
-        <TabsContent value="quotes">
-          <LeadQuotesTab leadId={lead.id} />
-        </TabsContent>
-        <TabsContent value="appointments">
-          <LeadAppointmentsTab leadId={lead.id} />
-        </TabsContent>
-        <TabsContent value="messages">
-          <LeadMessagesTab leadId={lead.id} />
-        </TabsContent>
+        {isOpen('tasks') && (
+          <TabsContent value="tasks">
+            <LeadTasksTab leadId={lead.id} />
+          </TabsContent>
+        )}
+        {isOpen('quotes') && (
+          <TabsContent value="quotes">
+            <LeadQuotesTab leadId={lead.id} />
+          </TabsContent>
+        )}
+        {isOpen('appointments') && (
+          <TabsContent value="appointments">
+            <LeadAppointmentsTab leadId={lead.id} />
+          </TabsContent>
+        )}
+        {isOpen('inbox') && (
+          <TabsContent value="messages">
+            <LeadMessagesTab leadId={lead.id} />
+          </TabsContent>
+        )}
       </DrawerBody>
 
       <DrawerFooter className="justify-end">

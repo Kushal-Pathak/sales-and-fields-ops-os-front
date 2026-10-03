@@ -1,3 +1,4 @@
+import { PartialWriteError } from '@/data/errors';
 import { useState, type FormEvent } from 'react';
 import {
   Combobox,
@@ -536,7 +537,9 @@ function LeadForm({
 
       {saveError && (
         <p role="alert" className="text-sm text-destructive">
-          The lead could not be saved. Try again.
+          {saveError instanceof PartialWriteError
+            ? saveError.message
+            : 'The lead could not be saved. Try again.'}
         </p>
       )}
 
@@ -544,7 +547,7 @@ function LeadForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || saveError instanceof PartialWriteError}>
           {lead ? 'Save changes' : 'Add lead'}
         </Button>
       </DialogFooter>

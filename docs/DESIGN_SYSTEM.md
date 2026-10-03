@@ -207,6 +207,8 @@ The reference has none; these are ours.
 - **Loading**: `Skeleton` rows matching the final layout (table rows 32 px, cards 88 px). Never spinners in content areas.
 - **Empty**: centred, `max-w-xs`, icon in a `size-10 rounded-xl bg-muted` tile, title `text-base font-semibold`, hint `text-sm text-muted-foreground`, one primary action.
 - **Error**: same layout with a `destructive` icon and a "Retry" outline button; route-level errors use `RootErrorBoundary`.
+- **Refresh error with cached data**: keep the content and any draft mounted. `RefreshNotice` is a compact `bg-warning-soft border-b border-border px-3 py-2` strip with `text-xs text-foreground-secondary`, an alert icon and an optional outline Retry button (`size="xs"`). It has `role="status"` and `print:hidden`. `QueryContent` chooses this notice for transient background failures; initial failures and 401/403 responses use `ErrorState` instead. The `/design-system` page includes a sample in the active theme.
+- **Partial save**: show the mutation's partial-save explanation as a destructive alert and disable the draft's submit buttons. Keep Cancel/Back available so the user can review the refreshed record before another attempt.
 - **Build with**: `EmptyState icon title hint action` and `ErrorState error onRetry` from `@/components/common/empty-state`; `Skeleton` rows shaped like the final content (see `LeadsTable` / `LeadDrawer`).
 
 ### Icons and motion

@@ -145,7 +145,7 @@ function MemberDetails({
               to={`/tasks?view=all&assignee=${user.id}`}
               className="font-semibold tabular-nums hover:underline"
             >
-              {openTasks}
+              {openTasks ?? '—'}
             </Link>
           </Field>
         </dl>

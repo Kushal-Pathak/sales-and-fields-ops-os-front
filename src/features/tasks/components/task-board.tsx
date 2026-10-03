@@ -1,3 +1,4 @@
+import { QueryContent } from '@/components/common/query-content';
 import { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -14,7 +15,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { ClipboardCheckIcon, PlusIcon } from 'lucide-react';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusBadge } from '@/components/common/status-badge';
 import { Button } from '@/components/ui/button';
@@ -79,54 +80,76 @@ export function TaskBoard({ rows, isPending, error, onOpen, onCreate, onRetry }:
       setStatus.mutate({ id: String(active.id), status });
   };
 
-  if (error)
-    return <ErrorState title="Tasks could not be loaded" error={error} onRetry={onRetry} />;
-  if (isPending || !rows) return <BoardSkeleton />;
+  if (isPending || !rows)
+    return (
+      <QueryContent
+        error={error}
+        hasData={rows !== undefined}
+        title="Tasks could not be loaded"
+        onRetry={onRetry}
+      >
+        <BoardSkeleton />
+      </QueryContent>
+    );
   if (rows.length === 0) {
     return (
-      <EmptyState
-        icon={ClipboardCheckIcon}
-        title="No tasks here"
-        hint="Change the view or filters, or add a task."
-        action={
-          <Button size="sm" onClick={onCreate}>
-            <PlusIcon /> Add task
-          </Button>
-        }
-      />
+      <QueryContent
+        error={error}
+        hasData={rows !== undefined}
+        title="Tasks could not be loaded"
+        onRetry={onRetry}
+      >
+        <EmptyState
+          icon={ClipboardCheckIcon}
+          title="No tasks here"
+          hint="Change the view or filters, or add a task."
+          action={
+            <Button size="sm" onClick={onCreate}>
+              <PlusIcon /> Add task
+            </Button>
+          }
+        />
+      </QueryContent>
     );
   }
 
   const activeRow = activeId ? rowById.get(activeId) : undefined;
 
   return (
-    <DndContext
-      sensors={sensors}
-      accessibility={{
-        announcements,
-        screenReaderInstructions: {
-          draggable:
-            'Press Space to pick up a task, use the left and right arrow keys to choose a status, and press Space again to drop. Press Escape to cancel. Press Enter to open the task.',
-        },
-      }}
-      onDragStart={({ active }) => setActiveId(String(active.id))}
-      onDragEnd={onDragEnd}
-      onDragCancel={() => setActiveId(null)}
+    <QueryContent
+      error={error}
+      hasData={rows !== undefined}
+      title="Tasks could not be loaded"
+      onRetry={onRetry}
     >
-      <div className="flex min-w-max items-start gap-3 p-4">
-        {columns.map((column) => (
-          <TaskColumn
-            key={column.status}
-            status={column.status}
-            rows={column.rows}
-            onOpen={onOpen}
-          />
-        ))}
-      </div>
-      <DragOverlay dropAnimation={null}>
-        {activeRow && <TaskCardBody row={activeRow} className="rotate-1 shadow-card" />}
-      </DragOverlay>
-    </DndContext>
+      <DndContext
+        sensors={sensors}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: {
+            draggable:
+              'Press Space to pick up a task, use the left and right arrow keys to choose a status, and press Space again to drop. Press Escape to cancel. Press Enter to open the task.',
+          },
+        }}
+        onDragStart={({ active }) => setActiveId(String(active.id))}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
+        <div className="flex min-w-max items-start gap-3 p-4">
+          {columns.map((column) => (
+            <TaskColumn
+              key={column.status}
+              status={column.status}
+              rows={column.rows}
+              onOpen={onOpen}
+            />
+          ))}
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {activeRow && <TaskCardBody row={activeRow} className="rotate-1 shadow-card" />}
+        </DragOverlay>
+      </DndContext>
+    </QueryContent>
   );
 }
 

@@ -1,3 +1,4 @@
+import type { WorkspaceModule } from './access';
 import type { BaseEntity } from './base';
 
 /** The tenant. A single row with id `default` until multi-workspace support exists. */
@@ -17,6 +18,8 @@ export interface Workspace extends BaseEntity {
   quoteTerms?: string;
   /** Saved message templates for the inbox composer. */
   quickReplies?: QuickReply[];
+  /** Which modules the workspace has. A module that is not listed is off. */
+  modules: WorkspaceModule[];
 }
 
 /** A message template; `{{name}}`, `{{company}}` and `{{owner}}` are filled in when used. */

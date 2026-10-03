@@ -24,7 +24,7 @@ export function useCurrentUser() {
   );
   return useQuery({
     queryKey: queryKeys.users.list(),
-    queryFn: () => db.users.list(),
+    queryFn: ({ signal }) => db.users.list({ signal }),
     select,
   });
 }

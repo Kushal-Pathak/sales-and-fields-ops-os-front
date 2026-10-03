@@ -1,5 +1,7 @@
+import { beginOptimisticListUpdate } from '@/data/optimistic-list';
+import { useWriteOperation } from '@/hooks/use-write-operation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, queryKeys } from '@/data';
+import { queryKeys, type Db } from '@/data';
 import { useCurrentUser } from '@/features/workspace';
 import type { Channel, Conversation, Message } from '@/types/domain';
 import { CHANNEL_LABEL } from '../utils/inbox-labels';
@@ -25,6 +27,7 @@ const AFTER_SEND = [
 const PREVIEW_LENGTH = 80;
 
 async function deliver(
+  db: Db,
   conversation: Conversation,
   body: string,
   actorId: string | null,
@@ -52,46 +55,57 @@ async function deliver(
 }
 
 export function useSendMessage() {
+  const write = useWriteOperation('inbox');
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ conversationId, body }: { conversationId: string; body: string }) => {
-      const trimmed = body.trim();
-      if (!trimmed) throw new Error('Type a message first.');
-      const conversation = await db.conversations.get(conversationId);
-      return deliver(conversation, trimmed, actorId);
-    },
-    onSuccess: () => invalidate(...AFTER_SEND),
+    mutationFn: async ({ conversationId, body }: { conversationId: string; body: string }) =>
+      write(async (db) => {
+        const trimmed = body.trim();
+        if (!trimmed) throw new Error('Type a message first.');
+        const conversation = await db.conversations.get(conversationId);
+        return deliver(db, conversation, trimmed, actorId);
+      }),
+    onSettled: () => invalidate(...AFTER_SEND),
   });
 }
 
 /** Clears the unread badge as soon as a thread is opened. Optimistic on the list. */
 export function useMarkRead() {
+  const write = useWriteOperation('inbox');
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (id: string) => db.conversations.update(id, { unreadCount: 0 }),
+    mutationFn: (id: string) =>
+      write(async (db) => db.conversations.update(id, { unreadCount: 0 })),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.conversations.list() });
-      const previous = queryClient.getQueryData<Conversation[]>(queryKeys.conversations.list());
-      queryClient.setQueryData<Conversation[]>(queryKeys.conversations.list(), (rows) =>
-        rows?.map((row) => (row.id === id ? { ...row, unreadCount: 0 } : row)),
+      return beginOptimisticListUpdate<Conversation>(
+        queryClient,
+        queryKeys.conversations.list(),
+        (rows) => rows.map((row) => (row.id === id ? { ...row, unreadCount: 0 } : row)),
+        write.signal,
       );
-      return { previous };
     },
     onError: (_error, _id, context) => {
-      if (context?.previous)
-        queryClient.setQueryData(queryKeys.conversations.list(), context.previous);
+      context?.rollback();
     },
-    onSettled: () => invalidate(queryKeys.conversations.all),
+    onSettled: async (_data, _error, _input, context) => {
+      try {
+        return await invalidate(queryKeys.conversations.all);
+      } finally {
+        context?.release();
+      }
+    },
   });
 }
 
 export function useMarkUnread() {
+  const write = useWriteOperation('inbox');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (id: string) => db.conversations.update(id, { unreadCount: 1 }),
-    onSuccess: () => invalidate(queryKeys.conversations.all),
+    mutationFn: (id: string) =>
+      write(async (db) => db.conversations.update(id, { unreadCount: 1 })),
+    onSettled: () => invalidate(queryKeys.conversations.all),
   });
 }
 
@@ -103,28 +117,30 @@ export interface StartConversationInput {
 
 /** Sends the first message, reusing the lead's conversation on that channel if one exists. */
 export function useStartConversation() {
+  const write = useWriteOperation('inbox');
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ leadId, channel, body }: StartConversationInput): Promise<string> => {
-      const trimmed = body.trim();
-      if (!trimmed) throw new Error('Type a message first.');
-      const lead = await db.leads.get(leadId);
-      const existing = (await db.conversations.list()).find(
-        (row) => row.leadId === leadId && row.channel === channel,
-      );
-      const conversation =
-        existing ??
-        (await db.conversations.create({
-          contactId: lead.contactId,
-          leadId,
-          channel,
-          lastMessageAt: new Date().toISOString(),
-          unreadCount: 0,
-        }));
-      await deliver(conversation, trimmed, actorId);
-      return conversation.id;
-    },
-    onSuccess: () => invalidate(...AFTER_SEND),
+    mutationFn: async ({ leadId, channel, body }: StartConversationInput): Promise<string> =>
+      write(async (db) => {
+        const trimmed = body.trim();
+        if (!trimmed) throw new Error('Type a message first.');
+        const lead = await db.leads.get(leadId);
+        const existing = (await db.conversations.list()).find(
+          (row) => row.leadId === leadId && row.channel === channel,
+        );
+        const conversation =
+          existing ??
+          (await db.conversations.create({
+            contactId: lead.contactId,
+            leadId,
+            channel,
+            lastMessageAt: new Date().toISOString(),
+            unreadCount: 0,
+          }));
+        await deliver(db, conversation, trimmed, actorId);
+        return conversation.id;
+      }),
+    onSettled: () => invalidate(...AFTER_SEND),
   });
 }

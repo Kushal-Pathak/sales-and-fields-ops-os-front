@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { QueryContent } from '@/components/common/query-content';
+import { getQueryError } from '@/data/query-state';
+import { PartialWriteError } from '@/data/errors';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeftIcon, LockIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { Button } from '@/components/ui/button';
 import {
   Combobox,
@@ -51,11 +54,10 @@ interface QuoteBuilderProps {
 export function QuoteBuilder({ quoteId, defaultLeadId = null }: QuoteBuilderProps) {
   const workspace = useWorkspace();
   const existing = useQuote(quoteId ?? null);
-
-  if (workspace.error)
-    return <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} />;
+  const error = getQueryError([workspace, existing]);
+  let content: ReactNode;
   if (existing.notFound) {
-    return (
+    content = (
       <EmptyState
         icon={LockIcon}
         title="This quote no longer exists"
@@ -63,34 +65,44 @@ export function QuoteBuilder({ quoteId, defaultLeadId = null }: QuoteBuilderProp
         action={<BackToQuotes />}
       />
     );
+  } else if (!workspace.data || (quoteId && !existing.row)) {
+    content = <BuilderSkeleton />;
+  } else {
+    const quote = existing.row?.quote;
+    content =
+      quote && !isQuoteEditable(quote.status) ? (
+        <EmptyState
+          icon={LockIcon}
+          title={`${quote.number} can no longer be edited`}
+          hint="Only drafts can be changed. Ask for a revision to return it to draft, or duplicate it."
+          action={
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link to={`/quotes?quote=${quote.id}`} />}
+            >
+              Open the quote
+            </Button>
+          }
+        />
+      ) : (
+        <BuilderForm
+          key={quote?.id ?? 'new'}
+          workspace={workspace.data}
+          quote={quote}
+          defaultLeadId={defaultLeadId}
+        />
+      );
   }
-  if (existing.error)
-    return <ErrorState error={existing.error} onRetry={() => void existing.refetch()} />;
-  if (!workspace.data || (quoteId && !existing.row)) return <BuilderSkeleton />;
-
-  const quote = existing.row?.quote;
-  if (quote && !isQuoteEditable(quote.status)) {
-    return (
-      <EmptyState
-        icon={LockIcon}
-        title={`${quote.number} can no longer be edited`}
-        hint="Only drafts can be changed. Ask for a revision to return it to draft, or duplicate it."
-        action={
-          <Button size="sm" nativeButton={false} render={<Link to={`/quotes?quote=${quote.id}`} />}>
-            Open the quote
-          </Button>
-        }
-      />
-    );
-  }
-
   return (
-    <BuilderForm
-      key={quote?.id ?? 'new'}
-      workspace={workspace.data}
-      quote={quote}
-      defaultLeadId={defaultLeadId}
-    />
+    <QueryContent
+      error={error}
+      hasData={Boolean(workspace.data && (!quoteId || existing.row))}
+      title="Quote builder could not be loaded"
+      onRetry={() => void Promise.all([workspace.refetch(), existing.refetch()])}
+    >
+      {content}
+    </QueryContent>
   );
 }
 
@@ -360,14 +372,24 @@ function BuilderForm({
 
           {saveError && (
             <p role="alert" className="text-sm text-destructive">
-              The quote could not be saved. Try again.
+              {saveError instanceof PartialWriteError
+                ? saveError.message
+                : 'The quote could not be saved. Try again.'}
             </p>
           )}
           <div className="mt-auto flex flex-col gap-1.5">
-            <Button type="button" disabled={isPending} onClick={() => save(true)}>
+            <Button
+              type="button"
+              disabled={isPending || saveError instanceof PartialWriteError}
+              onClick={() => save(true)}
+            >
               Save and submit for approval
             </Button>
-            <Button type="submit" variant="outline" disabled={isPending}>
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={isPending || saveError instanceof PartialWriteError}
+            >
               Save draft
             </Button>
             <Button

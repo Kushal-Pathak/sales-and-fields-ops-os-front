@@ -1,7 +1,23 @@
 import type { BaseEntity, StatusColor } from './base';
 
-export type Permission =
-  'leads.view_all' | 'leads.edit' | 'quotes.approve' | 'team.manage' | 'settings.manage';
+/**
+ * Everything a role can grant. `<module>.view` opens a module at all; the other keys
+ * are actions inside one. The list is a runtime value so server payloads can be checked.
+ */
+export const PERMISSION_KEYS = [
+  'leads.view_all',
+  'leads.edit',
+  'quotes.view',
+  'quotes.approve',
+  'tasks.view',
+  'appointments.view',
+  'inbox.view',
+  'team.manage',
+  'settings.manage',
+  'modules.manage',
+] as const;
+
+export type Permission = (typeof PERMISSION_KEYS)[number];
 
 export interface Role extends BaseEntity {
   name: string;

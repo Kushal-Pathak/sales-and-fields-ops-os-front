@@ -14,7 +14,7 @@ export function useThread(conversationId: string | null) {
   );
   return useQuery({
     queryKey: queryKeys.messages.list(),
-    queryFn: () => db.messages.list(),
+    queryFn: ({ signal }) => db.messages.list({ signal }),
     enabled: conversationId !== null,
     select,
   });

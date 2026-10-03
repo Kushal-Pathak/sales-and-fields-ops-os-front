@@ -1,29 +1,43 @@
-import type { Role, StatusColor, User } from '@/types/domain';
+import {
+  PERMISSION_KEYS,
+  type Permission,
+  type Role,
+  type StatusColor,
+  type User,
+} from '@/types/domain';
 import type { Clock } from './helpers';
+
+/** Every seeded role can open every module; roles differ in what they may do inside. */
+const VIEW_ALL_MODULES: Permission[] = [
+  'quotes.view',
+  'tasks.view',
+  'appointments.view',
+  'inbox.view',
+];
 
 export function buildRoles(clock: Clock): Role[] {
   const stamp = clock.stamp(400);
   return [
+    { id: 'role-admin', name: 'Admin', permissions: [...PERMISSION_KEYS], ...stamp },
     {
-      id: 'role-admin',
-      name: 'Admin',
+      id: 'role-manager',
+      name: 'Manager',
       permissions: [
+        ...VIEW_ALL_MODULES,
         'leads.view_all',
         'leads.edit',
         'quotes.approve',
         'team.manage',
-        'settings.manage',
       ],
       ...stamp,
     },
+    { id: 'role-sales', name: 'Sales', permissions: [...VIEW_ALL_MODULES, 'leads.edit'], ...stamp },
     {
-      id: 'role-manager',
-      name: 'Manager',
-      permissions: ['leads.view_all', 'leads.edit', 'quotes.approve', 'team.manage'],
+      id: 'role-viewer',
+      name: 'Viewer',
+      permissions: [...VIEW_ALL_MODULES, 'leads.view_all'],
       ...stamp,
     },
-    { id: 'role-sales', name: 'Sales', permissions: ['leads.edit'], ...stamp },
-    { id: 'role-viewer', name: 'Viewer', permissions: ['leads.view_all'], ...stamp },
   ];
 }
 

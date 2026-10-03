@@ -1,3 +1,6 @@
+import { useNow } from '@/hooks/use-now';
+import { QueryContent } from '@/components/common/query-content';
+import { isAccessError } from '@/data/errors';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import {
   CalendarClockIcon,
@@ -102,6 +105,7 @@ function AppointmentDrawerContent({
   appointmentId: string;
   onClose: () => void;
 }) {
+  useNow();
   const { row, isPending, notFound, error, refetch } = useAppointment(appointmentId);
 
   if (notFound) {
@@ -124,7 +128,7 @@ function AppointmentDrawerContent({
       </>
     );
   }
-  if (error) {
+  if (error && (!row || isAccessError(error))) {
     return (
       <>
         <DrawerHeader>
@@ -144,7 +148,16 @@ function AppointmentDrawerContent({
       </DrawerHeader>
     );
   }
-  return <AppointmentDetails row={row} onClose={onClose} />;
+  return (
+    <QueryContent
+      error={error}
+      hasData={true}
+      title="Appointment could not be loaded"
+      onRetry={() => void refetch()}
+    >
+      <AppointmentDetails row={row} onClose={onClose} />
+    </QueryContent>
+  );
 }
 
 function AppointmentDetails({ row, onClose }: { row: AppointmentRow; onClose: () => void }) {

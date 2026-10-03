@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router';
-import { adminNav, mainNav, type NavGroup, type NavItem } from '@/app/navigation';
+import { adminNav, mainNav, visibleNav, type NavGroup, type NavItem } from '@/app/navigation';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { UserMenu } from '@/features/auth';
+import { UserMenu, useModules } from '@/features/auth';
 import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
@@ -17,11 +17,16 @@ interface SidebarProps {
 
 /**
  * 236px navigation rail, or a 52px icon rail when `collapsed`. Groups and items
- * come from `src/app/navigation.ts`. Group headings shrink to hairlines when
+ * come from `src/app/navigation.ts`, limited to the modules open to the signed-in
+ * user. Group headings shrink to hairlines when
  * collapsed, animated with the width, so the icons slide rather than jump.
  * The desktop toggle lives in the top bar.
  */
 export function Sidebar({ id, className, collapsed = false, onNavigate }: SidebarProps) {
+  const modules = useModules();
+  const isOpen = (module: NavItem['module']) => modules[module].status === 'allowed';
+  const admin = visibleNav([adminNav], isOpen)[0];
+
   return (
     <aside
       id={id}
@@ -46,7 +51,7 @@ export function Sidebar({ id, className, collapsed = false, onNavigate }: Sideba
         </div>
 
         <nav className="flex-1 overflow-x-hidden overflow-y-auto px-2.5 pb-2.5" aria-label="Main">
-          {mainNav.map((group, index) => (
+          {visibleNav(mainNav, isOpen).map((group, index) => (
             <SidebarGroup
               key={group.label ?? index}
               group={group}
@@ -54,7 +59,9 @@ export function Sidebar({ id, className, collapsed = false, onNavigate }: Sideba
               onNavigate={onNavigate}
             />
           ))}
-          <SidebarGroup group={adminNav} divider collapsed={collapsed} onNavigate={onNavigate} />
+          {admin && (
+            <SidebarGroup group={admin} divider collapsed={collapsed} onNavigate={onNavigate} />
+          )}
         </nav>
 
         <div className="border-t">

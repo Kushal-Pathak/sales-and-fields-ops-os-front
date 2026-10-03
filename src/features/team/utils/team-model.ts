@@ -3,16 +3,29 @@ import type { Lead, Permission, Role, Stage, StatusColor, Task, User } from '@/t
 export const PERMISSIONS: { key: Permission; label: string; hint: string }[] = [
   { key: 'leads.view_all', label: 'View all leads', hint: 'See every lead, not only their own.' },
   { key: 'leads.edit', label: 'Edit leads', hint: 'Create, update, move and delete leads.' },
+  { key: 'quotes.view', label: 'Open quotes', hint: 'See the Quotes module and quotes on leads.' },
   {
     key: 'quotes.approve',
     label: 'Approve quotes',
     hint: 'Approve or reject quotes before they are sent.',
   },
+  { key: 'tasks.view', label: 'Open tasks', hint: 'See the Tasks module and tasks on leads.' },
+  {
+    key: 'appointments.view',
+    label: 'Open appointments',
+    hint: 'See the Appointments module and appointments on leads.',
+  },
+  { key: 'inbox.view', label: 'Open inbox', hint: 'See the Inbox and messages on leads.' },
   { key: 'team.manage', label: 'Manage team', hint: 'Invite members and change roles.' },
   {
     key: 'settings.manage',
     label: 'Manage settings',
     hint: 'Edit pipeline stages, fields and automations.',
+  },
+  {
+    key: 'modules.manage',
+    label: 'Manage modules',
+    hint: 'Switch modules on or off for the whole workspace.',
   },
 ];
 
@@ -21,15 +34,16 @@ export interface MemberRow {
   role: Role | undefined;
   /** Leads the member owns that are still open. */
   openLeads: number;
-  /** Tasks assigned to the member that are pending or in progress. */
-  openTasks: number;
+  /** Tasks assigned to the member that are pending or in progress; `null` when tasks are closed to the viewer. */
+  openTasks: number | null;
 }
 
 export interface TeamRefs {
   users: User[];
   roles: Role[];
   leads: Lead[];
-  tasks: Task[];
+  /** `null` when the Tasks module is closed to the viewer: the counts are then unknown, not zero. */
+  tasks: Task[] | null;
   stages: Stage[];
 }
 
@@ -44,7 +58,7 @@ export function joinMembers(refs: TeamRefs): MemberRow[] {
       openLeads.set(lead.ownerId, (openLeads.get(lead.ownerId) ?? 0) + 1);
   }
   const openTasks = new Map<string, number>();
-  for (const task of refs.tasks) {
+  for (const task of refs.tasks ?? []) {
     if (task.status === 'pending' || task.status === 'in_progress')
       openTasks.set(task.assigneeId, (openTasks.get(task.assigneeId) ?? 0) + 1);
   }
@@ -52,7 +66,7 @@ export function joinMembers(refs: TeamRefs): MemberRow[] {
     user,
     role: roles.get(user.roleId),
     openLeads: openLeads.get(user.id) ?? 0,
-    openTasks: openTasks.get(user.id) ?? 0,
+    openTasks: refs.tasks ? (openTasks.get(user.id) ?? 0) : null,
   }));
 }
 

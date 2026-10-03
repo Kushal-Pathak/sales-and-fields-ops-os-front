@@ -27,4 +27,9 @@ export const queryKeys = {
   fields: keysFor('fields'),
   automations: keysFor('automations'),
   automationRuns: keysFor('automationRuns'),
+  /** The signed-in user's resolved access (permissions, modules, flags). */
+  access: {
+    all: ['access'] as const,
+    context: (userId: string) => ['access', 'context', userId] as const,
+  },
 } as const;

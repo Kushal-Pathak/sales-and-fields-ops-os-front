@@ -1,3 +1,5 @@
+import { getQueryError } from '@/data/query-state';
+import { shouldRetryQuery } from '@/data/errors';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, NotFoundError, queryKeys } from '@/data';
@@ -9,11 +11,14 @@ import { joinAppointments, type AppointmentRow } from '../utils/appointment-view
 export function useAppointment(id: string | null) {
   const appointment = useQuery({
     queryKey: queryKeys.appointments.detail(id ?? ''),
-    queryFn: () => db.appointments.get(id ?? ''),
+    queryFn: ({ signal }) => db.appointments.get(id ?? '', { signal }),
     enabled: id !== null,
-    retry: (count, error) => !(error instanceof NotFoundError) && count < 1,
+    retry: shouldRetryQuery,
   });
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const users = useUsers();
   const stages = useStages();
@@ -29,14 +34,13 @@ export function useAppointment(id: string | null) {
     })[0];
   }, [appointment.data, leads.data, contacts.data, users.data, stages.data]);
 
-  const queries = [appointment, leads, contacts, users, stages];
+  const queries =
+    id !== null ? [appointment, leads, contacts, users, stages] : [leads, contacts, users, stages];
   return {
     row,
     isPending: id !== null && queries.some((query) => query.isPending),
     notFound: appointment.error instanceof NotFoundError,
-    error:
-      queries.find((query) => query.error && !(query.error instanceof NotFoundError))?.error ??
-      null,
+    error: getQueryError(queries.filter((query) => !(query.error instanceof NotFoundError))),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }

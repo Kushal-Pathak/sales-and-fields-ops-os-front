@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BaseEntity } from '@/types/domain';
 import { createLocalCollection } from './collection';
 import { NotFoundError } from './errors';
@@ -33,7 +33,21 @@ beforeEach(() => {
   localStorage.clear();
 });
 
+afterEach(() => vi.useRealTimers());
+
 describe('createLocalCollection', () => {
+  it('does not commit a write cancelled during simulated latency', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const collection = createLocalCollection<Note>('notes', { latencyMs: 20 });
+    const writing = collection
+      .create({ title: 'Cancelled' }, { signal: controller.signal })
+      .catch((error: unknown) => error);
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(await writing).toMatchObject({ name: 'AbortError' });
+    expect(readRows<Note>('notes')).toBeNull();
+  });
   it('creates, reads, updates and removes rows with timestamps', async () => {
     const clock = { current: new Date('2026-09-23T10:00:00Z') };
     const db = notes(clock);

@@ -1,5 +1,6 @@
+import { QueryContent } from '@/components/common/query-content';
 import { ListIcon, PlusIcon } from 'lucide-react';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusBadge } from '@/components/common/status-badge';
 import { StatusDot } from '@/components/common/status-dot';
@@ -63,67 +64,80 @@ export function LeadsTable({
   const money = (amount: number) =>
     formatMoney(amount, { currency: workspace?.currency ?? 'USD', locale: workspace?.locale });
 
-  if (error)
-    return <ErrorState title="Leads could not be loaded" error={error} onRetry={onRetry} />;
-
   if (!isPending && rows && rows.length === 0) {
-    return isFiltered ? (
-      <EmptyState
-        icon={ListIcon}
-        title="No leads match"
-        hint="Try a different view, search or filter."
-        action={
-          <Button variant="outline" size="sm" onClick={onClearFilters}>
-            Clear filters
-          </Button>
-        }
-      />
-    ) : (
-      <EmptyState
-        icon={ListIcon}
-        title="No leads yet"
-        hint="Add your first lead to start tracking opportunities."
-        action={
-          <Button size="sm" onClick={onCreate}>
-            <PlusIcon /> Add lead
-          </Button>
-        }
-      />
+    return (
+      <QueryContent
+        error={error}
+        hasData={rows !== undefined}
+        title="Leads could not be loaded"
+        onRetry={onRetry}
+      >
+        {isFiltered ? (
+          <EmptyState
+            icon={ListIcon}
+            title="No leads match"
+            hint="Try a different view, search or filter."
+            action={
+              <Button variant="outline" size="sm" onClick={onClearFilters}>
+                Clear filters
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={ListIcon}
+            title="No leads yet"
+            hint="Add your first lead to start tracking opportunities."
+            action={
+              <Button size="sm" onClick={onCreate}>
+                <PlusIcon /> Add lead
+              </Button>
+            }
+          />
+        )}
+      </QueryContent>
     );
   }
 
   return (
-    <Table containerClassName="overflow-visible" className="min-w-[1560px]">
-      <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-background">
-        <TableRow className="border-border hover:bg-transparent">
-          {COLUMNS.map((column) => (
-            <TableHead key={column.label} className={cn(HEAD_CLASS, column.className)}>
-              {column.label}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {isPending || !rows
-          ? Array.from({ length: 8 }, (_, index) => <SkeletonRow key={index} />)
-          : rows.map((row) => (
-              <LeadTableRow key={row.lead.id} row={row} money={money} onOpen={onOpen} />
+    <QueryContent
+      error={error}
+      hasData={rows !== undefined}
+      title="Leads could not be loaded"
+      onRetry={onRetry}
+    >
+      <Table containerClassName="overflow-visible" className="min-w-[1560px]">
+        <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-background">
+          <TableRow className="border-border hover:bg-transparent">
+            {COLUMNS.map((column) => (
+              <TableHead key={column.label} className={cn(HEAD_CLASS, column.className)}>
+                {column.label}
+              </TableHead>
             ))}
-        {!isPending && (
-          <TableRow className="border-0 hover:bg-muted">
-            <TableCell colSpan={COLUMNS.length} className={cn(CELL_CLASS, 'p-0')}>
-              <button
-                type="button"
-                onClick={onCreate}
-                className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-2 text-sm text-foreground-faint hover:text-foreground"
-              >
-                <PlusIcon className="size-3.5" /> New lead
-              </button>
-            </TableCell>
           </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {isPending || !rows
+            ? Array.from({ length: 8 }, (_, index) => <SkeletonRow key={index} />)
+            : rows.map((row) => (
+                <LeadTableRow key={row.lead.id} row={row} money={money} onOpen={onOpen} />
+              ))}
+          {!isPending && (
+            <TableRow className="border-0 hover:bg-muted">
+              <TableCell colSpan={COLUMNS.length} className={cn(CELL_CLASS, 'p-0')}>
+                <button
+                  type="button"
+                  onClick={onCreate}
+                  className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-2 text-sm text-foreground-faint hover:text-foreground"
+                >
+                  <PlusIcon className="size-3.5" /> New lead
+                </button>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </QueryContent>
   );
 }
 

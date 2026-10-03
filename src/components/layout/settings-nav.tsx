@@ -5,6 +5,7 @@ const SECTIONS: SectionNavItem[] = [
   { label: 'Pipeline', to: '/settings/pipeline' },
   { label: 'Custom fields', to: '/settings/fields' },
   { label: 'Automations', to: '/settings/automations' },
+  { label: 'Modules', to: '/settings/modules' },
 ];
 
 /** Pill tabs across the settings pages, rendered in the `PageHeader`. */

@@ -1,3 +1,4 @@
+import { QueryContent } from '@/components/common/query-content';
 import { useState } from 'react';
 import {
   DndContext,
@@ -24,7 +25,7 @@ import {
   SlidersHorizontalIcon,
   TrashIcon,
 } from 'lucide-react';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { StatusBadge } from '@/components/common/status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -94,94 +95,105 @@ export function FieldList({ entity, onEdit, onDelete, onCreate }: FieldListProps
     if (over && active.id !== over.id) apply(String(active.id), String(over.id));
   };
 
-  if (fields.error)
-    return <ErrorState error={fields.error} onRetry={() => void fields.refetch()} />;
-
   const rows = fields.data;
   if (rows && rows.length === 0) {
     return (
-      <EmptyState
-        icon={SlidersHorizontalIcon}
-        title="No custom fields yet"
-        hint={ENTITY_HINT[entity]}
-        action={
-          <Button size="sm" onClick={onCreate}>
-            <PlusIcon /> Add field
-          </Button>
-        }
-      />
+      <QueryContent
+        error={fields.error}
+        hasData={fields.data !== undefined}
+        title="Custom fields could not be loaded"
+        onRetry={() => void fields.refetch()}
+      >
+        <EmptyState
+          icon={SlidersHorizontalIcon}
+          title="No custom fields yet"
+          hint={ENTITY_HINT[entity]}
+          action={
+            <Button size="sm" onClick={onCreate}>
+              <PlusIcon /> Add field
+            </Button>
+          }
+        />
+      </QueryContent>
     );
   }
 
   return (
-    <div className="rounded-xl border">
-      <DndContext
-        sensors={sensors}
-        onDragStart={({ active }) => setActiveId(String(active.id))}
-        onDragEnd={onDragEnd}
-        onDragCancel={() => setActiveId(null)}
-      >
-        <Table containerClassName="overflow-visible rounded-xl" className="min-w-[640px]">
-          <TableHeader className="[&_th]:bg-sidebar [&_th:first-child]:rounded-tl-xl [&_th:last-child]:rounded-tr-xl">
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className={cn(HEAD_CLASS, 'w-8 px-1')}>
-                <span className="sr-only">Reorder</span>
-              </TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[240px]')}>Field</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[200px]')}>Key</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[140px]')}>Type</TableHead>
-              <TableHead className={HEAD_CLASS}>Options</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-10')}>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows ? (
-              <SortableContext
-                items={rows.map((field) => field.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {rows.map((field, index) => (
-                  <FieldRow
-                    key={field.id}
-                    field={field}
-                    isFirst={index === 0}
-                    isLast={index === rows.length - 1}
-                    isDragging={activeId === field.id}
-                    onEdit={() => onEdit(field.id)}
-                    onDelete={() => onDelete(field.id)}
-                    onMoveUp={() => rows[index - 1] && apply(field.id, rows[index - 1]!.id)}
-                    onMoveDown={() => rows[index + 1] && apply(field.id, rows[index + 1]!.id)}
-                  />
-                ))}
-              </SortableContext>
-            ) : (
-              Array.from({ length: 4 }, (_, index) => (
-                <TableRow key={index} className="border-border-faint hover:bg-transparent">
-                  <TableCell className={CELL_CLASS} colSpan={6}>
-                    <Skeleton className="h-4 w-1/2" />
+    <QueryContent
+      error={fields.error}
+      hasData={fields.data !== undefined}
+      title="Custom fields could not be loaded"
+      onRetry={() => void fields.refetch()}
+    >
+      <div className="rounded-xl border">
+        <DndContext
+          sensors={sensors}
+          onDragStart={({ active }) => setActiveId(String(active.id))}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          <Table containerClassName="overflow-visible rounded-xl" className="min-w-[640px]">
+            <TableHeader className="[&_th]:bg-sidebar [&_th:first-child]:rounded-tl-xl [&_th:last-child]:rounded-tr-xl">
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className={cn(HEAD_CLASS, 'w-8 px-1')}>
+                  <span className="sr-only">Reorder</span>
+                </TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[240px]')}>Field</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[200px]')}>Key</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[140px]')}>Type</TableHead>
+                <TableHead className={HEAD_CLASS}>Options</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-10')}>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows ? (
+                <SortableContext
+                  items={rows.map((field) => field.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {rows.map((field, index) => (
+                    <FieldRow
+                      key={field.id}
+                      field={field}
+                      isFirst={index === 0}
+                      isLast={index === rows.length - 1}
+                      isDragging={activeId === field.id}
+                      onEdit={() => onEdit(field.id)}
+                      onDelete={() => onDelete(field.id)}
+                      onMoveUp={() => rows[index - 1] && apply(field.id, rows[index - 1]!.id)}
+                      onMoveDown={() => rows[index + 1] && apply(field.id, rows[index + 1]!.id)}
+                    />
+                  ))}
+                </SortableContext>
+              ) : (
+                Array.from({ length: 4 }, (_, index) => (
+                  <TableRow key={index} className="border-border-faint hover:bg-transparent">
+                    <TableCell className={CELL_CLASS} colSpan={6}>
+                      <Skeleton className="h-4 w-1/2" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+              {rows && (
+                <TableRow className="border-0 hover:bg-muted">
+                  <TableCell colSpan={6} className="p-0">
+                    <button
+                      type="button"
+                      onClick={onCreate}
+                      className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-2 text-sm text-foreground-faint hover:text-foreground"
+                    >
+                      <PlusIcon className="size-3.5" /> Add field
+                    </button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-            {rows && (
-              <TableRow className="border-0 hover:bg-muted">
-                <TableCell colSpan={6} className="p-0">
-                  <button
-                    type="button"
-                    onClick={onCreate}
-                    className="flex w-full cursor-pointer items-center gap-1.5 px-3 py-2 text-sm text-foreground-faint hover:text-foreground"
-                  >
-                    <PlusIcon className="size-3.5" /> Add field
-                  </button>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
-    </div>
+              )}
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
+    </QueryContent>
   );
 }
 

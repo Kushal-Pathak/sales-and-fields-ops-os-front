@@ -90,4 +90,25 @@ describe('runAutomations', () => {
     expect(runs[0]!.status).toBe('failed');
     expect(runs[0]!.detail).toContain('member not found');
   });
+
+  it('skips an action whose module is switched off, records why, and still runs the rest', async () => {
+    const workspace = (await db.workspace.list())[0]!;
+    await db.workspace.update(workspace.id, {
+      modules: workspace.modules.map((module) =>
+        module.id === 'tasks' ? { ...module, enabled: false } : module,
+      ),
+    });
+    const lead = { ...seed.leads[0]!, stageId: 'stg-won' };
+    const before = (await db.tasks.list()).length;
+    const runs = await runAutomations(
+      { type: 'lead_stage_changed', lead, fromStageId: 'stg-proposal' },
+      'usr-1',
+    );
+    expect(runs[0]).toMatchObject({ automationId: 'auto-won', status: 'ok' });
+    expect(runs[0]!.detail).toContain('Skipped (Tasks is off): Create task “Schedule kickoff”');
+    expect(runs[0]!.detail).toContain('Add a note');
+    expect(await db.tasks.list()).toHaveLength(before);
+    // The rule itself is untouched, so it works again once Tasks is back on.
+    expect((await db.automations.get('auto-won')).active).toBe(true);
+  });
 });

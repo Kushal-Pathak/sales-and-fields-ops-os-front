@@ -1,19 +1,35 @@
-import { db } from '@/data';
+import { db as defaultDb, type Db } from '@/data';
 import { addDays } from '@/lib/dates';
 import { fillTemplate } from '@/lib/templates';
-import type { Automation, AutomationAction, AutomationRun, Lead } from '@/types/domain';
+import type {
+  Automation,
+  AutomationAction,
+  AutomationActionType,
+  AutomationRun,
+  Lead,
+  ModuleId,
+} from '@/types/domain';
 import { describeAction, type LabelRefs } from '../utils/automation-labels';
 import { describeEvent, matches, type AutomationEvent } from './match';
+
+/** Actions that write into another module. They are skipped while the workspace has it off. */
+const ACTION_MODULE: Partial<Record<AutomationActionType, { id: ModuleId; label: string }>> = {
+  create_task: { id: 'tasks', label: 'Tasks' },
+  send_message: { id: 'inbox', label: 'Inbox' },
+};
 
 /**
  * Executes every active rule that matches `event`, in creation order. Runs against
  * `db` directly because it is called from inside other mutations. Actions never
  * re-enter the engine, so a rule that moves a stage cannot trigger itself.
+ * Rules run for the workspace, not for the actor: an action is skipped (and the run
+ * says so) when the workspace has its module switched off, whatever the actor's role.
  * A backend replaces this whole file; the rule shape stays the same.
  */
 export async function runAutomations(
   event: AutomationEvent,
   actorId: string | null,
+  db: Db = defaultDb,
 ): Promise<AutomationRun[]> {
   const automations = (await db.automations.list()).filter((rule) => matches(rule, event));
   if (automations.length === 0) return [];
@@ -30,6 +46,9 @@ export async function runAutomations(
     quickReplies: workspace[0]?.quickReplies ?? [],
   };
   const summary = describeEvent(event, stages);
+  const enabled = new Set(
+    (workspace[0]?.modules ?? []).filter((module) => module.enabled).map((module) => module.id),
+  );
   const runs: AutomationRun[] = [];
 
   for (const automation of automations) {
@@ -39,8 +58,13 @@ export async function runAutomations(
     const done: string[] = [];
     let failure: string | null = null;
     for (const action of automation.actions) {
+      const target = ACTION_MODULE[action.type];
+      if (target && !enabled.has(target.id)) {
+        done.push(`Skipped (${target.label} is off): ${describeAction(action, refs)}`);
+        continue;
+      }
       try {
-        await execute(action, lead, automation, refs, contact?.name, actorId);
+        await execute(db, action, lead, automation, refs, contact?.name, actorId);
         done.push(describeAction(action, refs));
       } catch (error) {
         failure = `${describeAction(action, refs)}: ${error instanceof Error ? error.message : 'failed'}`;
@@ -63,7 +87,7 @@ export async function runAutomations(
   return runs;
 }
 
-async function log(lead: Lead, automation: Automation, message: string): Promise<void> {
+async function log(db: Db, lead: Lead, automation: Automation, message: string): Promise<void> {
   await db.activities.create({
     entityType: 'lead',
     entityId: lead.id,
@@ -74,6 +98,7 @@ async function log(lead: Lead, automation: Automation, message: string): Promise
 }
 
 async function execute(
+  db: Db,
   action: AutomationAction,
   lead: Lead,
   automation: Automation,
@@ -98,7 +123,7 @@ async function execute(
         priority: action.priority,
         status: 'pending',
       });
-      await log(lead, automation, `created task “${action.title}”`);
+      await log(db, lead, automation, `created task “${action.title}”`);
       return;
     }
     case 'move_stage': {
@@ -120,7 +145,7 @@ async function execute(
       if (!user) throw new Error('member not found');
       if (lead.ownerId === user.id) return;
       await db.leads.update(lead.id, { ownerId: user.id, lastActivityAt: now.toISOString() });
-      await log(lead, automation, `assigned to ${user.name}`);
+      await log(db, lead, automation, `assigned to ${user.name}`);
       return;
     }
     case 'send_message': {
@@ -152,7 +177,7 @@ async function execute(
       });
       await db.conversations.update(conversation.id, { lastMessageAt: iso });
       await db.leads.update(lead.id, { lastActivityAt: iso });
-      await log(lead, automation, `sent “${reply.title}” on ${action.channel}`);
+      await log(db, lead, automation, `sent “${reply.title}” on ${action.channel}`);
       return;
     }
     case 'add_note': {
@@ -164,7 +189,7 @@ async function execute(
         actorId,
       });
       await db.leads.update(lead.id, { lastActivityAt: now.toISOString() });
-      await log(lead, automation, 'added a note');
+      await log(db, lead, automation, 'added a note');
       return;
     }
   }

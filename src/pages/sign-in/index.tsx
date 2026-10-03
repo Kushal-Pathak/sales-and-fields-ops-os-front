@@ -14,7 +14,8 @@ export function SignInPage() {
   const [searchParams] = useSearchParams();
   const switching = searchParams.get('switch') === '1';
   const from = (location.state as { from?: string } | null)?.from;
-  const destination = from && from !== '/sign-in' ? from : '/dashboard';
+  // `/` forwards to the first page the member can open.
+  const destination = from && from !== '/sign-in' ? from : '/';
 
   useEffect(() => {
     document.title = `Sign in · ${env.appName}`;
@@ -45,7 +46,7 @@ export function SignInPage() {
             </div>
           </div>
           <SignInForm
-            onSignedIn={() => navigate(switching ? '/dashboard' : destination, { replace: true })}
+            onSignedIn={() => navigate(switching ? '/' : destination, { replace: true })}
           />
         </Card>
       </main>

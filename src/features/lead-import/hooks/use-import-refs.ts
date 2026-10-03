@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useContacts } from '@/features/contacts';
 import {
@@ -53,7 +54,7 @@ export function useImportRefs() {
   return {
     refs,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }

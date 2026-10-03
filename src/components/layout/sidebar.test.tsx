@@ -56,7 +56,8 @@ describe('Sidebar', () => {
     const user = userEvent.setup();
     renderSidebar(<CollapsibleSidebar />);
     expect(screen.getByText(env.appName)).toBeVisible();
-    expect(screen.getByText('Sales')).toBeVisible();
+    // Navigation appears once the user's access is known.
+    expect(await screen.findByText('Sales')).toBeVisible();
 
     const toggle = screen.getByRole('button', { name: 'Collapse sidebar' });
     expect(toggle.closest('header')).toBeInTheDocument();
@@ -89,9 +90,9 @@ describe('Sidebar', () => {
     expect(screen.getByText(env.appName)).toBeVisible();
   });
 
-  it('keeps the mobile sheet navigation separate from the desktop toggle', () => {
+  it('keeps the mobile sheet navigation separate from the desktop toggle', async () => {
     renderSidebar(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Leads' })).toBeVisible();
+    expect(await screen.findByRole('link', { name: 'Leads' })).toBeVisible();
     expect(screen.queryByRole('button', { name: /sidebar/ })).not.toBeInTheDocument();
   });
 });
