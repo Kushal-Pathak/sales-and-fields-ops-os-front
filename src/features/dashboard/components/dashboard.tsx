@@ -4,6 +4,7 @@ import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useWorkspace } from '@/features/workspace';
 import { formatDate, formatMoney } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { useDashboard } from '../hooks/use-dashboard';
 import { DashboardPanel, PanelRow } from './dashboard-panel';
 import { PipelineStrip } from './pipeline-strip';
@@ -46,15 +47,17 @@ export function Dashboard() {
               to={`/leads?lead=${lead.id}`}
               leading={<InitialsAvatar size="sm" name={contact?.name ?? '?'} />}
               title={contact?.name ?? lead.title}
-              meta={`${lead.nextAction ?? lead.title} · ${formatDate(lead.nextActionAt!, 'monthDay', locale)}`}
-              trailing={
-                <span className="flex items-center gap-1.5">
-                  {overdue && (
-                    <span className="text-xs font-semibold text-destructive">Overdue</span>
-                  )}
-                  {stage && <StatusBadge color={stage.color}>{stage.name}</StatusBadge>}
+              meta={
+                <span className="flex min-w-0 items-baseline gap-1">
+                  <span className="truncate">{lead.nextAction ?? lead.title}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className={cn('shrink-0', overdue && 'font-medium text-destructive')}>
+                    {overdue ? 'Overdue · ' : 'Due '}
+                    {formatDate(lead.nextActionAt!, 'monthDay', locale)}
+                  </span>
                 </span>
               }
+              trailing={stage && <StatusBadge color={stage.color}>{stage.name}</StatusBadge>}
             />
           ))}
         </DashboardPanel>

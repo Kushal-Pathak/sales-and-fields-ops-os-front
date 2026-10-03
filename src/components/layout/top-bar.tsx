@@ -1,25 +1,61 @@
 import { useState } from 'react';
-import { MenuIcon, SearchIcon, SparklesIcon } from 'lucide-react';
+import {
+  MenuIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  SearchIcon,
+  SparklesIcon,
+} from 'lucide-react';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/use-auth';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { useRouteHandle } from '@/hooks/use-route-handle';
 import { env } from '@/lib/env';
 import { Sidebar } from './sidebar';
 
-/** 42px bar above the page: mobile menu, breadcrumb from the route `handle`, user tools. */
-export function TopBar() {
+interface TopBarProps {
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+}
+
+/** 42px bar above the page: navigation toggle, breadcrumb from the route `handle`, user tools. */
+export function TopBar({ sidebarCollapsed, onToggleSidebar }: TopBarProps) {
   const handle = useRouteHandle();
   const { openPalette } = useCommandPalette();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const sidebarLabel = sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  const SidebarIcon = sidebarCollapsed ? PanelLeftOpenIcon : PanelLeftCloseIcon;
 
   return (
     <header className="flex h-[42px] flex-none items-center gap-1.5 border-b border-border-faint px-4 text-sm">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="-ml-1.5 hidden text-muted-foreground lg:inline-flex"
+              aria-label={sidebarLabel}
+              aria-expanded={!sidebarCollapsed}
+              aria-controls="desktop-navigation"
+              aria-keyshortcuts="Meta+b Control+b"
+              onClick={onToggleSidebar}
+            />
+          }
+        >
+          <SidebarIcon />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" align="start">
+          {sidebarLabel}
+          <Kbd>⌘B / Ctrl B</Kbd>
+        </TooltipContent>
+      </Tooltip>
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetTrigger
           render={
@@ -47,7 +83,9 @@ export function TopBar() {
         {handle?.group && (
           <>
             <span className="text-foreground-faint">{handle.group}</span>
-            <span className="text-border-strong">/</span>
+            <span aria-hidden="true" className="text-foreground-faint">
+              /
+            </span>
           </>
         )}
         <span className="truncate font-semibold">{handle?.title ?? env.appName}</span>

@@ -1,7 +1,12 @@
 import { XIcon } from 'lucide-react';
-import { FilterChip, SearchField, SortMenu } from '@/components/common/list-toolbar';
+import {
+  FilterChip,
+  SearchField,
+  SortMenu,
+  ViewTab,
+  ViewTabs,
+} from '@/components/common/list-toolbar';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUsers } from '@/features/workspace';
 import {
   QUOTE_SORT_KEYS,
@@ -32,30 +37,22 @@ export function QuotesToolbar({
 
   return (
     <div className="flex w-full flex-wrap items-center gap-1.5">
-      <Tabs value={filters.view} onValueChange={(view) => onChange({ view: view as QuoteView })}>
-        <TabsList className="h-auto gap-0.5 bg-transparent p-0">
-          {QUOTE_VIEWS.map((view) => (
-            <TabsTrigger
-              key={view}
-              value={view}
-              className="h-7 gap-1.5 px-2.5 data-active:bg-accent data-active:shadow-none"
-            >
-              {QUOTE_VIEW_LABEL[view]}
-              {counts && (
-                <span
-                  className={
-                    view === 'pending' && counts[view] > 0
-                      ? 'text-xs font-semibold text-warning'
-                      : 'text-xs text-foreground-faint'
-                  }
-                >
-                  {counts[view]}
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <ViewTabs
+        value={filters.view}
+        onValueChange={(view) => onChange({ view: view as QuoteView })}
+      >
+        {QUOTE_VIEWS.map((view) => (
+          <ViewTab
+            key={view}
+            value={view}
+            label={QUOTE_VIEW_LABEL[view]}
+            count={counts?.[view]}
+            countClassName={
+              view === 'pending' && (counts?.[view] ?? 0) > 0 ? 'text-warning' : undefined
+            }
+          />
+        ))}
+      </ViewTabs>
 
       <SearchField
         value={filters.q}

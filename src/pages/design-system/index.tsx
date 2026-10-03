@@ -12,6 +12,7 @@ import {
   UploadIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ViewTab, ViewTabs } from '@/components/common/list-toolbar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -282,22 +283,20 @@ export function DesignSystemPage() {
       </Section>
 
       <Section title="Tabs and segmented controls">
-        <Tabs defaultValue="all">
-          <TabsList className="h-auto gap-0.5 bg-transparent p-0">
-            {['All', 'Unread', 'Mine', 'Hot leads'].map((label) => (
-              <TabsTrigger
-                key={label}
-                value={label === 'All' ? 'all' : label.toLowerCase()}
-                className="h-7 px-2.5 data-active:bg-accent data-active:shadow-none"
-              >
-                {label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="all" className="text-muted-foreground">
-            Pill tabs switch views. Active tab takes the accent fill.
-          </TabsContent>
-        </Tabs>
+        <ViewTabs defaultValue="all">
+          {[
+            { value: 'all', label: 'All', count: 124 },
+            { value: 'unread', label: 'Unread', count: 3 },
+            { value: 'mine', label: 'Mine', count: 0 },
+            { value: 'hot', label: 'Hot leads', count: 12 },
+          ].map((view) => (
+            <ViewTab key={view.value} {...view} />
+          ))}
+        </ViewTabs>
+        <p className="text-muted-foreground">
+          Pill tabs switch views. Labels and counts share a baseline; active tabs take the accent
+          fill.
+        </p>
         <Tabs defaultValue="overview">
           <TabsList variant="line">
             {['Overview', 'Activity', 'Tasks', 'Quotes'].map((label) => (

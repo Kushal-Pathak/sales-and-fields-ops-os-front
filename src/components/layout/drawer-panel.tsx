@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from 'react';
+import { useId, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -7,6 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useDrawerWidth } from '@/hooks/use-drawer-width';
 import { cn } from '@/lib/utils';
 
 interface DrawerPanelProps {
@@ -17,7 +18,7 @@ interface DrawerPanelProps {
 }
 
 /**
- * The 464px right-hand detail panel from the design system. Compose with
+ * A resizable right-hand detail panel, initially 464px. Compose with
  * `DrawerHeader` / `DrawerBody` / `DrawerFooter`; drive `open` with `useDrawerParam`.
  */
 export function DrawerPanel({ open, onOpenChange, children, className }: DrawerPanelProps) {
@@ -25,11 +26,71 @@ export function DrawerPanel({ open, onOpenChange, children, className }: DrawerP
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className={cn('w-[464px] gap-0 p-0 shadow-drawer sm:max-w-[464px]', className)}
+        render={<ResizableDrawerSurface />}
+        className={cn(
+          'max-w-full gap-0 p-0 shadow-drawer data-[side=right]:w-full data-[side=right]:sm:max-w-none lg:data-[side=right]:w-(--drawer-width)',
+          className,
+        )}
       >
         {children}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Mounted with the popup so an interrupted drag is discarded when the drawer closes. */
+function ResizableDrawerSurface({
+  id,
+  className,
+  style,
+  children,
+  ...props
+}: ComponentProps<'div'>) {
+  const resize = useDrawerWidth();
+  const fallbackId = useId();
+  const panelId = id ?? fallbackId;
+  const hintId = useId();
+  const widthStyle: CSSProperties & { '--drawer-width': string } = {
+    ...style,
+    '--drawer-width': `${resize.width}px`,
+  };
+
+  return (
+    <div
+      {...props}
+      id={panelId}
+      style={widthStyle}
+      className={cn(className, resize.isResizing && 'cursor-col-resize select-none')}
+    >
+      {children}
+      <span id={hintId} className="sr-only">
+        Drag the left edge or use Left and Right arrow keys to resize. Hold Shift for larger steps.
+        Home sets the smallest width; End sets the largest. Double-click or press Enter to reset.
+      </span>
+      <div
+        role="separator"
+        tabIndex={0}
+        aria-label="Resize detail panel"
+        aria-orientation="vertical"
+        aria-controls={panelId}
+        aria-describedby={hintId}
+        aria-valuemin={resize.min}
+        aria-valuemax={resize.max}
+        aria-valuenow={resize.width}
+        aria-valuetext={`${resize.width} pixels wide`}
+        title="Drag to resize. Double-click to reset."
+        className="group absolute inset-y-0 -left-1.5 z-10 hidden w-3 cursor-col-resize touch-none outline-none lg:block"
+        {...resize.handleProps}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-y-0 left-1/2 w-0.5 bg-transparent transition-colors group-hover:bg-border-strong group-focus-visible:bg-ring',
+            resize.isResizing && 'bg-ring',
+          )}
+        />
+      </div>
+    </div>
   );
 }
 

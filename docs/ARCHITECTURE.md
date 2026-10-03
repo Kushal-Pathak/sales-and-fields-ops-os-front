@@ -33,7 +33,7 @@ src/
 │   ├── collection.ts       # Collection<T> + local / http implementations
 │   ├── local-store.ts      # localStorage persistence, seed versioning, reset
 │   ├── query-keys.ts       # TanStack Query key factory
-│   ├── preferences.ts      # per-browser conveniences (recent palette queries)
+│   ├── preferences.ts      # per-browser conveniences (recent queries, sidebar collapsed, drawer width)
 │   ├── session.ts          # session adapters: demo member picker, or the auth API
 │   ├── assistant.ts        # POST /assistant/ask on the backend; the only AI call, never a model key
 │   └── seed/               # generic demo data, dates relative to now
@@ -77,8 +77,8 @@ Application-level setup only: the composition root, route table, providers, them
 
 - **Routing** — `router.tsx` uses React Router's data router. Each page is registered with `lazy` so it is code-split, and declares a `handle: { title, group? }` (`src/types/route-handle.ts`) that drives the breadcrumb and document title via `useRouteHandle()`. `AppShell` is the shared shell; `RootErrorBoundary` catches render and loader errors for every route. `/` redirects to `/dashboard`; a `*` route renders `NotFoundPage`. Views that must render without the shell (the printable quote) are sibling root routes with their own `ErrorBoundary`.
 - **Navigation** — `navigation.ts` is the single source for sidebar groups and items (label, path, icon, optional count). Add a route and its nav entry together. Sub-views such as "hot leads" are in-page tabs, not sidebar entries.
-- **Shell layout** — `AppShell` is a fixed-height frame: `Sidebar` (236px, hidden below `lg` and opened from the top bar as a sheet) + a column with `TopBar` (42px) and `<main>`. Pages render `PageHeader` then `PageBody`; `PageBody` is the scroll container, so sticky table headers stick to it. Full-height screens may skip both.
-- **Detail drawers** — row-level detail opens in `DrawerPanel` (464px sheet). Its open state is the URL: `useDrawerParam('lead')` reads/writes `?lead=<id>`, so panels are linkable and Esc/close is a URL change.
+- **Shell layout** — `AppShell` is a fixed-height frame: `Sidebar` (236px, or a 52px icon rail when collapsed with the toggle at the start of the top bar or ⌘B / Ctrl-B — `AppShell` owns that state and remembers it through `data/preferences.ts`, passing the state and toggle callback to `TopBar`; hidden below `lg` and opened from the top bar as a sheet) + a column with `TopBar` (42px) and `<main>`. Pages render `PageHeader` then `PageBody`; `PageBody` is the scroll container, so sticky table headers stick to it. Full-height screens may skip both.
+- **Detail drawers** — row-level detail opens in `DrawerPanel` (464px default; resizable from its left edge on desktop, full-width below `lg`). `useDrawerWidth` owns pointer and keyboard resizing, clamps the width to the viewport, and remembers the preferred desktop width through `data/preferences.ts`. A preference subscription keeps multiple mounted drawers consistent without another provider; preview widths stay local until a drag finishes. Its open state is the URL: `useDrawerParam('lead')` reads/writes `?lead=<id>`, so panels are linkable and Esc/close is a URL change.
 - **Providers** — one file per provider in `providers/` (`<name>-provider.tsx`, plus `<name>-context.ts` when it exposes context, kept separate so component files export only components). `providers/index.tsx` composes them all; it is the single place to add app-wide context (query client, auth session, i18n, …). Keep `App.tsx` flat. The consuming hook (`useTheme`, `useAuth`, …) lives in `src/hooks/` so components never import from `app/`.
 - **Theme** — `ThemeProvider` persists `light | dark | system` in `localStorage` and toggles the `.dark` class. Components read it with `useTheme()` from `@/hooks/use-theme`.
 

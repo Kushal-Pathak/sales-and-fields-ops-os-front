@@ -1,7 +1,12 @@
 import { XIcon } from 'lucide-react';
-import { FilterChip, SearchField, SortMenu } from '@/components/common/list-toolbar';
+import {
+  FilterChip,
+  SearchField,
+  SortMenu,
+  ViewTab,
+  ViewTabs,
+} from '@/components/common/list-toolbar';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStages, useUsers, useWorkspace } from '@/features/workspace';
 import type { Priority } from '@/types/domain';
 import {
@@ -30,20 +35,11 @@ export function LeadsToolbar({ filters, counts, isActive, onChange, onClear }: L
 
   return (
     <div className="flex w-full flex-wrap items-center gap-1.5">
-      <Tabs value={filters.view} onValueChange={(view) => onChange({ view: view as LeadView })}>
-        <TabsList className="h-auto gap-0.5 bg-transparent p-0">
-          {LEAD_VIEWS.map((view) => (
-            <TabsTrigger
-              key={view}
-              value={view}
-              className="h-7 gap-1.5 px-2.5 data-active:bg-accent data-active:shadow-none"
-            >
-              {LEAD_VIEW_LABEL[view]}
-              {counts && <span className="text-xs text-foreground-faint">{counts[view]}</span>}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <ViewTabs value={filters.view} onValueChange={(view) => onChange({ view: view as LeadView })}>
+        {LEAD_VIEWS.map((view) => (
+          <ViewTab key={view} value={view} label={LEAD_VIEW_LABEL[view]} count={counts?.[view]} />
+        ))}
+      </ViewTabs>
 
       <SearchField value={filters.q} onChange={(q) => onChange({ q })} placeholder="Search leads" />
 

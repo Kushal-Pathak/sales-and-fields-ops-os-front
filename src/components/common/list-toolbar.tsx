@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { ArrowUpDownIcon, ChevronDownIcon, SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,12 +12,55 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 /**
  * Building blocks of the design system's filter row (page header, second line):
- * search, `Field <b>value</b>` chips backed by a Select, and a sort menu.
+ * counted view tabs, search, `Field <b>value</b>` chips backed by a Select, and a sort menu.
  */
+
+export function ViewTabs({ children, className, ...props }: ComponentProps<typeof Tabs>) {
+  return (
+    <Tabs className={cn('min-w-0 max-w-full', className)} {...props}>
+      <TabsList className="max-w-full flex-wrap justify-start gap-0.5 bg-transparent p-0 group-data-horizontal/tabs:h-auto">
+        {children}
+      </TabsList>
+    </Tabs>
+  );
+}
+
+interface ViewTabProps extends Omit<ComponentProps<typeof TabsTrigger>, 'children'> {
+  label: string;
+  count: number | undefined;
+  countClassName?: string | undefined;
+}
+
+export function ViewTab({ label, count, countClassName, className, ...props }: ViewTabProps) {
+  return (
+    <TabsTrigger
+      className={cn(
+        'h-7 flex-none px-2.5 font-semibold text-muted-foreground hover:bg-accent data-active:bg-accent data-active:shadow-none',
+        className,
+      )}
+      {...props}
+    >
+      <span className="inline-flex items-baseline gap-1.5 leading-none">
+        <span>{label}</span>
+        {count !== undefined && (
+          <span
+            className={cn(
+              'text-xs leading-none font-medium text-foreground-faint tabular-nums',
+              countClassName,
+            )}
+          >
+            {count}
+          </span>
+        )}
+      </span>
+    </TabsTrigger>
+  );
+}
 
 const SEARCH_DEBOUNCE_MS = 200;
 

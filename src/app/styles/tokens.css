@@ -3,8 +3,8 @@
  * Values only. Tailwind wiring (@theme) lives in index.css.
  *
  * Derived from the Pilot CRM reference design; see docs/DESIGN_SYSTEM.md for
- * what each token is for. Light values are kept as the reference's hex so they
- * can be traced back; dark values are derived from the same stone family.
+ * what each token is for. Light values retain the reference palette, with
+ * readable text contrast; dark values use the same stone family.
  */
 
 /* `.light` re-applies the light tokens to a subtree (used by the printable quote). */
@@ -17,7 +17,7 @@
   --background: #ffffff;
   --foreground: #1c1917;
   --foreground-secondary: #57534e;
-  --foreground-faint: #a8a29e;
+  --foreground-faint: #706964;
   --card: #ffffff;
   --card-foreground: #1c1917;
   --popover: #ffffff;
@@ -30,7 +30,7 @@
   --secondary: #f4f4f2;
   --secondary-foreground: #57534e;
   --muted: #f9f8f6;
-  --muted-foreground: #78716c;
+  --muted-foreground: #6b645f;
   --accent: #f1efeb;
   --accent-foreground: #1c1917;
   --destructive: #dc2626;
@@ -86,7 +86,7 @@
   --background: #1c1917;
   --foreground: #fafaf9;
   --foreground-secondary: #d6d3d1;
-  --foreground-faint: #78716c;
+  --foreground-faint: #a39c96;
   --card: #232020;
   --card-foreground: #fafaf9;
   --popover: #232020;
