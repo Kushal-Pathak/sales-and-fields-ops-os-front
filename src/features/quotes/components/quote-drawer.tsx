@@ -1,3 +1,5 @@
+import { QueryContent } from '@/components/common/query-content';
+import { isAccessError } from '@/data/errors';
 import { useState, type ReactNode } from 'react';
 import {
   CopyIcon,
@@ -92,7 +94,7 @@ function QuoteDrawerContent({ quoteId, onClose }: { quoteId: string; onClose: ()
       </>
     );
   }
-  if (error) {
+  if (error && (!row || isAccessError(error))) {
     return (
       <>
         <DrawerHeader>
@@ -112,7 +114,16 @@ function QuoteDrawerContent({ quoteId, onClose }: { quoteId: string; onClose: ()
       </DrawerHeader>
     );
   }
-  return <QuoteDetails row={row} onClose={onClose} />;
+  return (
+    <QueryContent
+      error={error}
+      hasData={true}
+      title="Quote could not be loaded"
+      onRetry={() => void refetch()}
+    >
+      <QuoteDetails row={row} onClose={onClose} />
+    </QueryContent>
+  );
 }
 
 /** Actions that move the quote forward render as the primary button, last in the row. */

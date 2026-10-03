@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, Outlet, RouterProvider, useLocation } from 'react-router';
 import { SessionProvider } from '@/app/providers/session-provider';
+import { QueryProvider } from '@/app/providers/query-provider';
 import { ThemeProvider } from '@/app/providers/theme-provider';
 import { resetDemoData } from '@/data';
 import { buildSeed } from '@/data/seed';
@@ -23,7 +23,6 @@ function Shell() {
 }
 
 function renderApp(initialEntry: string, userId: string | null) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
       { path: '/sign-in', element: <SignInPage /> },
@@ -33,11 +32,11 @@ function renderApp(initialEntry: string, userId: string | null) {
   );
   render(
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider adapter={stubSession(userId)}>
+      <SessionProvider adapter={stubSession(userId)}>
+        <QueryProvider>
           <RouterProvider router={router} />
-        </SessionProvider>
-      </QueryClientProvider>
+        </QueryProvider>
+      </SessionProvider>
     </ThemeProvider>,
   );
   return { router };
@@ -55,7 +54,7 @@ describe('sign-in', () => {
     expect(await screen.findByRole('heading', { name: /Sign in to/ })).toBeInTheDocument();
     for (const member of seed.users.filter((row) => row.active)) {
       expect(
-        screen.getByRole('button', { name: `Continue as ${member.name}` }),
+        await screen.findByRole('button', { name: `Continue as ${member.name}` }),
       ).toBeInTheDocument();
     }
     const inactive = seed.users.find((row) => !row.active)!;

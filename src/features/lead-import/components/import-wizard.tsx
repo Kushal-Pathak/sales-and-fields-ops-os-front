@@ -1,5 +1,5 @@
+import { QueryContent } from '@/components/common/query-content';
 import { useMemo } from 'react';
-import { ErrorState } from '@/components/common/empty-state';
 import { WizardFrame } from '@/components/layout/step-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { addDays } from '@/lib/dates';
@@ -48,13 +48,19 @@ export function ImportWizard() {
   }, [state.table, state.mapping, refs]);
   const summary = useMemo(() => summarize(rows), [rows]);
 
-  if (error) return <ErrorState error={error} onRetry={() => void refetch()} />;
   if (isPending || !refs || !settings) {
     return (
-      <div className="flex flex-col gap-4 p-6">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-32 w-full max-w-lg" />
-      </div>
+      <QueryContent
+        error={error}
+        hasData={refs !== undefined}
+        title="Import data could not be loaded"
+        onRetry={() => void refetch()}
+      >
+        <div className="flex flex-col gap-4 p-6">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-32 w-full max-w-lg" />
+        </div>
+      </QueryContent>
     );
   }
 
@@ -78,61 +84,68 @@ export function ImportWizard() {
   };
 
   return (
-    <WizardFrame
-      steps={IMPORT_STEPS}
-      current={state.step}
-      contentClassName={CONTENT_WIDTH[state.step]}
-      showNav={state.step < IMPORT_STEPS.length - 1}
-      backDisabled={state.step === 0}
-      continueDisabled={!canContinue}
-      continueLabel={state.step === 3 ? 'Start import' : 'Continue'}
-      onBack={() => dispatch({ type: 'back' })}
-      onContinue={() => (state.step === 3 ? startImport() : dispatch({ type: 'next' }))}
+    <QueryContent
+      error={error}
+      hasData={refs !== undefined}
+      title="Import data could not be loaded"
+      onRetry={() => void refetch()}
     >
-      {state.step === 0 && (
-        <UploadStep
-          table={state.table}
-          fileName={state.fileName}
-          onLoad={(table, fileName) => dispatch({ type: 'load', table, fileName })}
-          onClear={() => dispatch({ type: 'clear' })}
-        />
-      )}
-      {state.step === 1 && state.table && (
-        <MapStep
-          table={state.table}
-          mapping={state.mapping}
-          onChange={(mapping) => dispatch({ type: 'mapping', mapping })}
-        />
-      )}
-      {state.step === 2 && state.table && (
-        <CheckStep
-          headers={state.table.headers}
-          rows={rows}
-          duplicates={settings.duplicates}
-          onDuplicatesChange={(duplicates) =>
-            dispatch({ type: 'settings', settings: { ...settings, duplicates } })
-          }
-        />
-      )}
-      {state.step === 3 && (
-        <SettingsStep
-          refs={refs}
-          settings={settings}
-          fileName={state.fileName ?? 'Pasted rows'}
-          summary={summary}
-          onChange={(next) => dispatch({ type: 'settings', settings: next })}
-        />
-      )}
-      {state.step === 4 && (
-        <ResultStep
-          headers={state.table?.headers ?? []}
-          progress={runner.progress}
-          result={runner.result}
-          error={runner.error}
-          source={settings.source}
-          onImportMore={importMore}
-        />
-      )}
-    </WizardFrame>
+      <WizardFrame
+        steps={IMPORT_STEPS}
+        current={state.step}
+        contentClassName={CONTENT_WIDTH[state.step]}
+        showNav={state.step < IMPORT_STEPS.length - 1}
+        backDisabled={state.step === 0}
+        continueDisabled={!canContinue}
+        continueLabel={state.step === 3 ? 'Start import' : 'Continue'}
+        onBack={() => dispatch({ type: 'back' })}
+        onContinue={() => (state.step === 3 ? startImport() : dispatch({ type: 'next' }))}
+      >
+        {state.step === 0 && (
+          <UploadStep
+            table={state.table}
+            fileName={state.fileName}
+            onLoad={(table, fileName) => dispatch({ type: 'load', table, fileName })}
+            onClear={() => dispatch({ type: 'clear' })}
+          />
+        )}
+        {state.step === 1 && state.table && (
+          <MapStep
+            table={state.table}
+            mapping={state.mapping}
+            onChange={(mapping) => dispatch({ type: 'mapping', mapping })}
+          />
+        )}
+        {state.step === 2 && state.table && (
+          <CheckStep
+            headers={state.table.headers}
+            rows={rows}
+            duplicates={settings.duplicates}
+            onDuplicatesChange={(duplicates) =>
+              dispatch({ type: 'settings', settings: { ...settings, duplicates } })
+            }
+          />
+        )}
+        {state.step === 3 && (
+          <SettingsStep
+            refs={refs}
+            settings={settings}
+            fileName={state.fileName ?? 'Pasted rows'}
+            summary={summary}
+            onChange={(next) => dispatch({ type: 'settings', settings: next })}
+          />
+        )}
+        {state.step === 4 && (
+          <ResultStep
+            headers={state.table?.headers ?? []}
+            progress={runner.progress}
+            result={runner.result}
+            error={runner.error}
+            source={settings.source}
+            onImportMore={importMore}
+          />
+        )}
+      </WizardFrame>
+    </QueryContent>
   );
 }

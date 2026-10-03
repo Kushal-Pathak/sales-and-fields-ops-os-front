@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ViewTab, ViewTabs } from '@/components/common/list-toolbar';
+import { RefreshNotice } from '@/components/common/query-content';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -124,6 +125,13 @@ export function DesignSystemPage() {
               <span className={step.className}>{step.sample}</span>
             </div>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Background refresh error">
+        <div className="overflow-hidden rounded-lg border">
+          <RefreshNotice onRetry={() => {}} />
+          <p className="px-3 py-2 text-sm">Cached records stay visible while a refresh fails.</p>
         </div>
       </Section>
 
@@ -568,16 +576,16 @@ function DataSection() {
   const queryClient = useQueryClient();
   const counts = useQuery({
     queryKey: ['dev', 'collection-counts'],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const names = Object.keys(db) as CollectionName[];
       return Promise.all(
-        names.map(async (name) => [name, (await db[name].list()).length] as const),
+        names.map(async (name) => [name, (await db[name].list({ signal })).length] as const),
       );
     },
   });
   const workspace = useQuery({
     queryKey: queryKeys.workspace.list(),
-    queryFn: () => db.workspace.list(),
+    queryFn: ({ signal }) => db.workspace.list({ signal }),
   });
   const current = workspace.data?.[0];
 

@@ -1,3 +1,4 @@
+import { PartialWriteError } from '@/data/errors';
 import { useState, type FormEvent } from 'react';
 import {
   Combobox,
@@ -330,7 +331,9 @@ function AppointmentForm({
 
       {saveError && (
         <p role="alert" className="text-sm text-destructive">
-          The appointment could not be saved. Try again.
+          {saveError instanceof PartialWriteError
+            ? saveError.message
+            : 'The appointment could not be saved. Try again.'}
         </p>
       )}
 
@@ -338,7 +341,7 @@ function AppointmentForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || saveError instanceof PartialWriteError}>
           {appointment ? 'Save changes' : 'Schedule'}
         </Button>
       </DialogFooter>

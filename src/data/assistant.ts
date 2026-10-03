@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import { env } from '@/lib/env';
+import { getDataSessionSignal } from './session-scope';
 
 /**
  * The backend assistant. The browser never talks to a model directly: questions the
@@ -23,5 +24,8 @@ export async function askAssistant(
   context: AssistantContext,
 ): Promise<AssistantAnswer> {
   if (!isAssistantConfigured) throw new Error('No assistant is connected.');
-  return api.post<AssistantAnswer>('/assistant/ask', { body: { question, context } });
+  return api.post<AssistantAnswer>('/assistant/ask', {
+    body: { question, context },
+    signal: getDataSessionSignal(),
+  });
 }

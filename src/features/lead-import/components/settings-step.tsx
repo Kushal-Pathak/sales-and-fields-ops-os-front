@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useModule } from '@/features/auth';
 import { toDateInput } from '@/lib/dates';
 import { formatDate } from '@/lib/format';
 import type { Priority } from '@/types/domain';
@@ -38,6 +39,8 @@ export function SettingsStep({ refs, settings, fileName, summary, onChange }: Se
   const users = refs.users.filter((user) => user.active);
   const locale = refs.workspace.locale;
   const patch = (next: Partial<ImportSettings>) => onChange({ ...settings, ...next });
+  // The follow-up task is off by default, so hiding its switch keeps it off while Tasks is closed.
+  const tasksOpen = useModule('tasks').status === 'allowed';
   const stageName = stages.find((stage) => stage.id === settings.stageId)?.name ?? '—';
   const ownerName = users.find((user) => user.id === settings.ownerId)?.name ?? '—';
   const policy = DUPLICATE_POLICIES.find((row) => row.value === settings.duplicates)?.label;
@@ -133,35 +136,37 @@ export function SettingsStep({ refs, settings, fileName, summary, onChange }: Se
           </Field>
         </div>
 
-        <div className="flex items-center gap-3 rounded-lg border p-3">
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-medium">Create a follow-up task</span>
-            <span className="text-xs text-muted-foreground">
-              A call task for each imported lead, assigned to its owner.
+        {tasksOpen && (
+          <div className="flex items-center gap-3 rounded-lg border p-3">
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-sm font-medium">Create a follow-up task</span>
+              <span className="text-xs text-muted-foreground">
+                A call task for each imported lead, assigned to its owner.
+              </span>
             </span>
-          </span>
-          {settings.followUp.enabled && (
-            <Input
-              type="date"
-              aria-label="Follow-up due date"
-              className="w-40"
-              value={toDateInput(settings.followUp.dueAt)}
-              onChange={(event) =>
-                patch({
-                  followUp: {
-                    enabled: true,
-                    dueAt: new Date(`${event.target.value}T09:00:00`).toISOString(),
-                  },
-                })
-              }
+            {settings.followUp.enabled && (
+              <Input
+                type="date"
+                aria-label="Follow-up due date"
+                className="w-40"
+                value={toDateInput(settings.followUp.dueAt)}
+                onChange={(event) =>
+                  patch({
+                    followUp: {
+                      enabled: true,
+                      dueAt: new Date(`${event.target.value}T09:00:00`).toISOString(),
+                    },
+                  })
+                }
+              />
+            )}
+            <Switch
+              aria-label="Create a follow-up task"
+              checked={settings.followUp.enabled}
+              onCheckedChange={(enabled) => patch({ followUp: { ...settings.followUp, enabled } })}
             />
-          )}
-          <Switch
-            aria-label="Create a follow-up task"
-            checked={settings.followUp.enabled}
-            onCheckedChange={(enabled) => patch({ followUp: { ...settings.followUp, enabled } })}
-          />
-        </div>
+          </div>
+        )}
       </FieldGroup>
 
       <Card size="sm" className="gap-3">
@@ -192,11 +197,13 @@ export function SettingsStep({ refs, settings, fileName, summary, onChange }: Se
             <Row label="Priority">
               {PRIORITIES.find((item) => item.value === settings.priority)?.label}
             </Row>
-            <Row label="Follow-up task">
-              {settings.followUp.enabled
-                ? `Yes, due ${formatDate(settings.followUp.dueAt, 'date', locale)}`
-                : 'No'}
-            </Row>
+            {tasksOpen && (
+              <Row label="Follow-up task">
+                {settings.followUp.enabled
+                  ? `Yes, due ${formatDate(settings.followUp.dueAt, 'date', locale)}`
+                  : 'No'}
+              </Row>
+            )}
           </dl>
         </div>
       </Card>

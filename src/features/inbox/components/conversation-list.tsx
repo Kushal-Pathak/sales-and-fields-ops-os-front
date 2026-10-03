@@ -1,5 +1,6 @@
+import { QueryContent } from '@/components/common/query-content';
 import { InboxIcon, PenSquareIcon } from 'lucide-react';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { InitialsAvatar } from '@/components/common/initials-avatar';
 import { FilterChip, SearchField } from '@/components/common/list-toolbar';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -107,99 +108,107 @@ export function ConversationList({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {error ? (
-          <ErrorState title="Conversations could not be loaded" error={error} onRetry={onRetry} />
-        ) : isPending || !rows ? (
-          <ul>
-            {Array.from({ length: 6 }, (_, index) => (
-              <li key={index} className="flex gap-2.5 border-b border-border-faint px-3 py-2.5">
-                <Skeleton className="size-8 rounded-full" />
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-1/2" />
-                  <Skeleton className="h-3 w-3/4" />
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : rows.length === 0 ? (
-          <EmptyState
-            icon={InboxIcon}
-            title="No conversations"
-            hint={
-              filters.q || filters.channel || filters.view !== 'all'
-                ? 'Try another view, search or channel.'
-                : 'Start one from a lead or with the pen button above.'
-            }
-          />
-        ) : (
-          <ul>
-            {rows.map(({ conversation, contact, stage, lastMessage }) => {
-              const selected = conversation.id === selectedId;
-              const unread = conversation.unreadCount > 0;
-              const name = contact?.name ?? 'Unknown contact';
-              return (
-                <li key={conversation.id}>
-                  <button
-                    type="button"
-                    aria-label={`Open conversation with ${name}`}
-                    aria-current={selected ? 'true' : undefined}
-                    onClick={() => onSelect(conversation.id)}
-                    className={cn(
-                      'flex w-full cursor-pointer items-start gap-2.5 border-b border-border-faint px-3 py-2.5 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none',
-                      selected && 'bg-surface-2 hover:bg-surface-2',
-                    )}
-                  >
-                    <span className="relative shrink-0">
-                      <InitialsAvatar name={name} />
-                      <ChannelBadge
-                        channel={conversation.channel}
-                        className="absolute -right-0.5 -bottom-0.5"
-                      />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="flex items-baseline gap-2">
-                        <span
-                          className={cn('truncate text-sm', unread ? 'font-bold' : 'font-semibold')}
-                        >
-                          {name}
-                        </span>
-                        <span className="ml-auto shrink-0 text-2xs text-foreground-faint">
-                          {formatRelative(conversation.lastMessageAt, undefined, locale)}
-                        </span>
+        <QueryContent
+          error={error}
+          hasData={rows !== undefined}
+          title="Conversations could not be loaded"
+          onRetry={onRetry}
+        >
+          {isPending || !rows ? (
+            <ul>
+              {Array.from({ length: 6 }, (_, index) => (
+                <li key={index} className="flex gap-2.5 border-b border-border-faint px-3 py-2.5">
+                  <Skeleton className="size-8 rounded-full" />
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Skeleton className="h-3.5 w-1/2" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              icon={InboxIcon}
+              title="No conversations"
+              hint={
+                filters.q || filters.channel || filters.view !== 'all'
+                  ? 'Try another view, search or channel.'
+                  : 'Start one from a lead or with the pen button above.'
+              }
+            />
+          ) : (
+            <ul>
+              {rows.map(({ conversation, contact, stage, lastMessage }) => {
+                const selected = conversation.id === selectedId;
+                const unread = conversation.unreadCount > 0;
+                const name = contact?.name ?? 'Unknown contact';
+                return (
+                  <li key={conversation.id}>
+                    <button
+                      type="button"
+                      aria-label={`Open conversation with ${name}`}
+                      aria-current={selected ? 'true' : undefined}
+                      onClick={() => onSelect(conversation.id)}
+                      className={cn(
+                        'flex w-full cursor-pointer items-start gap-2.5 border-b border-border-faint px-3 py-2.5 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none',
+                        selected && 'bg-surface-2 hover:bg-surface-2',
+                      )}
+                    >
+                      <span className="relative shrink-0">
+                        <InitialsAvatar name={name} />
+                        <ChannelBadge
+                          channel={conversation.channel}
+                          className="absolute -right-0.5 -bottom-0.5"
+                        />
                       </span>
-                      <span
-                        className={cn(
-                          'truncate text-xs',
-                          unread ? 'font-medium text-foreground' : 'text-muted-foreground',
-                        )}
-                      >
-                        {lastMessage
-                          ? `${lastMessage.direction === 'outbound' ? 'You: ' : ''}${lastMessage.body}`
-                          : 'No messages yet'}
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-2">
-                        {stage && <StatusBadge color={stage.color}>{stage.name}</StatusBadge>}
-                        {unread && (
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="flex items-baseline gap-2">
                           <span
-                            aria-label={`${conversation.unreadCount} unread`}
                             className={cn(
-                              'ml-auto flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-2xs font-bold text-primary-foreground',
-                              isWhatsApp(conversation.channel)
-                                ? 'bg-whatsapp text-white'
-                                : 'bg-primary',
+                              'truncate text-sm',
+                              unread ? 'font-bold' : 'font-semibold',
                             )}
                           >
-                            {conversation.unreadCount}
+                            {name}
                           </span>
-                        )}
+                          <span className="ml-auto shrink-0 text-2xs text-foreground-faint">
+                            {formatRelative(conversation.lastMessageAt, undefined, locale)}
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            'truncate text-xs',
+                            unread ? 'font-medium text-foreground' : 'text-muted-foreground',
+                          )}
+                        >
+                          {lastMessage
+                            ? `${lastMessage.direction === 'outbound' ? 'You: ' : ''}${lastMessage.body}`
+                            : 'No messages yet'}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-2">
+                          {stage && <StatusBadge color={stage.color}>{stage.name}</StatusBadge>}
+                          {unread && (
+                            <span
+                              aria-label={`${conversation.unreadCount} unread`}
+                              className={cn(
+                                'ml-auto flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-2xs font-bold text-primary-foreground',
+                                isWhatsApp(conversation.channel)
+                                  ? 'bg-whatsapp text-white'
+                                  : 'bg-primary',
+                              )}
+                            >
+                              {conversation.unreadCount}
+                            </span>
+                          )}
+                        </span>
                       </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </QueryContent>
       </div>
     </div>
   );

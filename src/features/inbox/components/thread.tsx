@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { QueryContent } from '@/components/common/query-content';
 import { useSendMessage, useMarkRead } from '../hooks/use-inbox-mutations';
 import { useThread } from '../hooks/use-thread';
 import type { ConversationRow } from '../utils/inbox-view-model';
@@ -25,7 +26,12 @@ export function Thread({ row, compact = false }: ThreadProps) {
   }, [unread, conversation.id, markReadMutate]);
 
   return (
-    <>
+    <QueryContent
+      error={messages.error}
+      hasData={messages.data !== undefined}
+      title="Messages could not be loaded"
+      onRetry={() => void messages.refetch()}
+    >
       <MessageList
         messages={messages.data}
         channel={conversation.channel}
@@ -41,6 +47,6 @@ export function Thread({ row, compact = false }: ThreadProps) {
         onSend={(body) => send.mutate({ conversationId: conversation.id, body })}
         className={compact ? 'mt-2' : 'm-3 mt-0 flex-none'}
       />
-    </>
+    </QueryContent>
   );
 }

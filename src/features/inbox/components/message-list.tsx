@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/features/workspace';
+import { useNow } from '@/hooks/use-now';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Channel, Message } from '@/types/domain';
@@ -15,6 +16,7 @@ interface MessageListProps {
 
 /** The transcript: day separators and bubbles, scrolled to the newest message. */
 export function MessageList({ messages, channel, className }: MessageListProps) {
+  const now = useNow();
   const locale = useWorkspace().data?.locale;
   const endRef = useRef<HTMLDivElement>(null);
   const count = messages?.length ?? 0;
@@ -33,7 +35,7 @@ export function MessageList({ messages, channel, className }: MessageListProps) 
     );
   }
 
-  const groups = groupByDay(messages, new Date(), locale);
+  const groups = groupByDay(messages, now, locale);
   const last = messages[messages.length - 1];
   const outgoing = isWhatsApp(channel) ? 'bg-whatsapp-soft' : 'bg-info-soft';
 

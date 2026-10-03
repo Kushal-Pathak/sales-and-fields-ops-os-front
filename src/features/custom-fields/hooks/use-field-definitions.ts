@@ -11,5 +11,9 @@ export function useFieldDefinitions(entity?: FieldEntity) {
       sortFields(entity ? rows.filter((row) => row.entity === entity) : rows),
     [entity],
   );
-  return useQuery({ queryKey: queryKeys.fields.list(), queryFn: () => db.fields.list(), select });
+  return useQuery({
+    queryKey: queryKeys.fields.list(),
+    queryFn: ({ signal }) => db.fields.list({ signal }),
+    select,
+  });
 }

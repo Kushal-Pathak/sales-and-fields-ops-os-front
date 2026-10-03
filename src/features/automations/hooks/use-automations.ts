@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
@@ -16,7 +17,7 @@ export interface AutomationRow {
 export function useAutomations() {
   const automations = useQuery({
     queryKey: queryKeys.automations.list(),
-    queryFn: () => db.automations.list(),
+    queryFn: ({ signal }) => db.automations.list({ signal }),
   });
   const stages = useStages();
   const users = useUsers();
@@ -48,7 +49,7 @@ export function useAutomations() {
     rows,
     refs,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }
@@ -57,7 +58,7 @@ export function useAutomations() {
 export function useAutomationRuns(automationId: string | null, limit = 10) {
   return useQuery({
     queryKey: queryKeys.automationRuns.list(),
-    queryFn: () => db.automationRuns.list(),
+    queryFn: ({ signal }) => db.automationRuns.list({ signal }),
     enabled: automationId !== null,
     select: (rows) =>
       rows

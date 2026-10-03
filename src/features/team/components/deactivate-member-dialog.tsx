@@ -41,11 +41,14 @@ export function DeactivateMemberDialog({
 }: DeactivateMemberDialogProps) {
   const deactivate = useDeactivateMember();
   const [target, setTarget] = useState<string | null>(null);
-  const hasWork = row.openLeads > 0 || row.openTasks > 0;
+  // Unknown task counts (Tasks closed to the viewer) still need someone to take them over.
+  const tasksUnknown = row.openTasks === null;
+  const openTasks = row.openTasks ?? 0;
+  const hasWork = row.openLeads > 0 || openTasks > 0 || tasksUnknown;
   const reassignTo = target ?? candidates[0]?.user.id ?? null;
   const work = [
     row.openLeads > 0 && `${row.openLeads} open lead${row.openLeads === 1 ? '' : 's'}`,
-    row.openTasks > 0 && `${row.openTasks} open task${row.openTasks === 1 ? '' : 's'}`,
+    openTasks > 0 && `${openTasks} open task${openTasks === 1 ? '' : 's'}`,
   ]
     .filter(Boolean)
     .join(' and ');
@@ -59,9 +62,11 @@ export function DeactivateMemberDialog({
           </AlertDialogMedia>
           <AlertDialogTitle>Deactivate {row.user.name}?</AlertDialogTitle>
           <AlertDialogDescription>
-            {hasWork
+            {work
               ? `${row.user.name} has ${work}. Choose who takes them over. They can be reactivated later.`
-              : `${row.user.name} will no longer appear in pickers. They can be reactivated later.`}
+              : hasWork
+                ? `Choose who takes over any open work ${row.user.name} still has. They can be reactivated later.`
+                : `${row.user.name} will no longer appear in pickers. They can be reactivated later.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {hasWork && (

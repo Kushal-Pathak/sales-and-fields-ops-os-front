@@ -5,7 +5,7 @@ import type { Stage } from '@/types/domain';
 export function usePipelines() {
   return useQuery({
     queryKey: queryKeys.pipelines.list(),
-    queryFn: () => db.pipelines.list(),
+    queryFn: ({ signal }) => db.pipelines.list({ signal }),
   });
 }
 
@@ -13,7 +13,7 @@ export function usePipelines() {
 export function useStages(pipelineId?: string) {
   return useQuery({
     queryKey: queryKeys.stages.list(),
-    queryFn: () => db.stages.list(),
+    queryFn: ({ signal }) => db.stages.list({ signal }),
     select: (rows: Stage[]) =>
       rows
         .filter((stage) => !pipelineId || stage.pipelineId === pipelineId)

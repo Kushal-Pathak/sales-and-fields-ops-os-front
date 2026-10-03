@@ -4,6 +4,6 @@ import { db, queryKeys } from '@/data';
 export function useUsers() {
   return useQuery({
     queryKey: queryKeys.users.list(),
-    queryFn: () => db.users.list(),
+    queryFn: ({ signal }) => db.users.list({ signal }),
   });
 }

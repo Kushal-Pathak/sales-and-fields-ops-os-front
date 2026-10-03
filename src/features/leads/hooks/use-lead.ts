@@ -1,3 +1,5 @@
+import { getQueryError } from '@/data/query-state';
+import { shouldRetryQuery } from '@/data/errors';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, NotFoundError, queryKeys } from '@/data';
@@ -9,9 +11,9 @@ import { joinLeads, type LeadRow } from '../utils/lead-view-model';
 export function useLead(id: string | null) {
   const lead = useQuery({
     queryKey: queryKeys.leads.detail(id ?? ''),
-    queryFn: () => db.leads.get(id ?? ''),
+    queryFn: ({ signal }) => db.leads.get(id ?? '', { signal }),
     enabled: id !== null,
-    retry: (count, error) => !(error instanceof NotFoundError) && count < 1,
+    retry: shouldRetryQuery,
   });
   const contacts = useContacts();
   const users = useUsers();
@@ -26,15 +28,13 @@ export function useLead(id: string | null) {
     })[0];
   }, [lead.data, contacts.data, users.data, stages.data]);
 
-  const queries = [lead, contacts, users, stages];
+  const queries = id !== null ? [lead, contacts, users, stages] : [contacts, users, stages];
   return {
     row,
     stages: stages.data ?? [],
     isPending: id !== null && queries.some((query) => query.isPending),
     notFound: lead.error instanceof NotFoundError,
-    error:
-      queries.find((query) => query.error && !(query.error instanceof NotFoundError))?.error ??
-      null,
+    error: getQueryError(queries.filter((query) => !(query.error instanceof NotFoundError))),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }

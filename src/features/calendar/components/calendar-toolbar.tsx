@@ -19,10 +19,18 @@ interface CalendarToolbarProps {
   onChange: (patch: Partial<CalendarFilters>) => void;
   onShift: (delta: number) => void;
   onToday: () => void;
+  /** Hide the Tasks toggle: tasks are either not available or the only thing shown. */
+  hideTasksToggle?: boolean;
 }
 
 /** ‹ › Today, the visible range, the week/month switch, and the assignee and tasks filters. */
-export function CalendarToolbar({ filters, onChange, onShift, onToday }: CalendarToolbarProps) {
+export function CalendarToolbar({
+  filters,
+  onChange,
+  onShift,
+  onToday,
+  hideTasksToggle = false,
+}: CalendarToolbarProps) {
   const locale = useWorkspace().data?.locale ?? 'en-US';
   const users = (useUsers().data ?? []).filter((user) => user.active);
   const unit = filters.view === 'week' ? 'week' : 'month';
@@ -87,19 +95,21 @@ export function CalendarToolbar({ filters, onChange, onShift, onToday }: Calenda
         items={users.map((user) => ({ value: user.id, label: user.name }))}
         onChange={(assigneeId) => onChange({ assigneeId })}
       />
-      <Toggle
-        size="sm"
-        aria-label="Show tasks"
-        pressed={filters.showTasks}
-        onPressedChange={(showTasks) => onChange({ showTasks })}
-        className={cn(
-          'h-6 gap-1 rounded-full bg-surface-2 px-2.5 text-xs text-muted-foreground',
-          filters.showTasks && 'bg-accent text-foreground',
-        )}
-      >
-        {filters.showTasks && <CheckIcon className="size-3" />}
-        Tasks
-      </Toggle>
+      {!hideTasksToggle && (
+        <Toggle
+          size="sm"
+          aria-label="Show tasks"
+          pressed={filters.showTasks}
+          onPressedChange={(showTasks) => onChange({ showTasks })}
+          className={cn(
+            'h-6 gap-1 rounded-full bg-surface-2 px-2.5 text-xs text-muted-foreground',
+            filters.showTasks && 'bg-accent text-foreground',
+          )}
+        >
+          {filters.showTasks && <CheckIcon className="size-3" />}
+          Tasks
+        </Toggle>
+      )}
     </div>
   );
 }

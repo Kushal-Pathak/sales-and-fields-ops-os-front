@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
@@ -10,8 +11,14 @@ import { joinQuotes, type QuoteRow } from '../utils/quote-view-model';
  * through the shared cache key, so this feature does not depend on `features/leads`.
  */
 export function useQuotes() {
-  const quotes = useQuery({ queryKey: queryKeys.quotes.list(), queryFn: () => db.quotes.list() });
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const quotes = useQuery({
+    queryKey: queryKeys.quotes.list(),
+    queryFn: ({ signal }) => db.quotes.list({ signal }),
+  });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const users = useUsers();
   const stages = useStages();
@@ -31,7 +38,7 @@ export function useQuotes() {
   return {
     rows,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }
@@ -43,7 +50,10 @@ export interface LeadOption {
 
 /** Lead + contact pairs for the builder's lead picker (same shape as the tasks feature's). */
 export function useLeadOptions(): LeadOption[] | undefined {
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   return useMemo(() => {
     if (!leads.data || !contacts.data) return undefined;

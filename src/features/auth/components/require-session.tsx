@@ -1,25 +1,22 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/common/empty-state';
 import { useAuth } from '@/hooks/use-auth';
+import { ShellSkeleton } from './shell-skeleton';
 
-/** Renders its children only with a signed-in session; otherwise sends the user to sign in. */
+/**
+ * Renders its children only with a signed-in session; otherwise sends the user to sign in.
+ * A session that could not be checked (the network, not a refusal) offers Retry instead.
+ */
 export function RequireSession({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
+  const { status, retry } = useAuth();
   const location = useLocation();
 
-  if (status === 'loading') {
+  if (status === 'loading') return <ShellSkeleton />;
+  if (status === 'error') {
     return (
-      <div
-        className="flex h-screen items-center justify-center"
-        aria-busy="true"
-        aria-label="Loading"
-      >
-        <div className="flex w-64 flex-col gap-3">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
+      <div className="flex h-screen">
+        <ErrorState title="Your session could not be restored" onRetry={retry} />
       </div>
     );
   }

@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
@@ -13,13 +14,16 @@ import { joinConversations, type ConversationRow } from '../utils/inbox-view-mod
 export function useConversations() {
   const conversations = useQuery({
     queryKey: queryKeys.conversations.list(),
-    queryFn: () => db.conversations.list(),
+    queryFn: ({ signal }) => db.conversations.list({ signal }),
   });
   const messages = useQuery({
     queryKey: queryKeys.messages.list(),
-    queryFn: () => db.messages.list(),
+    queryFn: ({ signal }) => db.messages.list({ signal }),
   });
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const stages = useStages();
   const users = useUsers();
@@ -47,7 +51,7 @@ export function useConversations() {
   return {
     rows,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }
@@ -59,7 +63,10 @@ export interface LeadOption {
 
 /** Lead + contact pairs for the new-message dialog. */
 export function useLeadOptions(): LeadOption[] | undefined {
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   return useMemo(() => {
     if (!leads.data || !contacts.data) return undefined;

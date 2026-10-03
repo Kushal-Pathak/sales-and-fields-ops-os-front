@@ -7,13 +7,17 @@ import { readRows, writeRows } from './local-store';
  * The five operations every entity supports, shaped like a REST resource so the
  * local (demo) implementation and the HTTP implementation are interchangeable.
  */
+export interface CollectionOptions {
+  signal?: AbortSignal;
+}
+
 export interface Collection<T extends BaseEntity> {
-  list(): Promise<T[]>;
+  list(options?: CollectionOptions): Promise<T[]>;
   /** Rejects with `NotFoundError` when the id does not exist. */
-  get(id: string): Promise<T>;
-  create(input: CreateInput<T>): Promise<T>;
-  update(id: string, patch: UpdateInput<T>): Promise<T>;
-  remove(id: string): Promise<void>;
+  get(id: string, options?: CollectionOptions): Promise<T>;
+  create(input: CreateInput<T>, options?: CollectionOptions): Promise<T>;
+  update(id: string, patch: UpdateInput<T>, options?: CollectionOptions): Promise<T>;
+  remove(id: string, options?: CollectionOptions): Promise<void>;
 }
 
 export interface LocalCollectionOptions {
@@ -41,28 +45,32 @@ export function createLocalCollection<T extends BaseEntity>(
   const rows = (): T[] => readRows<T>(name) ?? [];
 
   return {
-    async list() {
+    async list(options) {
       await delay(latency);
+      options?.signal?.throwIfAborted();
       return rows();
     },
 
-    async get(id) {
+    async get(id, options) {
       await delay(latency);
+      options?.signal?.throwIfAborted();
       const row = rows().find((r) => r.id === id);
       if (!row) throw new NotFoundError(name, id);
       return row;
     },
 
-    async create(input) {
+    async create(input, options) {
       await delay(latency);
+      options?.signal?.throwIfAborted();
       const timestamp = now().toISOString();
       const row = { ...input, id: newId(), createdAt: timestamp, updatedAt: timestamp } as T;
       writeRows(name, [...rows(), row]);
       return row;
     },
 
-    async update(id, patch) {
+    async update(id, patch, options) {
       await delay(latency);
+      options?.signal?.throwIfAborted();
       const all = rows();
       const index = all.findIndex((r) => r.id === id);
       const existing = all[index];
@@ -73,8 +81,9 @@ export function createLocalCollection<T extends BaseEntity>(
       return row;
     },
 
-    async remove(id) {
+    async remove(id, options) {
       await delay(latency);
+      options?.signal?.throwIfAborted();
       const all = rows();
       if (!all.some((r) => r.id === id)) throw new NotFoundError(name, id);
       writeRows(
@@ -98,10 +107,11 @@ export function createHttpCollection<T extends BaseEntity>(
   };
 
   return {
-    list: () => api.get<T[]>(basePath),
-    get: (id) => api.get<T>(itemPath(id)).catch(mapNotFound(id)),
-    create: (input) => api.post<T>(basePath, { body: input }),
-    update: (id, patch) => api.patch<T>(itemPath(id), { body: patch }).catch(mapNotFound(id)),
-    remove: (id) => api.delete<void>(itemPath(id)).catch(mapNotFound(id)),
+    list: (options) => api.get<T[]>(basePath, options),
+    get: (id, options) => api.get<T>(itemPath(id), options).catch(mapNotFound(id)),
+    create: (input, options) => api.post<T>(basePath, { ...options, body: input }),
+    update: (id, patch, options) =>
+      api.patch<T>(itemPath(id), { ...options, body: patch }).catch(mapNotFound(id)),
+    remove: (id, options) => api.delete<void>(itemPath(id), options).catch(mapNotFound(id)),
   };
 }

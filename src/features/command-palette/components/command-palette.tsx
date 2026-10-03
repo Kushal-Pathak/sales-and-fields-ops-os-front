@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   AlertCircleIcon,
   CalendarIcon,
@@ -23,22 +23,23 @@ import {
 import { Kbd } from '@/components/ui/kbd';
 import { getRecentQueries, pushRecentQuery } from '@/data/preferences';
 import { AppointmentFormDialog } from '@/features/appointments';
+import { useFlag, useModules } from '@/features/auth';
 import { NewMessageDialog } from '@/features/inbox';
 import { LeadFormDialog } from '@/features/leads';
 import { TaskFormDialog } from '@/features/tasks';
 import { useCommandPalette } from '@/hooks/use-command-palette';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate } from '@/lib/format';
-import type { TaskType } from '@/types/domain';
+import type { ModuleId, TaskType } from '@/types/domain';
 import { usePaletteData } from '../hooks/use-palette-data';
 import {
   filterCommands,
-  QUICK_ACTIONS,
+  quickActions,
   sectionCommands,
   type Command as PaletteCommand,
   type QuickActionId,
 } from '../utils/commands';
-import { parseIntent, SUGGESTED_QUERIES, type Intent } from '../utils/intents';
+import { INTENT_MODULE, parseIntent, SUGGESTED_QUERIES, type Intent } from '../utils/intents';
 import { searchRecords, type RecordKind } from '../utils/search';
 import { AnswerPanel, type AnswerState } from './answer-panel';
 
@@ -81,6 +82,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [taskPrefill, setTaskPrefill] = useState<TaskPrefill>({});
+  const modules = useModules();
 
   const openDialog = (next: Exclude<OpenDialog, null>, prefill: TaskPrefill = {}) => {
     setTaskPrefill(prefill);
@@ -105,25 +107,31 @@ export function CommandPalette() {
         onOpenChange={(next) => !next && setDialog(null)}
         onSaved={(id) => navigate(`/leads?lead=${id}`)}
       />
-      <TaskFormDialog
-        open={dialog === 'task'}
-        onOpenChange={(next) => !next && setDialog(null)}
-        defaultLeadId={taskPrefill.leadId}
-        defaultTitle={taskPrefill.title}
-        defaultType={taskPrefill.type}
-        defaultDueAt={taskPrefill.dueAt}
-        onSaved={(id) => navigate(`/tasks?view=all&task=${id}`)}
-      />
-      <AppointmentFormDialog
-        open={dialog === 'appointment'}
-        onOpenChange={(next) => !next && setDialog(null)}
-        onSaved={(id) => navigate(`/appointments?view=all&appointment=${id}`)}
-      />
-      <NewMessageDialog
-        open={dialog === 'message'}
-        onOpenChange={(next) => !next && setDialog(null)}
-        onStarted={(id) => navigate(`/inbox?c=${id}`)}
-      />
+      {modules.tasks.status === 'allowed' && (
+        <TaskFormDialog
+          open={dialog === 'task'}
+          onOpenChange={(next) => !next && setDialog(null)}
+          defaultLeadId={taskPrefill.leadId}
+          defaultTitle={taskPrefill.title}
+          defaultType={taskPrefill.type}
+          defaultDueAt={taskPrefill.dueAt}
+          onSaved={(id) => navigate(`/tasks?view=all&task=${id}`)}
+        />
+      )}
+      {modules.appointments.status === 'allowed' && (
+        <AppointmentFormDialog
+          open={dialog === 'appointment'}
+          onOpenChange={(next) => !next && setDialog(null)}
+          onSaved={(id) => navigate(`/appointments?view=all&appointment=${id}`)}
+        />
+      )}
+      {modules.inbox.status === 'allowed' && (
+        <NewMessageDialog
+          open={dialog === 'message'}
+          onOpenChange={(next) => !next && setDialog(null)}
+          onStarted={(id) => navigate(`/inbox?c=${id}`)}
+        />
+      )}
     </>
   );
 }
@@ -141,19 +149,32 @@ function PaletteBody({
   const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
   const refs = usePaletteData(true);
+  const modules = useModules();
+  const assistantOn = useFlag('assistant.ask');
   const [query, setQuery] = useState(initialQuery);
   const [answer, setAnswer] = useState<AnswerState | null>(null);
   const [recent] = useState<string[]>(() => getRecentQueries());
 
-  const sections = useMemo(() => sectionCommands(), []);
+  // Everything the palette offers is limited to the modules open to the signed-in user.
+  const isOpen = useCallback((id: ModuleId) => modules[id].status === 'allowed', [modules]);
+  const findIntent = useCallback(
+    (text: string): Intent | null => {
+      const found = refs ? parseIntent(text, refs) : null;
+      return found && isOpen(INTENT_MODULE[found.type]) ? found : null;
+    },
+    [refs, isOpen],
+  );
+  const sections = useMemo(() => sectionCommands(isOpen), [isOpen]);
+  const actions = useMemo(() => quickActions(isOpen), [isOpen]);
+  const suggested = useMemo(
+    () => SUGGESTED_QUERIES.filter((item) => isOpen(item.module)),
+    [isOpen],
+  );
   const trimmed = query.trim();
   const records = useMemo(() => (refs ? searchRecords(trimmed, refs) : []), [refs, trimmed]);
-  const intent = useMemo(
-    () => (refs && trimmed ? parseIntent(trimmed, refs) : null),
-    [refs, trimmed],
-  );
+  const intent = useMemo(() => (trimmed ? findIntent(trimmed) : null), [findIntent, trimmed]);
   const matchingSections = useMemo(() => filterCommands(sections, trimmed), [sections, trimmed]);
-  const matchingActions = useMemo(() => filterCommands(QUICK_ACTIONS, trimmed), [trimmed]);
+  const matchingActions = useMemo(() => filterCommands(actions, trimmed), [actions, trimmed]);
   const nothing =
     trimmed.length > 0 &&
     records.length === 0 &&
@@ -186,9 +207,9 @@ function PaletteBody({
 
   const runQuery = (text: string) => {
     if (!refs || !text.trim()) return;
-    const found = parseIntent(text, refs);
+    const found = findIntent(text);
     if (found) runIntent(found, text);
-    else {
+    else if (assistantOn) {
       remember(text);
       setAnswer({ kind: 'assistant', question: text.trim(), route: location.pathname });
     }
@@ -269,9 +290,9 @@ function PaletteBody({
               ))}
             </CommandGroup>
           )}
-          {!trimmed && (
+          {!trimmed && suggested.length > 0 && (
             <CommandGroup heading="Suggested">
-              {SUGGESTED_QUERIES.map((item) => (
+              {suggested.map((item) => (
                 <CommandItem
                   key={item.text}
                   value={`suggested:${item.text}`}
@@ -313,7 +334,7 @@ function PaletteBody({
               })}
             </CommandGroup>
           )}
-          {trimmed && refs && (
+          {trimmed && refs && (intent || assistantOn) && (
             <CommandGroup heading="Ask">
               {intent ? (
                 (() => {

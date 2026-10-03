@@ -9,6 +9,7 @@ import {
 import { StatusBadge } from '@/components/common/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFlag } from '@/features/auth';
 import { useBulkAssignLeads } from '@/features/leads';
 import type { User } from '@/types/domain';
 import { useAskAssistant } from '../hooks/use-ask-assistant';
@@ -161,7 +162,10 @@ function AssignHotLeads({
 
 function AssistantAnswer({ question, route }: { question: string; route: string }) {
   const ask = useAskAssistant();
-  const { isConfigured, mutate } = ask;
+  const { mutate } = ask;
+  // The `assistant.ask` flag is the kill switch, and it can flip while this panel is open.
+  const switchedOn = useFlag('assistant.ask');
+  const isConfigured = ask.isConfigured && switchedOn;
 
   // Ask once per question; `mutate` is referentially stable.
   useEffect(() => {
@@ -174,7 +178,9 @@ function AssistantAnswer({ question, route }: { question: string; route: string 
         <SparklesIcon className="size-4 text-foreground-faint" />
         <h3 className="truncate text-sm font-bold">“{question}”</h3>
       </div>
-      {!isConfigured ? (
+      {!switchedOn ? (
+        <p className="text-sm text-muted-foreground">The assistant is switched off right now.</p>
+      ) : !isConfigured ? (
         <p className="text-sm text-muted-foreground">
           No assistant is connected. Pilot CRM can answer this once a backend behind{' '}
           <code className="font-mono text-xs">VITE_API_BASE_URL</code> implements{' '}

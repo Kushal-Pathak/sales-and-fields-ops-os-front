@@ -1,3 +1,4 @@
+import { QueryContent } from '@/components/common/query-content';
 import { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -22,7 +23,6 @@ import {
   PencilIcon,
   TrashIcon,
 } from 'lucide-react';
-import { ErrorState } from '@/components/common/empty-state';
 import { StatusBadge } from '@/components/common/status-badge';
 import { StatusDot } from '@/components/common/status-dot';
 import { Button } from '@/components/ui/button';
@@ -88,68 +88,72 @@ export function StageList({ pipelineId, onEdit, onDelete }: StageListProps) {
     if (over && active.id !== over.id) apply(String(active.id), String(over.id));
   };
 
-  if (stages.error)
-    return <ErrorState error={stages.error} onRetry={() => void stages.refetch()} />;
-
   const rows = stages.data;
 
   return (
-    <div className="rounded-xl border">
-      <DndContext
-        sensors={sensors}
-        onDragStart={({ active }) => setActiveId(String(active.id))}
-        onDragEnd={onDragEnd}
-        onDragCancel={() => setActiveId(null)}
-      >
-        <Table containerClassName="overflow-visible rounded-xl" className="min-w-[640px]">
-          <TableHeader className="[&_th]:bg-sidebar [&_th:first-child]:rounded-tl-xl [&_th:last-child]:rounded-tr-xl">
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className={cn(HEAD_CLASS, 'w-8 px-1')}>
-                <span className="sr-only">Reorder</span>
-              </TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[220px]')}>Stage</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[90px] text-right')}>Leads</TableHead>
-              <TableHead className={HEAD_CLASS}>Default task</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-[110px]')}>Type</TableHead>
-              <TableHead className={cn(HEAD_CLASS, 'w-10')}>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows ? (
-              <SortableContext
-                items={rows.map((stage) => stage.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {rows.map((stage, index) => (
-                  <StageRow
-                    key={stage.id}
-                    stage={stage}
-                    leadCount={leadCounts.get(stage.id) ?? 0}
-                    isFirst={index === 0}
-                    isLast={index === rows.length - 1}
-                    isDragging={activeId === stage.id}
-                    onEdit={() => onEdit(stage.id)}
-                    onDelete={() => onDelete(stage.id)}
-                    onMoveUp={() => rows[index - 1] && apply(stage.id, rows[index - 1]!.id)}
-                    onMoveDown={() => rows[index + 1] && apply(stage.id, rows[index + 1]!.id)}
-                  />
-                ))}
-              </SortableContext>
-            ) : (
-              Array.from({ length: 5 }, (_, index) => (
-                <TableRow key={index} className="border-border-faint hover:bg-transparent">
-                  <TableCell className={CELL_CLASS} colSpan={6}>
-                    <Skeleton className="h-4 w-1/2" />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </DndContext>
-    </div>
+    <QueryContent
+      error={stages.error}
+      hasData={stages.data !== undefined}
+      title="Stages could not be loaded"
+      onRetry={() => void stages.refetch()}
+    >
+      <div className="rounded-xl border">
+        <DndContext
+          sensors={sensors}
+          onDragStart={({ active }) => setActiveId(String(active.id))}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          <Table containerClassName="overflow-visible rounded-xl" className="min-w-[640px]">
+            <TableHeader className="[&_th]:bg-sidebar [&_th:first-child]:rounded-tl-xl [&_th:last-child]:rounded-tr-xl">
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className={cn(HEAD_CLASS, 'w-8 px-1')}>
+                  <span className="sr-only">Reorder</span>
+                </TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[220px]')}>Stage</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[90px] text-right')}>Leads</TableHead>
+                <TableHead className={HEAD_CLASS}>Default task</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-[110px]')}>Type</TableHead>
+                <TableHead className={cn(HEAD_CLASS, 'w-10')}>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows ? (
+                <SortableContext
+                  items={rows.map((stage) => stage.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {rows.map((stage, index) => (
+                    <StageRow
+                      key={stage.id}
+                      stage={stage}
+                      leadCount={leadCounts.get(stage.id) ?? 0}
+                      isFirst={index === 0}
+                      isLast={index === rows.length - 1}
+                      isDragging={activeId === stage.id}
+                      onEdit={() => onEdit(stage.id)}
+                      onDelete={() => onDelete(stage.id)}
+                      onMoveUp={() => rows[index - 1] && apply(stage.id, rows[index - 1]!.id)}
+                      onMoveDown={() => rows[index + 1] && apply(stage.id, rows[index + 1]!.id)}
+                    />
+                  ))}
+                </SortableContext>
+              ) : (
+                Array.from({ length: 5 }, (_, index) => (
+                  <TableRow key={index} className="border-border-faint hover:bg-transparent">
+                    <TableCell className={CELL_CLASS} colSpan={6}>
+                      <Skeleton className="h-4 w-1/2" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
+    </QueryContent>
   );
 }
 

@@ -1,5 +1,6 @@
+import { useWriteOperation } from '@/hooks/use-write-operation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, queryKeys } from '@/data';
+import { queryKeys, type Db } from '@/data';
 import { AUTOMATION_EFFECT_KEYS, runAutomations } from '@/features/automations';
 import { useCurrentUser } from '@/features/workspace';
 import type { CreateInput, Quote, UpdateInput } from '@/types/domain';
@@ -26,6 +27,7 @@ function useInvalidate() {
 const AFFECTED = [queryKeys.quotes.all, queryKeys.activities.all, queryKeys.leads.all] as const;
 
 async function log(
+  db: Db,
   quote: Quote,
   actorId: string | null,
   message: string,
@@ -56,34 +58,38 @@ export interface CreateQuoteInput {
 
 /** Creates a quote from the builder: numbers it, fills contact and creator, logs it. */
 export function useCreateQuote() {
+  const write = useWriteOperation('quotes');
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ draft, submit = false }: CreateQuoteInput): Promise<Quote> => {
-      if (!actorId) throw new Error('No signed-in user.');
-      const [lead, quotes] = await Promise.all([db.leads.get(draft.leadId), db.quotes.list()]);
-      const input: CreateInput<Quote> = {
-        ...draft,
-        number: nextQuoteNumber(quotes),
-        contactId: lead.contactId,
-        createdById: actorId,
-        status: submit ? 'pending_approval' : 'draft',
-      };
-      const created = await db.quotes.create(input);
-      await log(
-        created,
-        actorId,
-        `Quote ${created.number} ${submit ? 'created and submitted for approval' : 'created as draft'}`,
-        'quote_status',
-      );
-      return created;
-    },
-    onSuccess: () => invalidate(...AFFECTED),
+    mutationFn: async ({ draft, submit = false }: CreateQuoteInput): Promise<Quote> =>
+      write(async (db) => {
+        if (!actorId) throw new Error('No signed-in user.');
+        const [lead, quotes] = await Promise.all([db.leads.get(draft.leadId), db.quotes.list()]);
+        const input: CreateInput<Quote> = {
+          ...draft,
+          number: nextQuoteNumber(quotes),
+          contactId: lead.contactId,
+          createdById: actorId,
+          status: submit ? 'pending_approval' : 'draft',
+        };
+        const created = await db.quotes.create(input);
+        await log(
+          db,
+          created,
+          actorId,
+          `Quote ${created.number} ${submit ? 'created and submitted for approval' : 'created as draft'}`,
+          'quote_status',
+        );
+        return created;
+      }),
+    onSettled: () => invalidate(...AFFECTED),
   });
 }
 
 /** Edits a draft. Refuses once the quote has left Draft. */
 export function useUpdateQuote() {
+  const write = useWriteOperation('quotes');
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
@@ -96,107 +102,119 @@ export function useUpdateQuote() {
       id: string;
       patch: UpdateInput<Quote>;
       submit?: boolean;
-    }): Promise<Quote> => {
-      const before = await db.quotes.get(id);
-      if (!isQuoteEditable(before.status)) throw new Error('Only drafts can be edited.');
-      const quote = await db.quotes.update(id, {
-        ...patch,
-        ...(submit && { status: 'pending_approval' }),
-      });
-      await log(
-        quote,
-        actorId,
-        `Quote ${quote.number} ${submit ? 'updated and submitted for approval' : 'updated'}`,
-        'quote_status',
-      );
-      return quote;
-    },
+    }): Promise<Quote> =>
+      write(async (db) => {
+        const before = await db.quotes.get(id);
+        if (!isQuoteEditable(before.status)) throw new Error('Only drafts can be edited.');
+        const quote = await db.quotes.update(id, {
+          ...patch,
+          ...(submit && { status: 'pending_approval' }),
+        });
+        await log(
+          db,
+          quote,
+          actorId,
+          `Quote ${quote.number} ${submit ? 'updated and submitted for approval' : 'updated'}`,
+          'quote_status',
+        );
+        return quote;
+      }),
     onSuccess: (quote) => {
+      if (write.signal.aborted) return;
       queryClient.setQueryData(queryKeys.quotes.detail(quote.id), quote);
-      return invalidate(...AFFECTED);
     },
+    onSettled: () => invalidate(...AFFECTED),
   });
 }
 
 /** Moves a quote through the workflow; sending also stamps `sentAt`. */
 export function useQuoteAction() {
+  const write = useWriteOperation('quotes');
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: QuoteAction }): Promise<Quote> => {
-      const before = await db.quotes.get(id);
-      const status = applyAction(before.status, action);
-      const patch: UpdateInput<Quote> =
-        action === 'send' ? { status, sentAt: new Date().toISOString() } : { status };
-      const quote = await db.quotes.update(id, patch);
-      await log(
-        quote,
-        actorId,
-        `Quote ${quote.number} ${QUOTE_ACTION_DONE[action]}`,
-        action === 'send' ? 'quote_sent' : 'quote_status',
-      );
-      const lead = await db.leads.get(quote.leadId);
-      await runAutomations({ type: 'quote_status_changed', lead, quote }, actorId);
-      return quote;
-    },
+    mutationFn: async ({ id, action }: { id: string; action: QuoteAction }): Promise<Quote> =>
+      write(async (db) => {
+        const before = await db.quotes.get(id);
+        const status = applyAction(before.status, action);
+        const patch: UpdateInput<Quote> =
+          action === 'send' ? { status, sentAt: new Date().toISOString() } : { status };
+        const quote = await db.quotes.update(id, patch);
+        await log(
+          db,
+          quote,
+          actorId,
+          `Quote ${quote.number} ${QUOTE_ACTION_DONE[action]}`,
+          action === 'send' ? 'quote_sent' : 'quote_status',
+        );
+        const lead = await db.leads.get(quote.leadId);
+        await runAutomations({ type: 'quote_status_changed', lead, quote }, actorId, db);
+        return quote;
+      }),
     onSuccess: (quote) => {
+      if (write.signal.aborted) return;
       queryClient.setQueryData(queryKeys.quotes.detail(quote.id), quote);
-      return invalidate(...AFFECTED, ...AUTOMATION_EFFECT_KEYS);
     },
+    onSettled: () => invalidate(...AFFECTED, ...AUTOMATION_EFFECT_KEYS),
   });
 }
 
 /** Copies a quote into a new draft with the next number. */
 export function useDuplicateQuote() {
+  const write = useWriteOperation('quotes');
   const invalidate = useInvalidate();
   const actorId = useCurrentUser().data?.id ?? null;
   return useMutation({
-    mutationFn: async (id: string): Promise<Quote> => {
-      if (!actorId) throw new Error('No signed-in user.');
-      const [source, quotes] = await Promise.all([db.quotes.get(id), db.quotes.list()]);
-      const validUntil = new Date();
-      validUntil.setDate(validUntil.getDate() + 30);
-      const input: CreateInput<Quote> = {
-        leadId: source.leadId,
-        contactId: source.contactId,
-        currency: source.currency,
-        items: source.items.map((item) => ({ ...item, id: crypto.randomUUID() })),
-        discountPct: source.discountPct,
-        taxRatePct: source.taxRatePct,
-        ...(source.notes !== undefined && { notes: source.notes }),
-        ...(source.terms !== undefined && { terms: source.terms }),
-        validUntil: validUntil.toISOString(),
-        number: nextQuoteNumber(quotes),
-        createdById: actorId,
-        status: 'draft',
-      };
-      const created = await db.quotes.create(input);
-      await log(
-        created,
-        actorId,
-        `Quote ${created.number} created as a copy of ${source.number}`,
-        'quote_status',
-      );
-      return created;
-    },
-    onSuccess: () => invalidate(...AFFECTED),
+    mutationFn: async (id: string): Promise<Quote> =>
+      write(async (db) => {
+        if (!actorId) throw new Error('No signed-in user.');
+        const [source, quotes] = await Promise.all([db.quotes.get(id), db.quotes.list()]);
+        const validUntil = new Date();
+        validUntil.setDate(validUntil.getDate() + 30);
+        const input: CreateInput<Quote> = {
+          leadId: source.leadId,
+          contactId: source.contactId,
+          currency: source.currency,
+          items: source.items.map((item) => ({ ...item, id: crypto.randomUUID() })),
+          discountPct: source.discountPct,
+          taxRatePct: source.taxRatePct,
+          ...(source.notes !== undefined && { notes: source.notes }),
+          ...(source.terms !== undefined && { terms: source.terms }),
+          validUntil: validUntil.toISOString(),
+          number: nextQuoteNumber(quotes),
+          createdById: actorId,
+          status: 'draft',
+        };
+        const created = await db.quotes.create(input);
+        await log(
+          db,
+          created,
+          actorId,
+          `Quote ${created.number} created as a copy of ${source.number}`,
+          'quote_status',
+        );
+        return created;
+      }),
+    onSettled: () => invalidate(...AFFECTED),
   });
 }
 
 /** Deletes a quote and its own history. The lead timeline keeps what happened. */
 export function useDeleteQuote() {
+  const write = useWriteOperation('quotes');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const activities = await db.activities.list();
-      await Promise.all(
-        activities
-          .filter((row) => row.entityType === 'quote' && row.entityId === id)
-          .map((row) => db.activities.remove(row.id)),
-      );
-      await db.quotes.remove(id);
-    },
-    onSuccess: () => invalidate(queryKeys.quotes.all, queryKeys.activities.all),
+    mutationFn: async (id: string): Promise<void> =>
+      write(async (db) => {
+        const activities = await db.activities.list();
+        await Promise.all(
+          activities
+            .filter((row) => row.entityType === 'quote' && row.entityId === id)
+            .map((row) => db.activities.remove(row.id)),
+        );
+        await db.quotes.remove(id);
+      }),
+    onSettled: () => invalidate(queryKeys.quotes.all, queryKeys.activities.all),
   });
 }

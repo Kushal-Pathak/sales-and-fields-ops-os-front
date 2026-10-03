@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { Channel } from '@/types/domain';
 import { CHANNEL_LABEL, isWhatsApp } from '../utils/inbox-labels';
 import { fillTemplate, type TemplateContext } from '@/lib/templates';
+import { PartialWriteError } from '@/data/errors';
 
 interface ComposerProps {
   channel: Channel;
@@ -122,7 +123,7 @@ export function Composer({ channel, context, isSending, error, onSend, className
         </span>
         {error ? (
           <span role="alert" className="text-xs text-destructive">
-            The message could not be sent.
+            {error instanceof PartialWriteError ? error.message : 'The message could not be sent.'}
           </span>
         ) : null}
         <Button

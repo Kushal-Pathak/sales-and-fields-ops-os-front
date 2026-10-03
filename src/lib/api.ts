@@ -3,12 +3,12 @@ import { env } from '@/lib/env';
 /**
  * Minimal typed JSON client over `fetch`, prefixed with `VITE_API_BASE_URL`.
  *
- * Usage (inside a feature hook):
+ * Usage (inside the data layer):
  *   const users = await api.get<User[]>('/users');
  *   await api.post('/users', { body: { name } });
  *
- * When you need caching, retries or request de-duplication, add TanStack Query as a
- * provider in `src/app/providers/` and call these functions from its query/mutation functions.
+ * Feature hooks use the data collections through TanStack Query for caching,
+ * retries and request de-duplication. Only `src/data/` imports this transport.
  */
 
 export class ApiError extends Error {
@@ -27,14 +27,31 @@ export interface RequestOptions {
   body?: unknown;
   headers?: Record<string, string>;
   signal?: AbortSignal;
+  /** Public auth endpoints do not inherit an existing bearer token. */
+  authenticated?: boolean;
+  /** Logout is best effort and must not recursively trigger another sign-out. */
+  handleUnauthorized?: boolean;
+  /** The access request itself must not ask for access to be reloaded. */
+  handleForbidden?: boolean;
 }
 
 let authToken: string | null = null;
+let authController = new AbortController();
 let unauthorizedHandler: (() => void) | null = null;
+let forbiddenHandler: (() => void) | null = null;
 
 /** Bearer token sent with every request; `null` clears it. Set by the session, never read from `VITE_*`. */
 export function setAuthToken(token: string | null): void {
+  if (authToken !== token) {
+    authController.abort(new DOMException('The authentication context changed.', 'AbortError'));
+    authController = new AbortController();
+  }
   authToken = token;
+}
+
+/** Data operations capture this before queuing, so they cannot inherit a later token. */
+export function getAuthSignal(): AbortSignal {
+  return authController.signal;
 }
 
 /** Called once per 401 so the session can sign the user out. Returns an unsubscribe. */
@@ -42,6 +59,14 @@ export function onUnauthorized(handler: () => void): () => void {
   unauthorizedHandler = handler;
   return () => {
     if (unauthorizedHandler === handler) unauthorizedHandler = null;
+  };
+}
+
+/** Called on a 403 from the current credentials: what the user may do has changed. Returns an unsubscribe. */
+export function onForbidden(handler: () => void): () => void {
+  forbiddenHandler = handler;
+  return () => {
+    if (forbiddenHandler === handler) forbiddenHandler = null;
   };
 }
 
@@ -53,13 +78,16 @@ async function parseBody(response: Response): Promise<unknown> {
 
 async function request<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, signal } = options;
+  const requestToken = options.authenticated === false ? null : authToken;
+  const requestAuthSignal = getAuthSignal();
+  signal?.throwIfAborted();
 
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     method,
     headers: {
       Accept: 'application/json',
       ...(body !== undefined && { 'Content-Type': 'application/json' }),
-      ...(authToken && { Authorization: `Bearer ${authToken}` }),
+      ...(requestToken && { Authorization: `Bearer ${requestToken}` }),
       ...headers,
     },
     ...(body !== undefined && { body: JSON.stringify(body) }),
@@ -67,7 +95,13 @@ async function request<T>(method: string, path: string, options: RequestOptions 
   });
 
   const payload = await parseBody(response);
-  if (response.status === 401 && authToken) unauthorizedHandler?.();
+  signal?.throwIfAborted();
+  const currentCredentials =
+    requestToken && requestToken === authToken && !requestAuthSignal.aborted;
+  if (response.status === 401 && currentCredentials && options.handleUnauthorized !== false)
+    unauthorizedHandler?.();
+  if (response.status === 403 && currentCredentials && options.handleForbidden !== false)
+    forbiddenHandler?.();
   if (!response.ok) throw new ApiError(response.status, payload);
   return payload as T;
 }

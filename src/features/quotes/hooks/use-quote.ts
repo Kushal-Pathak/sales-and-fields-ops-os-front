@@ -1,3 +1,5 @@
+import { getQueryError } from '@/data/query-state';
+import { shouldRetryQuery } from '@/data/errors';
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, NotFoundError, queryKeys } from '@/data';
@@ -10,11 +12,14 @@ import { joinQuotes, type QuoteRow } from '../utils/quote-view-model';
 export function useQuote(id: string | null) {
   const quote = useQuery({
     queryKey: queryKeys.quotes.detail(id ?? ''),
-    queryFn: () => db.quotes.get(id ?? ''),
+    queryFn: ({ signal }) => db.quotes.get(id ?? '', { signal }),
     enabled: id !== null,
-    retry: (count, error) => !(error instanceof NotFoundError) && count < 1,
+    retry: shouldRetryQuery,
   });
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const users = useUsers();
   const stages = useStages();
@@ -30,14 +35,13 @@ export function useQuote(id: string | null) {
     })[0];
   }, [quote.data, leads.data, contacts.data, users.data, stages.data]);
 
-  const queries = [quote, leads, contacts, users, stages];
+  const queries =
+    id !== null ? [quote, leads, contacts, users, stages] : [leads, contacts, users, stages];
   return {
     row,
     isPending: id !== null && queries.some((query) => query.isPending),
     notFound: quote.error instanceof NotFoundError,
-    error:
-      queries.find((query) => query.error && !(query.error instanceof NotFoundError))?.error ??
-      null,
+    error: getQueryError(queries.filter((query) => !(query.error instanceof NotFoundError))),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }
@@ -53,7 +57,7 @@ export function useQuoteActivities(quoteId: string | null) {
   );
   return useQuery({
     queryKey: queryKeys.activities.list(),
-    queryFn: () => db.activities.list(),
+    queryFn: ({ signal }) => db.activities.list({ signal }),
     enabled: quoteId !== null,
     select,
   });

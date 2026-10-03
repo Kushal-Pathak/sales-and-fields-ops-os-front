@@ -1,5 +1,7 @@
+import { beginOptimisticListUpdate } from '@/data/optimistic-list';
+import { useWriteOperation } from '@/hooks/use-write-operation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, queryKeys } from '@/data';
+import { queryKeys } from '@/data';
 import type { CreateInput, FieldDefinition, UpdateInput } from '@/types/domain';
 
 function useInvalidate() {
@@ -8,19 +10,22 @@ function useInvalidate() {
 }
 
 export function useCreateField() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (input: CreateInput<FieldDefinition>) => db.fields.create(input),
-    onSuccess: invalidate,
+    mutationFn: (input: CreateInput<FieldDefinition>) =>
+      write(async (db) => db.fields.create(input)),
+    onSettled: invalidate,
   });
 }
 
 export function useUpdateField() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateInput<FieldDefinition> }) =>
-      db.fields.update(id, patch),
-    onSuccess: invalidate,
+      write(async (db) => db.fields.update(id, patch)),
+    onSettled: invalidate,
   });
 }
 
@@ -31,32 +36,43 @@ export interface FieldOrder {
 
 /** Writes new `order` values; the list is updated optimistically so a drop settles at once. */
 export function useReorderFields() {
+  const write = useWriteOperation('settings');
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: (changes: FieldOrder[]) =>
-      Promise.all(changes.map(({ id, order }) => db.fields.update(id, { order }))),
+      write(async (db) =>
+        Promise.all(changes.map(({ id, order }) => db.fields.update(id, { order }))),
+      ),
     onMutate: async (changes) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.fields.list() });
-      const previous = queryClient.getQueryData<FieldDefinition[]>(queryKeys.fields.list());
       const orders = new Map(changes.map((change) => [change.id, change.order]));
-      queryClient.setQueryData<FieldDefinition[]>(queryKeys.fields.list(), (rows) =>
-        rows?.map((row) => (orders.has(row.id) ? { ...row, order: orders.get(row.id)! } : row)),
+      return beginOptimisticListUpdate<FieldDefinition>(
+        queryClient,
+        queryKeys.fields.list(),
+        (rows) =>
+          rows.map((row) => (orders.has(row.id) ? { ...row, order: orders.get(row.id)! } : row)),
+        write.signal,
       );
-      return { previous };
     },
     onError: (_error, _changes, context) => {
-      if (context?.previous) queryClient.setQueryData(queryKeys.fields.list(), context.previous);
+      context?.rollback();
     },
-    onSettled: invalidate,
+    onSettled: async (_data, _error, _input, context) => {
+      try {
+        return await invalidate();
+      } finally {
+        context?.release();
+      }
+    },
   });
 }
 
 /** Removes the definition only; values already stored on records are left in place. */
 export function useDeleteField() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (id: string) => db.fields.remove(id),
-    onSuccess: invalidate,
+    mutationFn: (id: string) => write(async (db) => db.fields.remove(id)),
+    onSettled: invalidate,
   });
 }

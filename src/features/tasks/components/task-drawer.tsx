@@ -1,3 +1,6 @@
+import { useNow } from '@/hooks/use-now';
+import { QueryContent } from '@/components/common/query-content';
+import { isAccessError } from '@/data/errors';
 import { useState, type FormEvent } from 'react';
 import {
   CalendarClockIcon,
@@ -70,6 +73,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 }
 
 function TaskDrawerContent({ taskId, onClose }: { taskId: string; onClose: () => void }) {
+  useNow();
   const { row, isPending, notFound, error, refetch } = useTask(taskId);
 
   if (notFound) {
@@ -92,7 +96,7 @@ function TaskDrawerContent({ taskId, onClose }: { taskId: string; onClose: () =>
       </>
     );
   }
-  if (error) {
+  if (error && (!row || isAccessError(error))) {
     return (
       <>
         <DrawerHeader>
@@ -112,7 +116,16 @@ function TaskDrawerContent({ taskId, onClose }: { taskId: string; onClose: () =>
       </DrawerHeader>
     );
   }
-  return <TaskDetails row={row} onClose={onClose} />;
+  return (
+    <QueryContent
+      error={error}
+      hasData={true}
+      title="Task could not be loaded"
+      onRetry={() => void refetch()}
+    >
+      <TaskDetails row={row} onClose={onClose} />
+    </QueryContent>
+  );
 }
 
 function TaskDetails({ row, onClose }: { row: TaskRow; onClose: () => void }) {

@@ -1,4 +1,4 @@
-import type { Workspace } from '@/types/domain';
+import { MODULE_IDS, type ModuleId, type Workspace, type WorkspaceModule } from '@/types/domain';
 import type { Clock } from './helpers';
 
 export function buildWorkspace(clock: Clock): Workspace[] {
@@ -35,7 +35,21 @@ export function buildWorkspace(clock: Clock): Workspace[] {
           body: 'Hi {{name}}, I have sent over the quote for {{company}}. Happy to walk you through it whenever suits.',
         },
       ],
+      modules: buildModules(),
       ...clock.stamp(400, 30),
     },
   ];
+}
+
+/** The modules a workspace admin may switch off; the rest are always on. */
+const CONFIGURABLE: ReadonlySet<ModuleId> = new Set([
+  'quotes',
+  'tasks',
+  'appointments',
+  'calendar',
+  'inbox',
+]);
+
+function buildModules(): WorkspaceModule[] {
+  return MODULE_IDS.map((id) => ({ id, enabled: true, configurable: CONFIGURABLE.has(id) }));
 }

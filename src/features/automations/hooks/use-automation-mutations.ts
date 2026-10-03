@@ -1,5 +1,7 @@
+import { beginOptimisticListUpdate } from '@/data/optimistic-list';
+import { useWriteOperation } from '@/hooks/use-write-operation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, queryKeys } from '@/data';
+import { queryKeys } from '@/data';
 import type { Automation, CreateInput, UpdateInput } from '@/types/domain';
 
 function useInvalidate() {
@@ -9,54 +11,65 @@ function useInvalidate() {
 }
 
 export function useCreateAutomation() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (input: CreateInput<Automation>) => db.automations.create(input),
-    onSuccess: () => invalidate(queryKeys.automations.all),
+    mutationFn: (input: CreateInput<Automation>) =>
+      write(async (db) => db.automations.create(input)),
+    onSettled: () => invalidate(queryKeys.automations.all),
   });
 }
 
 export function useUpdateAutomation() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateInput<Automation> }) =>
-      db.automations.update(id, patch),
-    onSuccess: () => invalidate(queryKeys.automations.all),
+      write(async (db) => db.automations.update(id, patch)),
+    onSettled: () => invalidate(queryKeys.automations.all),
   });
 }
 
 /** The On switch in the table; optimistic so it flips at once. */
 export function useToggleAutomation() {
+  const write = useWriteOperation('settings');
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      db.automations.update(id, { active }),
+      write(async (db) => db.automations.update(id, { active })),
     onMutate: async ({ id, active }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.automations.list() });
-      const previous = queryClient.getQueryData<Automation[]>(queryKeys.automations.list());
-      queryClient.setQueryData<Automation[]>(queryKeys.automations.list(), (rows) =>
-        rows?.map((row) => (row.id === id ? { ...row, active } : row)),
+      return beginOptimisticListUpdate<Automation>(
+        queryClient,
+        queryKeys.automations.list(),
+        (rows) => rows.map((row) => (row.id === id ? { ...row, active } : row)),
+        write.signal,
       );
-      return { previous };
     },
     onError: (_error, _input, context) => {
-      if (context?.previous)
-        queryClient.setQueryData(queryKeys.automations.list(), context.previous);
+      context?.rollback();
     },
-    onSettled: () => invalidate(queryKeys.automations.all),
+    onSettled: async (_data, _error, _input, context) => {
+      try {
+        return await invalidate(queryKeys.automations.all);
+      } finally {
+        context?.release();
+      }
+    },
   });
 }
 
 /** Removes the rule and its run history. */
 export function useDeleteAutomation() {
+  const write = useWriteOperation('settings');
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const runs = (await db.automationRuns.list()).filter((run) => run.automationId === id);
-      await Promise.all(runs.map((run) => db.automationRuns.remove(run.id)));
-      await db.automations.remove(id);
-    },
-    onSuccess: () => invalidate(queryKeys.automations.all, queryKeys.automationRuns.all),
+    mutationFn: async (id: string) =>
+      write(async (db) => {
+        const runs = (await db.automationRuns.list()).filter((run) => run.automationId === id);
+        await Promise.all(runs.map((run) => db.automationRuns.remove(run.id)));
+        await db.automations.remove(id);
+      }),
+    onSettled: () => invalidate(queryKeys.automations.all, queryKeys.automationRuns.all),
   });
 }

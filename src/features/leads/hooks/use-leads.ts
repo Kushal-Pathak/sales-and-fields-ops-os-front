@@ -1,3 +1,4 @@
+import { getQueryError } from '@/data/query-state';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db, queryKeys } from '@/data';
@@ -7,7 +8,10 @@ import { joinLeads, type LeadRow } from '../utils/lead-view-model';
 
 /** Every lead joined with its contact, owner and stage. Filtering happens in the caller. */
 export function useLeads() {
-  const leads = useQuery({ queryKey: queryKeys.leads.list(), queryFn: () => db.leads.list() });
+  const leads = useQuery({
+    queryKey: queryKeys.leads.list(),
+    queryFn: ({ signal }) => db.leads.list({ signal }),
+  });
   const contacts = useContacts();
   const users = useUsers();
   const stages = useStages();
@@ -25,7 +29,7 @@ export function useLeads() {
   return {
     rows,
     isPending: queries.some((query) => query.isPending),
-    error: queries.find((query) => query.error)?.error ?? null,
+    error: getQueryError(queries),
     refetch: () => Promise.all(queries.map((query) => query.refetch())),
   };
 }

@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { ArrowLeftIcon, PrinterIcon } from 'lucide-react';
 import { Link } from 'react-router';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
+import { QueryContent } from '@/components/common/query-content';
+import { getQueryError } from '@/data/query-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/features/workspace';
@@ -17,7 +19,8 @@ import { QuoteTotals } from './quote-fields';
  */
 export function QuotePrint({ quoteId }: { quoteId: string }) {
   const { row, isPending, notFound, error, refetch } = useQuote(quoteId);
-  const workspace = useWorkspace().data;
+  const workspace = useWorkspace();
+  const queryError = getQueryError([{ error }, workspace]);
   const number = row?.quote.number;
 
   useEffect(() => {
@@ -41,19 +44,28 @@ export function QuotePrint({ quoteId }: { quoteId: string }) {
       </div>
 
       <article className="mx-auto max-w-[800px] bg-background p-10 shadow-sm print:max-w-none print:p-0 print:shadow-none">
-        {notFound ? (
-          <EmptyState title="This quote no longer exists" icon={PrinterIcon} />
-        ) : error ? (
-          <ErrorState error={error} onRetry={() => void refetch()} />
-        ) : isPending || !row || !workspace ? (
-          <div className="flex flex-col gap-4">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-64" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        ) : (
-          <PrintSheet row={row} workspaceName={workspace.name} locale={workspace.locale} />
-        )}
+        <QueryContent
+          error={queryError}
+          hasData={Boolean(row && workspace.data)}
+          title="Quote could not be loaded"
+          onRetry={() => void Promise.all([refetch(), workspace.refetch()])}
+        >
+          {notFound ? (
+            <EmptyState title="This quote no longer exists" icon={PrinterIcon} />
+          ) : isPending || !row || !workspace.data ? (
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          ) : (
+            <PrintSheet
+              row={row}
+              workspaceName={workspace.data.name}
+              locale={workspace.data.locale}
+            />
+          )}
+        </QueryContent>
       </article>
     </div>
   );

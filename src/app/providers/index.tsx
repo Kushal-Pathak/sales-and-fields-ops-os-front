@@ -13,13 +13,13 @@ import { ThemeProvider } from './theme-provider';
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
-      <QueryProvider>
-        <SessionProvider>
+      <SessionProvider>
+        <QueryProvider>
           <CommandPaletteProvider>
             <TooltipProvider>{children}</TooltipProvider>
           </CommandPaletteProvider>
-        </SessionProvider>
-      </QueryProvider>
+        </QueryProvider>
+      </SessionProvider>
     </ThemeProvider>
   );
 }

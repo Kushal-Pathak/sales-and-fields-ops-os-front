@@ -1,3 +1,4 @@
+import { QueryContent } from '@/components/common/query-content';
 import { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -12,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { ListIcon, PlusIcon } from 'lucide-react';
-import { EmptyState, ErrorState } from '@/components/common/empty-state';
+import { EmptyState } from '@/components/common/empty-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePipelines, useStages, useWorkspace } from '@/features/workspace';
@@ -83,69 +84,90 @@ export function PipelineBoard({
     if (stageId && stageId !== fromStageId) moveStage.mutate({ id: String(active.id), stageId });
   };
 
-  if (error)
-    return <ErrorState title="Pipeline could not be loaded" error={error} onRetry={onRetry} />;
-
   if (!isPending && rows && rows.length === 0 && columns?.every((c) => c.rows.length === 0)) {
     const total = columns.length;
     if (total === 0) {
       return (
-        <EmptyState
-          icon={ListIcon}
-          title="No stages yet"
-          hint="Define the stages of your pipeline in Settings to start using the board."
-        />
+        <QueryContent
+          error={error}
+          hasData={rows !== undefined}
+          title="Pipeline could not be loaded"
+          onRetry={onRetry}
+        >
+          <EmptyState
+            icon={ListIcon}
+            title="No stages yet"
+            hint="Define the stages of your pipeline in Settings to start using the board."
+          />
+        </QueryContent>
       );
     }
   }
 
-  if (isPending || !columns) return <BoardSkeleton />;
+  if (isPending || !columns)
+    return (
+      <QueryContent
+        error={error}
+        hasData={rows !== undefined}
+        title="Pipeline could not be loaded"
+        onRetry={onRetry}
+      >
+        <BoardSkeleton />
+      </QueryContent>
+    );
 
   const activeRow = activeId ? rowById.get(activeId) : undefined;
 
   return (
-    <DndContext
-      sensors={sensors}
-      accessibility={{
-        announcements,
-        screenReaderInstructions: {
-          draggable:
-            'Press Space to pick up a lead, use the left and right arrow keys to choose a stage, and press Space again to drop. Press Escape to cancel. Press Enter to open the lead.',
-        },
-      }}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragCancel={() => setActiveId(null)}
+    <QueryContent
+      error={error}
+      hasData={rows !== undefined}
+      title="Pipeline could not be loaded"
+      onRetry={onRetry}
     >
-      <div className="flex min-w-max items-start gap-3 p-4">
-        {columns.map((column) => (
-          <PipelineColumn
-            key={column.stage.id}
-            column={column}
-            money={money}
-            onOpen={onOpen}
-            onCreate={onCreate}
-          />
-        ))}
-        {columns.length === 0 && (
-          <EmptyState
-            icon={PlusIcon}
-            title="No stages yet"
-            hint="Define the stages of your pipeline in Settings."
-            action={
-              <Button size="sm" variant="outline" onClick={() => onCreate()}>
-                Add lead
-              </Button>
-            }
-          />
-        )}
-      </div>
-      <DragOverlay dropAnimation={null}>
-        {activeRow && (
-          <PipelineCardBody row={activeRow} money={money} className="rotate-1 shadow-card" />
-        )}
-      </DragOverlay>
-    </DndContext>
+      <DndContext
+        sensors={sensors}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: {
+            draggable:
+              'Press Space to pick up a lead, use the left and right arrow keys to choose a stage, and press Space again to drop. Press Escape to cancel. Press Enter to open the lead.',
+          },
+        }}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
+        <div className="flex min-w-max items-start gap-3 p-4">
+          {columns.map((column) => (
+            <PipelineColumn
+              key={column.stage.id}
+              column={column}
+              money={money}
+              onOpen={onOpen}
+              onCreate={onCreate}
+            />
+          ))}
+          {columns.length === 0 && (
+            <EmptyState
+              icon={PlusIcon}
+              title="No stages yet"
+              hint="Define the stages of your pipeline in Settings."
+              action={
+                <Button size="sm" variant="outline" onClick={() => onCreate()}>
+                  Add lead
+                </Button>
+              }
+            />
+          )}
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {activeRow && (
+            <PipelineCardBody row={activeRow} money={money} className="rotate-1 shadow-card" />
+          )}
+        </DragOverlay>
+      </DndContext>
+    </QueryContent>
   );
 }
 

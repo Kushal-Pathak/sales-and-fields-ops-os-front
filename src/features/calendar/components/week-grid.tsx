@@ -1,3 +1,4 @@
+import { useNow } from '@/hooks/use-now';
 import { useWorkspace } from '@/features/workspace';
 import { isSameDay } from '@/lib/dates';
 import { formatDate } from '@/lib/format';
@@ -15,8 +16,8 @@ interface WeekGridProps {
   date: Date;
   events: CalendarEvent[];
   onOpenEvent: (event: CalendarEvent) => void;
-  /** An empty hour cell was clicked; `startAt` is that hour on that day. */
-  onSlotClick: (startAt: Date) => void;
+  /** An empty hour cell was clicked; `startAt` is that hour on that day. Omit when nothing can be scheduled. */
+  onSlotClick?: ((startAt: Date) => void) | undefined;
 }
 
 const HOUR_PX = 56;
@@ -26,7 +27,7 @@ const COLUMNS = 'grid-cols-[56px_repeat(7,minmax(0,1fr))]';
 /** Mon–Sun time grid: hour rows, one column per day, events placed by time and overlap. */
 export function WeekGrid({ date, events, onOpenEvent, onSlotClick }: WeekGridProps) {
   const locale = useWorkspace().data?.locale;
-  const now = new Date();
+  const now = useNow();
   const days = weekDays(date);
   const byDay = days.map((day) => eventsForDay(events, day));
   const { startHour, endHour } = hourRange(byDay.flat());
@@ -86,7 +87,7 @@ export function WeekGrid({ date, events, onOpenEvent, onSlotClick }: WeekGridPro
               {hours.map((hour) => {
                 const slot = new Date(day);
                 slot.setHours(hour, 0, 0, 0);
-                return (
+                return onSlotClick ? (
                   <button
                     key={hour}
                     type="button"
@@ -94,6 +95,8 @@ export function WeekGrid({ date, events, onOpenEvent, onSlotClick }: WeekGridPro
                     onClick={() => onSlotClick(slot)}
                     className="block h-14 w-full cursor-pointer border-t border-border-faint hover:bg-muted/60 focus-visible:bg-muted focus-visible:outline-none"
                   />
+                ) : (
+                  <div key={hour} className="h-14 border-t border-border-faint" />
                 );
               })}
               {placed.map(({ event, column, columns }) => {
