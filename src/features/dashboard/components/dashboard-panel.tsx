@@ -66,7 +66,7 @@ interface PanelRowProps {
   to: string;
   leading?: ReactNode;
   title: string;
-  meta: string;
+  meta: ReactNode;
   trailing?: ReactNode;
 }
 

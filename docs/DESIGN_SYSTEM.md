@@ -14,7 +14,7 @@ Read this before building any screen. The reference file is a static mock: copy 
 
 ## Tokens
 
-All values live in `src/app/styles/tokens.css` and are exposed as Tailwind utilities through `@theme inline` in `index.css` (`bg-primary`, `text-muted-foreground`, `shadow-drawer`, …). Light values are the reference's exact colours; dark values are derived from the same stone family.
+All values live in `src/app/styles/tokens.css` and are exposed as Tailwind utilities through `@theme inline` in `index.css` (`bg-primary`, `text-muted-foreground`, `shadow-drawer`, …). Light values retain the reference palette, with text colours adjusted for readability; dark values are derived from the same stone family.
 
 ### Colour
 
@@ -23,8 +23,8 @@ All values live in `src/app/styles/tokens.css` and are exposed as Tailwind utili
 | `background`                  | `#ffffff`              | `#1c1917`              | page                                                      |
 | `foreground`                  | `#1c1917`              | `#fafaf9`              | primary text, titles                                      |
 | `foreground-secondary`        | `#57534e`              | `#d6d3d1`              | table cells, secondary button text                        |
-| `muted-foreground`            | `#78716c`              | `#a8a29e`              | table headers, captions, descriptions                     |
-| `foreground-faint`            | `#a8a29e`              | `#78716c`              | field labels, placeholders, meta, ghost rows              |
+| `muted-foreground`            | `#6b645f`              | `#a8a29e`              | table headers, captions, descriptions                     |
+| `foreground-faint`            | `#706964`              | `#a39c96`              | field labels, placeholders, meta, ghost rows              |
 | `card` / `popover`            | `#ffffff`              | `#232020`              | cards, menus, dialogs, drawers                            |
 | `muted`                       | `#f9f8f6`              | `#292524`              | panel backgrounds, selected rows, read-only boxes         |
 | `surface-2`                   | `#f4f4f2`              | `#292524`              | filter chips, search pill, neutral pills                  |
@@ -48,6 +48,8 @@ All values live in `src/app/styles/tokens.css` and are exposed as Tailwind utili
 | `sidebar-*`                   | `#fbfbfa` family       | `#1a1715` family       | app sidebar background, item states                       |
 
 Category colours (lead stage, source, priority, task type, role) are **feature data**, not tokens. Define them next to the feature's types as maps onto the status tokens above; see the appendix for what the reference used.
+
+Readable neutral text (`foreground`, `foreground-secondary`, `muted-foreground`, `foreground-faint`) must have at least 4.5:1 contrast on the neutral page, card, sidebar, chip and hover surfaces in both themes. Keep metadata visually secondary through these tokens and the type scale; do not use border colours or reduced opacity for readable labels. Decorative dividers and disabled controls have separate roles.
 
 ### Typography
 
@@ -111,12 +113,13 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 ### Tabs and segmented controls
 
-- **Pill tabs** (view switching): transparent list, 12.5 px 600 triggers, active gets the `accent` fill. **Underline tabs** (inside drawers): 2 px `foreground` underline, no fill. **Segmented control** (table / kanban): bordered group, icon-only items, active fill `accent`.
-- **Build with**: `Tabs` + `TabsList` + `TabsTrigger` + `TabsContent`. Pill: `<TabsList className="h-auto gap-0.5 bg-transparent p-0">` and `<TabsTrigger className="h-7 px-2.5 data-active:bg-accent data-active:shadow-none">`. Underline: `<TabsList variant="line">`. Segmented: `ToggleGroup variant="outline" spacing={0}` with `ToggleGroupItem size="sm"` and `aria-label`s — `ViewSwitch` (`features/leads`) is the table/board instance. Pill tabs that are links (settings sections) are `SettingsNav` in `components/layout/`.
+- **Pill tabs** (view switching): transparent list, 28 px content-width triggers with 10 px horizontal padding and 2 px between tabs, 12.5 px 600 labels, active gets the `accent` fill. Each label and its 11.5 px 500 count share a baseline with a 6 px gap and matching `leading-none`; counts use `tabular-nums`. The whole label/count pair is centred vertically in the trigger. The list wraps within the toolbar at narrow widths. **Underline tabs** (inside drawers): 2 px `foreground` underline, no fill. **Segmented control** (table / kanban): bordered group, icon-only items, active fill `accent`.
+- **Build with**: counted list views use `ViewTabs` + `ViewTab label count` from `components/common/list-toolbar`, composed from the `Tabs` primitives. `ViewTab` accepts `countClassName` for a feature's attention colour; count size and weight stay consistent, and a zero count remains visible. Panel tabs use `Tabs` + `TabsList` + `TabsTrigger` + `TabsContent`; underline: `<TabsList variant="line">`. Segmented: `ToggleGroup variant="outline" spacing={0}` with `ToggleGroupItem size="sm"` and `aria-label`s — `ViewSwitch` (`features/leads`) is the table/board instance. Pill tabs that are links (settings sections) are `SettingsNav` in `components/layout/`.
 
 ### Cards and stat tiles
 
 - **Looks**: white, 1 px hairline, `rounded-xl`, 12 px padding, 13 px body. Hover on clickable cards: `muted` background + `shadow-card`. Stat tile: label `text-xs text-muted-foreground` → value `text-3xl font-bold` → sub `text-xs text-foreground-faint`. Implemented as `StatTiles` in `features/dashboard/`; list panels with a header (icon, title, count, "View all") are `DashboardPanel` + `PanelRow`.
+- **Follow-up rows**: contact name above action and due-date metadata; overdue dates use explicit `Overdue · <date>` text in `text-destructive`, without a pill. Keep the action muted and truncate it before the date. The lead stage is the sole right-aligned badge, with the same right inset as other panel rows.
 - **Build with**: `Card size="sm"` (+ `CardHeader` / `CardTitle` / `CardContent`). Clickable: `className="cursor-pointer transition hover:bg-muted hover:shadow-card"`. Kanban card: `Card size="sm"` with a name row (`text-base font-semibold`), a description (`text-sm text-muted-foreground`), and a footer row separated by `border-t border-border-faint pt-2`.
 
 ### Tables
@@ -133,21 +136,21 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 ### Sidebar navigation
 
 - **Looks**: 236 px, `bg-sidebar`, `border-r`. Top: workspace switcher (24 px `brand` square with the initial, 13.5 px bold name, chevron). Group labels `text-2xs font-bold uppercase tracking-wider text-foreground-faint` with `pt-3.5 pb-1 px-2`. Items: 13 px, `px-2 py-1.5`, `rounded-lg`, icon 15 px, label, then a faint count or a red count badge on the right. Active: `bg-sidebar-accent text-foreground font-semibold`. Hover: `bg-accent`. A `Separator` before admin items. Footer: user row (22 px tinted avatar + name), Settings, Sign out, above a `border-t`.
-- **Behaves**: one active item; counts are live numbers; the switcher opens a `DropdownMenu`.
+- **Behaves**: one active item; counts are live numbers; the switcher opens a `DropdownMenu`. A `Button variant="ghost" size="icon-sm"` at the start of the top bar uses `PanelLeftClose` / `PanelLeftOpen` icons, matching the other toolbar actions. Its tooltip says "Collapse sidebar" / "Expand sidebar" with the keyboard shortcut; `aria-expanded` announces the state and `aria-controls` identifies the desktop sidebar. It (or ⌘B / Ctrl-B) collapses the desktop sidebar to a 52 px icon rail and back: labels become right-side `Tooltip`s, group labels shrink to 20 px hairline `Separator`s (heights animate with the width, so icons slide rather than jump) so every gap in the rail is equal, the workspace row shows only the brand tile, and the footer shows only the avatar with its menu opening to the right. Width animates (`transition-[width]`, off for reduced motion) and the choice is remembered per browser. Below `lg`, the desktop toggle is replaced by the mobile menu button; the mobile sheet is always full width.
 - **Build with**: `Button variant="ghost"` sized `h-7 w-full justify-start gap-2 px-2` (or a plain link with the same classes), `Badge` for counts, `Separator`, `DropdownMenu` for the switcher. Build the shell once in `src/components/layout/` and read nav items from config.
 
 ### Top bar, breadcrumb, page header
 
-- **Top bar**: 42 px, `border-b border-border-faint`, `px-4`. Breadcrumb: root in `foreground-faint`, `/` in `border-strong` colour, leaf `font-semibold`. Right: ghost icon buttons (Filter, Sort, Search), the "Ask AI · ⌘K" chip (`h-7 rounded-lg bg-surface-2 px-3 text-sm text-muted-foreground` with a `Kbd`), and the user avatar.
+- **Top bar**: 42 px, `border-b border-border-faint`, `px-4`. Left: a ghost `icon-sm` sidebar toggle on desktop or menu button on mobile, followed by the breadcrumb (root and decorative `/` in `foreground-faint`, leaf `font-semibold`). Right: ghost icon buttons (Filter, Sort, Search), the "Ask AI · ⌘K" chip (`h-7 rounded-lg bg-surface-2 px-3 text-sm text-muted-foreground` with a `Kbd`), and the user avatar.
 - **Page header**: `px-4 pt-3.5 pb-2.5`; title `text-2xl font-bold`, faint count beside it, actions right-aligned (`Button` primary + outline). Optional filter-chip row below: `rounded-full bg-surface-2 px-2.5 h-6 text-xs` chips showing `Field <b>value</b>`, plus a ghost "+ Add filter".
-- **Filter row recipe** (see `features/leads/components/leads-toolbar.tsx`): pill `Tabs` for saved views with faint counts → a `rounded-full bg-surface-2` `InputGroup` search → filter chips that are `SelectTrigger size="sm"` styled `h-6 rounded-full border-transparent bg-surface-2 px-2.5 text-xs` (an active chip switches to `bg-accent text-foreground`) → a ghost `xs` "Clear" when any filter is set → a `DropdownMenu` radio group for sort, `ml-auto`. The whole row wraps at narrow widths.
+- **Filter row recipe** (see `features/leads/components/leads-toolbar.tsx`): `ViewTabs` + `ViewTab` for saved views with faint counts → a `rounded-full bg-surface-2` `InputGroup` search → filter chips that are `SelectTrigger size="sm"` styled `h-6 rounded-full border-transparent bg-surface-2 px-2.5 text-xs` (an active chip switches to `bg-accent text-foreground`) → a ghost `xs` "Clear" when any filter is set → a `DropdownMenu` radio group for sort, `ml-auto`. The whole row wraps at narrow widths.
 - Full-height screens (inbox, builders, wizards) omit the page header and draw their own top strip.
 
 ### Drawer (side panel)
 
-- **Looks**: 464 px wide, full height of the content column, white, `border-l` + `shadow-drawer`. Header `p-4 border-b border-border-faint`: avatar or icon, title `text-lg font-bold`, subtitle, pills; a ghost `icon-sm` close button top-right; optional quick-action row (`Button size="sm" variant="outline"`); optional underline tabs. Body scrolls, `p-4`; fields as a 2-column grid of label (`text-2xs` uppercase faint) over value (`text-base`). Footer `border-t px-3.5 py-2.5` with a row of `sm` buttons and one primary on the right.
-- **Behaves**: opens from a row click; Esc and the close button dismiss it; content behind stays visible and scrollable; only one drawer at a time.
-- **Build with**: `Sheet` + `SheetContent side="right" className="w-[464px] gap-0 p-0 sm:max-w-[464px] shadow-drawer"` + `SheetHeader` / `SheetTitle` / `SheetDescription` / `SheetFooter`. The overlay uses the `overlay` token; pass `className="bg-transparent"` to `SheetOverlay`-based variants if a screen needs the content visible without a scrim.
+- **Looks**: initially 464 px wide, full height of the content column, white, `border-l` + `shadow-drawer`. On desktop, the left border has a 12 px resize target with a `col-resize` cursor; its line uses `border-strong` on hover and `ring` on keyboard focus or drag. Header `p-4 border-b border-border-faint`: avatar or icon, title `text-lg font-bold`, subtitle, pills; a ghost `icon-sm` close button top-right; optional quick-action row (`Button size="sm" variant="outline"`); optional underline tabs. Body scrolls, `p-4`; fields as a 2-column grid of label (`text-2xs` uppercase faint) over value (`text-base`). Footer `border-t px-3.5 py-2.5` with a row of `sm` buttons and one primary on the right.
+- **Behaves**: opens from a row click; Esc and the close button dismiss it; content behind stays visible and scrollable; only one drawer at a time. From `lg`, drag the left edge to resize between 360 px and the smaller of 960 px or 80% of the viewport. Left / Right arrow keys adjust by 24 px (48 px with Shift); Home / End go to the limits; double-click or Enter resets to 464 px. The handle is a focusable vertical separator with its width and limits announced. All drawers share the saved desktop preference through `data/preferences.ts`; resizing the browser clamps the visible width without changing that preference. Below `lg`, the drawer fills the viewport and hides the resize handle.
+- **Build with**: `DrawerPanel` + `DrawerHeader` / `DrawerTitle` / `DrawerDescription` / `DrawerBody` / `DrawerFooter`. `DrawerPanel` wraps `Sheet` and uses its `render` composition for the resize surface, driven by `useDrawerWidth` and the `--drawer-width` layout variable. The overlay uses the `overlay` token; pass `className="bg-transparent"` to `SheetOverlay`-based variants if a screen needs the content visible without a scrim.
 
 ### Builder (full-page form)
 
@@ -214,7 +217,7 @@ The reference has none; these are ours.
 
 ## Layout shell (dimensions to build later)
 
-`100vh` row: sidebar 236 px · main column (top bar 42 px → page header → scrolling content) · drawer 464 px absolutely positioned on the right edge of the main column. Inbox is a 3-panel split (244 · flex · 218). Wizards centre their content at `max-w-[460–900px]`. The reference is desktop-only; below 1024 px the sidebar should collapse to icons and the drawer should become a full-width sheet.
+`100vh` row: sidebar 236 px · main column (top bar 42 px → page header → scrolling content) · drawer initially 464 px, resizable on desktop and anchored to the right edge of the viewport. Inbox is a 3-panel split (244 · flex · 218). Wizards centre their content at `max-w-[460–900px]`. Below 1024 px the sidebar opens as a mobile sheet and detail drawers fill the viewport.
 
 ## Dark mode
 

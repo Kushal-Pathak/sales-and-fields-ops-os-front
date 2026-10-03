@@ -68,7 +68,7 @@ const TABS = [
   { value: 'messages', label: 'Messages' },
 ] as const;
 
-/** The 464px lead detail panel. Opened by `?lead=<id>`; everything inside reads that id. */
+/** The resizable lead detail panel. Opened by `?lead=<id>`; everything inside reads that id. */
 export function LeadDrawer({ leadId, onClose }: LeadDrawerProps) {
   return (
     <DrawerPanel open={leadId !== null} onOpenChange={(open) => !open && onClose()}>

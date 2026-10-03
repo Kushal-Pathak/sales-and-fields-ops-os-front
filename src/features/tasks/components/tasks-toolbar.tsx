@@ -1,7 +1,12 @@
 import { XIcon } from 'lucide-react';
-import { FilterChip, SearchField, SortMenu } from '@/components/common/list-toolbar';
+import {
+  FilterChip,
+  SearchField,
+  SortMenu,
+  ViewTab,
+  ViewTabs,
+} from '@/components/common/list-toolbar';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUsers } from '@/features/workspace';
 import type { Priority, TaskType } from '@/types/domain';
 import {
@@ -34,30 +39,19 @@ export function TasksToolbar({ filters, counts, isActive, onChange, onClear }: T
 
   return (
     <div className="flex w-full flex-wrap items-center gap-1.5">
-      <Tabs value={filters.view} onValueChange={(view) => onChange({ view: view as TaskView })}>
-        <TabsList className="h-auto gap-0.5 bg-transparent p-0">
-          {TASK_VIEWS.map((view) => (
-            <TabsTrigger
-              key={view}
-              value={view}
-              className="h-7 gap-1.5 px-2.5 data-active:bg-accent data-active:shadow-none"
-            >
-              {TASK_VIEW_LABEL[view]}
-              {counts && (
-                <span
-                  className={
-                    view === 'overdue' && counts[view] > 0
-                      ? 'text-xs font-semibold text-destructive'
-                      : 'text-xs text-foreground-faint'
-                  }
-                >
-                  {counts[view]}
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <ViewTabs value={filters.view} onValueChange={(view) => onChange({ view: view as TaskView })}>
+        {TASK_VIEWS.map((view) => (
+          <ViewTab
+            key={view}
+            value={view}
+            label={TASK_VIEW_LABEL[view]}
+            count={counts?.[view]}
+            countClassName={
+              view === 'overdue' && (counts?.[view] ?? 0) > 0 ? 'text-destructive' : undefined
+            }
+          />
+        ))}
+      </ViewTabs>
 
       <SearchField value={filters.q} onChange={(q) => onChange({ q })} placeholder="Search tasks" />
 
