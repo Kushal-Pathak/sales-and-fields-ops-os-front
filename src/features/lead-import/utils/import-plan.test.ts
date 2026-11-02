@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildImportPlan, type ImportSettings } from './import-plan';
+import { env } from '@/lib/env';
 import type { ParsedRow } from './import-validation';
 
 function row(line: number, extra: Partial<ParsedRow> = {}): ParsedRow {
@@ -37,7 +38,7 @@ describe('import plan', () => {
     expect(buildImportPlan(rows, { ...settings, duplicates: 'skip' }).items[2]).toMatchObject({
       action: 'skip',
       contactId: 'con-1',
-      reason: 'Already in Pilot CRM',
+      reason: `Already in ${env.appName}`,
     });
     expect(buildImportPlan(rows, { ...settings, duplicates: 'update' }).items[2]).toMatchObject({
       action: 'update',

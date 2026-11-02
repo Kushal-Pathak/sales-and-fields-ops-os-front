@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFlag } from '@/features/auth';
 import { useBulkAssignLeads } from '@/features/leads';
+import { env } from '@/lib/env';
 import type { User } from '@/types/domain';
 import { useAskAssistant } from '../hooks/use-ask-assistant';
 import { answerIntent, hotLeadsToAssign, type Intent, type IntentRefs } from '../utils/intents';
@@ -182,7 +183,7 @@ function AssistantAnswer({ question, route }: { question: string; route: string 
         <p className="text-sm text-muted-foreground">The assistant is switched off right now.</p>
       ) : !isConfigured ? (
         <p className="text-sm text-muted-foreground">
-          No assistant is connected. Pilot CRM can answer this once a backend behind{' '}
+          No assistant is connected. {env.appName} can answer this once a backend behind{' '}
           <code className="font-mono text-xs">VITE_API_BASE_URL</code> implements{' '}
           <code className="font-mono text-xs">POST /assistant/ask</code>. Model keys never live in
           the browser.

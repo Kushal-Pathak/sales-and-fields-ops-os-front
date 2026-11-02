@@ -1,6 +1,6 @@
-# Pilot CRM
+# Sales and Field Ops OS
 
-The Pilot CRM frontend: a customer relationship management application for managing leads, contacts and deals.
+The Sales and Field Ops OS frontend: a customer relationship management application for managing leads, contacts and deals.
 
 Built with React 19, Vite, TypeScript (strict), Tailwind CSS v4, shadcn/ui (Base UI), React Router, ESLint and Prettier.
 
@@ -64,7 +64,7 @@ Copy `.env.example` to `.env.local` and provide local values. Read them only thr
 
 | Variable            | Purpose                                                                                                                                                                                                                             |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_APP_NAME`     | Display name of the app (`Pilot CRM`)                                                                                                                                                                                               |
+| `VITE_APP_NAME`     | Display name of the app (`Sales and Field Ops OS`)                                                                                                                                                                                  |
 | `VITE_API_BASE_URL` | Base URL of the backend API (no trailing /). Leave empty to run on local demo data, seeded and persisted in the browser. The command palette's assistant (`POST /assistant/ask`) also needs it; the browser never holds a model key |
 
 Never store secrets, credentials, private keys, or other sensitive values in `VITE_*` variables. They are bundled into client-side code.

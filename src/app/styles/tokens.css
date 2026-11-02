@@ -2,7 +2,7 @@
  * Design tokens — the single place to change the look of the app.
  * Values only. Tailwind wiring (@theme) lives in index.css.
  *
- * Derived from the Pilot CRM reference design; see docs/DESIGN_SYSTEM.md for
+ * Derived from the Sales and Field Ops OS reference design; see docs/DESIGN_SYSTEM.md for
  * what each token is for. Light values retain the reference palette, with
  * readable text contrast; dark values use the same stone family.
  */

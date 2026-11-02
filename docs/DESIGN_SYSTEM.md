@@ -1,6 +1,6 @@
 # Design System
 
-The visual foundation of Pilot CRM. It is derived from the reference mock in `design/AquaEdge CRM (standalone).html` and implemented with the tokens in `src/app/styles/tokens.css`, the Tailwind wiring in `src/app/styles/index.css`, and the shadcn/ui primitives in `src/components/ui/`.
+The visual foundation of Sales and Field Ops OS. It is derived from the reference mock in `design/AquaEdge CRM (standalone).html` and implemented with the tokens in `src/app/styles/tokens.css`, the Tailwind wiring in `src/app/styles/index.css`, and the shadcn/ui primitives in `src/components/ui/`.
 
 Read this before building any screen. The reference file is a static mock: copy its patterns, not its DOM. Open `/design-system` in the dev server to see every token and primitive rendered.
 
@@ -173,7 +173,7 @@ Each entry says how the element looks, how it behaves, and how to build it. "Bui
 
 ### Sign-in and the user menu
 
-- **Sign-in**: a `Card` (`max-w-sm p-6 shadow-card`) centred on a `bg-muted` page with the theme toggle top-right; brand tile, "Sign in to Pilot CRM", one line of copy, then either the member picker (rows with `InitialsAvatar`, name, role · email, `hover:bg-muted`, "Continue as …") or the email/password `Field`s and a primary "Sign in". Errors as `text-destructive` alerts under the form. `SignInForm` in `features/auth/`.
+- **Sign-in**: a `Card` (`max-w-sm p-6 shadow-card`) centred on a `bg-muted` page with the theme toggle top-right; brand tile, "Sign in to Sales and Field Ops OS", one line of copy, then either the member picker (rows with `InitialsAvatar`, name, role · email, `hover:bg-muted`, "Continue as …") or the email/password `Field`s and a primary "Sign in". Errors as `text-destructive` alerts under the form. `SignInForm` in `features/auth/`.
 - **User menu**: the sidebar footer row (`InitialsAvatar size="sm"` in the user's colour, name, role in `text-2xs`, chevrons) opens a `DropdownMenu` upward with the email, "Switch user" (demo) and "Sign out". The top-bar avatar mirrors the user. `UserMenu` in `features/auth/`.
 - **Read-only sections**: disabled actions plus `PermissionNote` (`LockIcon` + one `text-xs text-muted-foreground` line) in the page header.
 

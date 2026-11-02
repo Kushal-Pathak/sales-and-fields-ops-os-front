@@ -5,6 +5,7 @@ import { StatusDot } from '@/components/common/status-dot';
 import { Button } from '@/components/ui/button';
 import { Progress, ProgressLabel, ProgressValue } from '@/components/ui/progress';
 import { serializeCsv } from '@/lib/csv';
+import { env } from '@/lib/env';
 import type { ImportResult, RunProgress } from '../hooks/use-run-import';
 
 interface ResultStepProps {
@@ -78,7 +79,7 @@ export function ResultStep({
       <div>
         <h1 className="text-xl font-bold">Import complete</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {result.leadsCreated} lead{result.leadsCreated === 1 ? '' : 's'} added to Pilot CRM.
+          {result.leadsCreated} lead{result.leadsCreated === 1 ? '' : 's'} added to {env.appName}.
         </p>
       </div>
 

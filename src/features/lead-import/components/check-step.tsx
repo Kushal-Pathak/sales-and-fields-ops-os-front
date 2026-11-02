@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { serializeCsv } from '@/lib/csv';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { DUPLICATE_POLICIES, type DuplicatePolicy } from '../utils/import-plan';
 import { hasError, summarize, type ParsedRow } from '../utils/import-validation';
@@ -21,7 +22,7 @@ interface CheckStepProps {
   onDuplicatesChange: (policy: DuplicatePolicy) => void;
 }
 
-/** Step 3: what will import, what will not, and how to treat rows already in Pilot CRM. */
+/** Step 3: what will import, what will not, and how to treat rows already in the app. */
 export function CheckStep({ headers, rows, duplicates, onDuplicatesChange }: CheckStepProps) {
   const summary = summarize(rows);
   const flagged = rows.filter((row) => row.issues.length > 0);
@@ -36,7 +37,7 @@ export function CheckStep({ headers, rows, duplicates, onDuplicatesChange }: Che
   const tiles = [
     { label: 'Rows found', value: summary.total, tone: '' },
     { label: 'Ready to import', value: summary.ready, tone: 'text-success' },
-    { label: 'Already in Pilot CRM', value: summary.duplicates, tone: 'text-warning' },
+    { label: `Already in ${env.appName}`, value: summary.duplicates, tone: 'text-warning' },
     { label: 'Rows with errors', value: summary.errors, tone: 'text-destructive' },
   ];
 
@@ -134,7 +135,7 @@ export function CheckStep({ headers, rows, duplicates, onDuplicatesChange }: Che
 
       <section className="flex flex-col gap-2">
         <h2 className="text-2xs font-bold tracking-wider text-foreground-faint uppercase">
-          Rows already in Pilot CRM · {summary.duplicates}
+          Rows already in {env.appName} · {summary.duplicates}
         </h2>
         <p className="text-sm text-muted-foreground">
           A row matches an existing contact when its email or phone number is the same.

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { db, resetDemoData } from '@/data';
 import { buildSeed } from '@/data/seed';
+import { env } from '@/lib/env';
 import { ImportLeadsPage } from './index';
 
 function renderWizard() {
@@ -62,7 +63,7 @@ describe('Import wizard', () => {
     expect(await screen.findByRole('heading', { name: 'Check the rows' })).toBeInTheDocument();
     expect(screen.getByText('Missing contact name')).toBeInTheDocument();
     expect(screen.getByText('Value “lots” is not a number; left empty')).toBeInTheDocument();
-    expect(screen.getByText('Rows already in Pilot CRM · 1')).toBeInTheDocument();
+    expect(screen.getByText(`Rows already in ${env.appName} · 1`)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Continue/ }));
 
     // Step 4: settings with a follow-up task, then start.

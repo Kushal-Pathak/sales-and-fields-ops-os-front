@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { parseDelimited, type ParsedTable } from '@/lib/csv';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { SAMPLE_CSV } from '../utils/sample-csv';
 
@@ -62,7 +63,7 @@ export function UploadStep({ table, fileName, onLoad, onClear }: UploadStepProps
       <div>
         <h1 className="text-xl font-bold">Import leads</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bring a spreadsheet of contacts and leads into Pilot CRM. The first row must hold the
+          Bring a spreadsheet of contacts and leads into {env.appName}. The first row must hold the
           column names; every row needs a contact name.
         </p>
       </div>
@@ -204,7 +205,7 @@ export function UploadStep({ table, fileName, onLoad, onClear }: UploadStepProps
       ) : (
         <a
           href={SAMPLE_HREF}
-          download="pilot-crm-import-sample.csv"
+          download="import-sample.csv"
           className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:underline"
         >
           <DownloadIcon className="size-3.5" /> Download a sample CSV

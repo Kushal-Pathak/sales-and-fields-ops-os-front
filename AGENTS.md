@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for coding agents working in the Pilot CRM frontend repository. The product and brand name is **Pilot CRM**; use it consistently in UI text, titles and docs. Work like a senior engineer and system architect: understand the system first, change it deliberately, and leave it more consistent than you found it.
+Instructions for coding agents working in the Sales and Field Ops OS frontend repository. The product and brand name is **Sales and Field Ops OS**; use it consistently in UI text, titles and docs. Work like a senior engineer and system architect: understand the system first, change it deliberately, and leave it more consistent than you found it.
 
 Sources of truth — read before non-trivial work:
 

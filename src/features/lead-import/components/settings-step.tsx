@@ -11,6 +11,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useModule } from '@/features/auth';
 import { toDateInput } from '@/lib/dates';
+import { env } from '@/lib/env';
 import { formatDate } from '@/lib/format';
 import type { Priority } from '@/types/domain';
 import type { ImportRefs } from '../hooks/use-import-refs';
@@ -180,7 +181,7 @@ export function SettingsStep({ refs, settings, fileName, summary, onChange }: Se
             <Row label="Ready to import">
               <span className="text-success">{summary.ready}</span>
             </Row>
-            <Row label="Already in Pilot CRM">
+            <Row label={`Already in ${env.appName}`}>
               <span className="text-warning">{summary.duplicates}</span>
               {summary.duplicates > 0 && <span className="text-muted-foreground"> · {policy}</span>}
             </Row>

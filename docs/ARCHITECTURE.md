@@ -1,6 +1,6 @@
 # Architecture
 
-Pilot CRM uses a feature-first frontend architecture. The rule of thumb: **`app/` wires, `pages/` route, `features/` own logic, `components/` are dumb and shared, `lib/` is infrastructure.**
+Sales and Field Ops OS uses a feature-first frontend architecture. The rule of thumb: **`app/` wires, `pages/` route, `features/` own logic, `components/` are dumb and shared, `lib/` is infrastructure.**
 
 ## Structure
 

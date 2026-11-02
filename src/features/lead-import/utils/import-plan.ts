@@ -1,3 +1,4 @@
+import { env } from '@/lib/env';
 import type { Priority } from '@/types/domain';
 import { hasError, type ParsedRow } from './import-validation';
 
@@ -7,12 +8,12 @@ export const DUPLICATE_POLICIES: { value: DuplicatePolicy; label: string; hint: 
   {
     value: 'attach',
     label: 'Add a new lead to the existing contact',
-    hint: 'The row becomes another lead on the contact already in Pilot CRM.',
+    hint: `The row becomes another lead on the contact already in ${env.appName}.`,
   },
   {
     value: 'skip',
     label: 'Skip duplicate rows',
-    hint: 'Only rows that are not already in Pilot CRM are imported.',
+    hint: `Only rows that are not already in ${env.appName} are imported.`,
   },
   {
     value: 'update',
@@ -63,7 +64,7 @@ export function buildImportPlan(rows: ParsedRow[], settings: ImportSettings): Im
           row,
           action: 'skip',
           contactId: row.match.contactId,
-          reason: 'Already in Pilot CRM',
+          reason: `Already in ${env.appName}`,
         };
       } else {
         item = { row, action: settings.duplicates, contactId: row.match.contactId };

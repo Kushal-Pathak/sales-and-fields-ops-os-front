@@ -1,6 +1,6 @@
 # Development
 
-How to work on Pilot CRM. Read it once, follow it always.
+How to work on Sales and Field Ops OS. Read it once, follow it always.
 
 For setup see [`README.md`](../README.md), for structure see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md), and for agent rules see [`AGENTS.md`](../AGENTS.md).
 

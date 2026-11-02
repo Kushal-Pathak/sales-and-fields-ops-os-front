@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { ParsedTable } from '@/lib/csv';
+import { env } from '@/lib/env';
 import { mappingIssues, sampleValue, type Mapping } from '../utils/column-mapping';
 import { IMPORT_FIELDS, type ImportFieldKey } from '../utils/import-fields';
 
@@ -25,7 +26,7 @@ interface MapStepProps {
 
 const NONE = 'none';
 
-/** Step 2: choose which file column feeds each Pilot CRM field. */
+/** Step 2: choose which file column feeds each app field. */
 export function MapStep({ table, mapping, onChange }: MapStepProps) {
   const issues = mappingIssues(mapping);
   const columns = table.headers.map((header, index) => ({
@@ -42,7 +43,7 @@ export function MapStep({ table, mapping, onChange }: MapStepProps) {
       <div>
         <h1 className="text-xl font-bold">Map columns</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Match the columns in your file to Pilot CRM fields. We guessed from the headers; fix
+          Match the columns in your file to {env.appName} fields. We guessed from the headers; fix
           anything that looks wrong.
         </p>
       </div>
@@ -51,7 +52,7 @@ export function MapStep({ table, mapping, onChange }: MapStepProps) {
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="h-8 w-[200px] px-3 text-xs font-semibold text-muted-foreground">
-              Pilot CRM field
+              {env.appName} field
             </TableHead>
             <TableHead className="h-8 w-[220px] px-3 text-xs font-semibold text-muted-foreground">
               File column

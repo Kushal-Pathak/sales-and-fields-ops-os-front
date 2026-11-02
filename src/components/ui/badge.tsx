@@ -15,7 +15,7 @@ const badgeVariants = cva(
         outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
         ghost: 'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
         link: 'text-primary underline-offset-4 hover:underline',
-        // Status pills (Pilot CRM design system): soft fill + strong text.
+        // Status pills (Sales and Field Ops OS design system): soft fill + strong text.
         success: 'bg-success-soft text-success',
         warning: 'bg-warning-soft text-warning',
         info: 'bg-info-soft text-info',
